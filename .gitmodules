@@ -1,3 +1,3 @@
 [submodule "argos"]
-	path = argos
+	path = argos3
 	url = git@github.com:ilpincy/argos3.git
