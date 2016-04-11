@@ -7,7 +7,8 @@
     <framework>
         <system threads="0" />
         <experiment length="0"
-                    ticks_per_second="10" />
+                    ticks_per_second="10"
+                    random_seed="123"/>
     </framework>
 
     <!-- *************** -->
@@ -102,7 +103,7 @@
                 library="loop_functions/libloop_functions"
                 label="draw_voronoi" />
             <camera>
-                <placement idx="0" position="0,0,7" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="0" position="0,0,8" look_at="0,0,0" lens_focal_length="50"/>
                 <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>
                 <placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>
                 <placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>

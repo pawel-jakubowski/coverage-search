@@ -15,6 +15,8 @@ private:
     CalculateVoronoi& voronoi;
 
     void drawVertices();
+
+    void drawEdges();
 };
 
 

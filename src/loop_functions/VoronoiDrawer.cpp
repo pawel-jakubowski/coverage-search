@@ -7,12 +7,16 @@ VoronoiDrawer::VoronoiDrawer()
     : voronoi(dynamic_cast<CalculateVoronoi&>(CSimulator::GetInstance().GetLoopFunctions())) {}
 
 void VoronoiDrawer::DrawInWorld() {
+    voronoi.update();
     drawVertices();
+    drawEdges();
+}
 
+void VoronoiDrawer::drawEdges() {
     auto voronoiEdges = voronoi.getEdges();
     LOG << "Draw " << voronoiEdges.size() << " edges" "\n";
     for (auto& edge : voronoiEdges)
-        DrawRay(CRay3(edge.begin, edge.end));
+        DrawRay(edge);
 }
 
 void VoronoiDrawer::drawVertices() {
