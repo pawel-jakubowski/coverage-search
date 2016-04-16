@@ -2,7 +2,7 @@
 
 #include <argos3/plugins/simulator/visualizations/qt-opengl/qtopengl_user_functions.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
-#include "CalculateVoronoi.h"
+#include "VoronoiCalculator.h"
 
 class VoronoiDrawer : public argos::CQTOpenGLUserFunctions {
 public:
@@ -12,10 +12,9 @@ public:
 private:
     const argos::CColor vertexColor = argos::CColor::BLACK;
     const argos::Real vertexSize = 5.0f;
-    CalculateVoronoi& voronoi;
+    VoronoiCalculator& voronoi;
 
     void drawVertices();
-
     void drawEdges();
 };
 

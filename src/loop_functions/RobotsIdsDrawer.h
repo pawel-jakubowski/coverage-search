@@ -5,10 +5,10 @@
 
 using namespace argos;
 
-class ShowRobotsIds : public CQTOpenGLUserFunctions {
+class RobotsIdsDrawer : public CQTOpenGLUserFunctions {
 public:
-   ShowRobotsIds();
-   virtual ~ShowRobotsIds() {}
+   RobotsIdsDrawer();
+   virtual ~RobotsIdsDrawer() {}
 
    void Draw(CFootBotEntity& c_entity);
 };

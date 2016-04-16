@@ -4,7 +4,7 @@
 using namespace argos;
 
 VoronoiDrawer::VoronoiDrawer()
-    : voronoi(dynamic_cast<CalculateVoronoi&>(CSimulator::GetInstance().GetLoopFunctions())) {}
+    : voronoi(dynamic_cast<VoronoiCalculator&>(CSimulator::GetInstance().GetLoopFunctions())) {}
 
 void VoronoiDrawer::DrawInWorld() {
     voronoi.update();

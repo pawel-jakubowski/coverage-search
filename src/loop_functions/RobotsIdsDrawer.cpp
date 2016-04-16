@@ -1,10 +1,10 @@
-#include "ShowRobotsIds.h"
+#include "RobotsIdsDrawer.h"
 
-ShowRobotsIds::ShowRobotsIds() {
-    RegisterUserFunction<ShowRobotsIds, CFootBotEntity>(&ShowRobotsIds::Draw);
+RobotsIdsDrawer::RobotsIdsDrawer() {
+    RegisterUserFunction<RobotsIdsDrawer, CFootBotEntity>(&RobotsIdsDrawer::Draw);
 }
 
-void ShowRobotsIds::Draw(CFootBotEntity& c_entity) {
+void RobotsIdsDrawer::Draw(CFootBotEntity& c_entity) {
     glDisable(GL_LIGHTING);
     /* Disable face culling to be sure the text is visible from anywhere */
     glDisable(GL_CULL_FACE);
@@ -28,4 +28,4 @@ void ShowRobotsIds::Draw(CFootBotEntity& c_entity) {
 /****************************************/
 /****************************************/
 
-REGISTER_QTOPENGL_USER_FUNCTIONS(ShowRobotsIds, "show_id")
+REGISTER_QTOPENGL_USER_FUNCTIONS(RobotsIdsDrawer, "show_id")
