@@ -8,11 +8,11 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
 include_directories(${CMAKE_SOURCE_DIR} ..)
 set(SRC
     RobotsIdsDrawer.cpp
-        VoronoiCalculator.cpp
+    VoronoiCalculator.cpp
     VoronoiDrawer.cpp
     CoverageGridDrawer.cpp
     CoverageCalculator.cpp
-)
+    MbfoLoopFunction.cpp MbfoDrawer.cpp MbfoDrawer.h)
 
 # If Qt+OpenGL dependencies were found, descend into these directories
 if(ARGOS_COMPILE_QTOPENGL)

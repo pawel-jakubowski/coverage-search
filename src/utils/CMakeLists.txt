@@ -3,6 +3,7 @@ project(coverage_search_utils)
 
 set(SRC
         VoronoiDiagram.cpp
-        liang-barsky.cpp)
+        liang-barsky.cpp
+        CoverageGrid.cpp)
 
 add_library(${PROJECT_NAME} MODULE ${SRC})

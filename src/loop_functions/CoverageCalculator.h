@@ -1,6 +1,7 @@
 #pragma once
 
 #include <argos3/core/simulator/loop_functions.h>
+#include <utils/CoverageGrid.h>
 
 class CoverageCalculator : public argos::CLoopFunctions {
 public:
@@ -10,9 +11,7 @@ public:
 
     std::vector<argos::CRay3> getGrid();
 private:
-    const argos::Real cellSizeInMeters = 0.1f;
-    const argos::Real gridLiftOnZ = 0.05f;
-    std::vector<argos::CRay3> grid;
+    CoverageGrid coverage;
 };
 
 

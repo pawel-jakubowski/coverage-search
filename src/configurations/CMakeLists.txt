@@ -12,3 +12,5 @@ add_subdirectory(random)
 add_subdirectory(random_with_ids)
 add_subdirectory(random_with_voronoi)
 add_subdirectory(random_with_grid)
+
+add_subdirectory(mbfo)
