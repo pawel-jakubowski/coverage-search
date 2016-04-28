@@ -10,6 +10,10 @@ void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     update();
 }
 
+void MbfoLoopFunction::PreStep() {
+    update();
+}
+
 void MbfoLoopFunction::update() {
     auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
     updateRobotsPositions(entities);

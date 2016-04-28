@@ -6,7 +6,6 @@ MbfoDrawer::MbfoDrawer()
         : mbfo(dynamic_cast<MbfoLoopFunction&>(CSimulator::GetInstance().GetLoopFunctions())) {}
 
 void MbfoDrawer::DrawInWorld() {
-    mbfo.update();
     drawVoronoi();
     drawGrid();
 }
@@ -42,7 +41,7 @@ void MbfoDrawer::drawEdges() {
     auto voronoiEdges = mbfo.getVoronoiEdges();
     LOG << "Draw " << voronoiEdges.size() << " edges" "\n";
     for (auto& edge : voronoiEdges)
-        DrawRay(edge);
+        DrawRay(edge, CColor::RED, 3.0f);
 }
 
 void MbfoDrawer::drawVertices() {

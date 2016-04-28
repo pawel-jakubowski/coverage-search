@@ -1,4 +1,7 @@
 #include "liang-barsky.h"
+#include <cmath>
+
+double checkLimits(double x, double l1, double l2);
 
 // Liang-Barsky function by Daniel White @ http://www.skytopia.com/project/articles/compsci/clipping.html
 // This function inputs 8 numbers, and outputs 4 new numbers (plus a boolean value to say whether the clipped line is drawn at all).
@@ -30,11 +33,21 @@ bool LiangBarsky (double edgeLeft, double edgeRight, double edgeBottom, double e
         }
     }
 
-    x0clip = x0src + t0*xdelta;
-    y0clip = y0src + t0*ydelta;
-    x1clip = x0src + t1*xdelta;
-    y1clip = y0src + t1*ydelta;
+    x0clip = checkLimits(x0src + t0*xdelta, edgeLeft, edgeRight);
+    y0clip = checkLimits(y0src + t0*ydelta, edgeBottom, edgeTop);
+    x1clip = checkLimits(x0src + t1*xdelta, edgeLeft, edgeRight);
+    y1clip = checkLimits(y0src + t1*ydelta, edgeBottom, edgeTop);
 
     return true;        // (clipped) line is drawn
+}
+
+double checkLimits(double x, double l1, double l2) {
+    double newX = x;
+    double epsilon = 5e-15;
+    if (fabs(x - l1) < epsilon)
+        newX = l1;
+    else if (fabs(x - l2) < epsilon)
+        newX = l2;
+    return newX;
 }
 

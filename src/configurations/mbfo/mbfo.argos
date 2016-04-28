@@ -16,7 +16,7 @@
     <!-- *************** -->
     <controllers>
 
-        <random_controller id="rnd_movement" library="controllers/librandom_controller.so">
+        <mbfo_controller id="mbfo" library="controllers/libmbfo_controller.so">
             <actuators>
                 <differential_steering implementation="default" />
             </actuators>
@@ -24,7 +24,7 @@
                 <footbot_proximity implementation="default" show_rays="true" />
             </sensors>
             <params velocity="5" delta="0.05" />
-        </random_controller>
+        </mbfo_controller>
 
     </controllers>
 
@@ -43,17 +43,17 @@
         <!-- ********* -->
         <!-- * Walls * -->
         <!-- ********* -->
-        <box id="wall_north" size="4,0.1,0.5" movable="false">
-            <body position="0,2,0" orientation="0,0,0" />
+        <box id="wall_north" size="4.1,0.1,0.5" movable="false">
+            <body position="0,2.05,0" orientation="0,0,0" />
         </box>
-        <box id="wall_south" size="4,0.1,0.5" movable="false">
-            <body position="0,-2,0" orientation="0,0,0" />
+        <box id="wall_south" size="4.1,0.1,0.5" movable="false">
+            <body position="0,-2.05,0" orientation="0,0,0" />
         </box>
-        <box id="wall_east" size="0.1,4,0.5" movable="false">
-            <body position="2,0,0" orientation="0,0,0" />
+        <box id="wall_east" size="0.1,4.1,0.5" movable="false">
+            <body position="2.05,0,0" orientation="0,0,0" />
         </box>
-        <box id="wall_west" size="0.1,4,0.5" movable="false">
-            <body position="-2,0,0" orientation="0,0,0" />
+        <box id="wall_west" size="0.1,4.1,0.5" movable="false">
+            <body position="-2.05,0,0" orientation="0,0,0" />
         </box>
 
         <!-- ********** -->
@@ -62,9 +62,9 @@
         <distribute>
             <position method="uniform" min="-1.8,-1.8,0" max="1.8,1.8,0" />
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="10" max_trials="100">
+            <entity quantity="3" max_trials="100">
                 <foot-bot id="fb">
-                    <controller config="rnd_movement" />
+                    <controller config="mbfo" />
                 </foot-bot>
             </entity>
         </distribute>

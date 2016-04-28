@@ -9,10 +9,10 @@
 
 namespace argos {
 
-class RandomMovement : public CCI_Controller {
+class Mbfo : public CCI_Controller {
 public:
-    RandomMovement();
-    virtual ~RandomMovement() {}
+    Mbfo();
+    virtual ~Mbfo() {}
 
     virtual void Init(TConfigurationNode& configuration);
     virtual void ControlStep();

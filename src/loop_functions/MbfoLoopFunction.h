@@ -11,6 +11,7 @@ public:
     virtual ~MbfoLoopFunction() {}
     virtual void Init(argos::TConfigurationNode& t_tree) override;
 
+    void PreStep() override;
     void update();
     std::vector<std::vector<CoverageGrid::Cell>> getCoverageGrid();
     std::vector<argos::CVector3> getVoronoiVertices();

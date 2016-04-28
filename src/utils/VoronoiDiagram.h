@@ -7,6 +7,11 @@
 
 class VoronoiDiagram {
 public:
+    struct Cell {
+        std::vector<argos::CVector3> vertices;
+        std::vector<argos::CRay3> edges;
+    };
+
     void calculate(std::vector<argos::CVector3> points);
     void setArenaLimits(argos::CRange<argos::CVector3> limits);
     std::vector<argos::CVector3> getVertices() const;
@@ -19,22 +24,29 @@ private:
     using Vertex = boost::polygon::voronoi_vertex<CoordinateType>;
     using Edge = boost::polygon::voronoi_edge<CoordinateType>;
 
+    class EdgeNotInArea : public std::logic_error {
+    public:
+        EdgeNotInArea() : std::logic_error("Edge not in area") {}
+    };
+
     const int scaleVectorToMilimeters = 100000;
     const argos::Real diagramLiftOnZ = 0.1f;
     argos::CRange<argos::CVector3> arenaLimits;
     std::vector<Point> boostPoints;
-    std::vector<argos::CVector3> vertices;
-    std::vector<argos::CRay3> edges;
+    std::vector<Cell> cells;
 
     void reset();
     void updateVoronoiDiagram();
-    void updateVertices(const Diagram& diagram);
+    void fillMissingEdges();
     void updateEdges(const Diagram& diagram);
 
     Point ToPoint(const argos::CVector3& vec) const;
     argos::CVector3 ToVector3(const Vertex& vertex) const;
     argos::CRay3 ToVoronoiEdge(const Edge& edge) const;
     argos::CRay3 getRayBoundedToArena(const argos::CRay3 &ray) const;
+
+    bool areVectorsEqual(const argos::CVector3 &a, const argos::CVector3 &b) const;
+    bool areOnSameSide(const argos::CVector3 &a, const argos::CVector3 &b) const;
 };
 
 

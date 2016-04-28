@@ -1,4 +1,4 @@
-#include "RandomMovement.h"
+#include "Mbfo.h"
 
 #include <assert.h>
 
@@ -6,7 +6,7 @@ using namespace std;
 
 namespace argos {
 
-RandomMovement::RandomMovement()
+Mbfo::Mbfo()
     : wheelsEngine(nullptr)
     , proximitySensor(nullptr)
     , velocity(5.0f)
@@ -14,7 +14,7 @@ RandomMovement::RandomMovement()
     , minAngleFromObstacle(CDegrees(-45.0f), CDegrees(45.0f))
 {}
 
-void RandomMovement::Init(TConfigurationNode& configuration) {
+void Mbfo::Init(TConfigurationNode& configuration) {
     wheelsEngine = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     proximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
 
@@ -26,7 +26,7 @@ void RandomMovement::Init(TConfigurationNode& configuration) {
     assert(proximitySensor != nullptr);
 }
 
-void RandomMovement::ControlStep() {
+void Mbfo::ControlStep() {
     CVector2 obstacleProximity = getWeightedProximityReading();
     if (isRoadClear(obstacleProximity)) {
         wheelsEngine->SetLinearVelocity(velocity, velocity);
@@ -38,7 +38,7 @@ void RandomMovement::ControlStep() {
     }
 }
 
-CVector2 RandomMovement::getWeightedProximityReading() {
+CVector2 Mbfo::getWeightedProximityReading() {
     const CCI_FootBotProximitySensor::TReadings& proximityReadings = proximitySensor->GetReadings();
     CVector2 accumulator;
     for (size_t i = 0; i < proximityReadings.size(); ++i) {
@@ -48,7 +48,7 @@ CVector2 RandomMovement::getWeightedProximityReading() {
     return accumulator;
 }
 
-bool RandomMovement::isRoadClear(const CVector2& obstacleProximity) {
+bool Mbfo::isRoadClear(const CVector2& obstacleProximity) {
     CDegrees obstacleAngle(ToDegrees(obstacleProximity.Angle()));
     CDegrees safeAngle(150.0f);
     return (minAngleFromObstacle.WithinMinBoundIncludedMaxBoundIncluded(obstacleAngle)
@@ -56,11 +56,11 @@ bool RandomMovement::isRoadClear(const CVector2& obstacleProximity) {
             (obstacleAngle < -safeAngle || obstacleAngle > safeAngle);
 }
 
-RandomMovement::Direction RandomMovement::getRotationDirection(const CDegrees& obstacleAngle) {
+Mbfo::Direction Mbfo::getRotationDirection(const CDegrees& obstacleAngle) {
     return obstacleAngle.GetValue() > 0.0f ? Direction::right : Direction::left;
 }
 
-void RandomMovement::rotate(Direction rotationDirection) {
+void Mbfo::rotate(Direction rotationDirection) {
     if (rotationDirection == Direction::right)
         wheelsEngine->SetLinearVelocity(velocity, -0.1*velocity);
     else if (rotationDirection == Direction::left)
@@ -69,4 +69,4 @@ void RandomMovement::rotate(Direction rotationDirection) {
 
 }
 
-REGISTER_CONTROLLER(RandomMovement, "random_controller")
+REGISTER_CONTROLLER(Mbfo, "mbfo_controller")
