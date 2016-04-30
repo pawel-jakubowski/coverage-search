@@ -21,5 +21,3 @@ private:
 
     Cell createCell(argos::Real x, argos::Real y) const;
 };
-
-

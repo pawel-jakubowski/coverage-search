@@ -4,6 +4,7 @@
 
 #include "assert.h"
 
+
 using namespace argos;
 using namespace boost::polygon;
 
@@ -40,7 +41,6 @@ void VoronoiDiagram::fillMissingEdges() {
             auto nextEdgeIt = edgeIt + 1;
             if (nextEdgeIt == cell.edges.end())
                 nextEdgeIt = cell.edges.begin();
-            assert(edgeIt != nullptr && nextEdgeIt != nullptr);
             CVector3 startVertex = edgeIt->GetEnd();
             CVector3 endVertex = nextEdgeIt->GetStart();
 

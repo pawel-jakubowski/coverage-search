@@ -39,6 +39,9 @@
     <!-- * Arena configuration * -->
     <!-- *********************** -->
     <arena size="4, 4, 1" center="0,0,0.5">
+        <floor id="floor"
+               source="image"
+               path="@ARGOS_TEXTURES_DIR@/ground_plain.png" />
 
         <!-- ********* -->
         <!-- * Walls * -->

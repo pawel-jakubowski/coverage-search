@@ -12,7 +12,8 @@ set(SRC
     VoronoiDrawer.cpp
     CoverageGridDrawer.cpp
     CoverageCalculator.cpp
-    MbfoLoopFunction.cpp MbfoDrawer.cpp MbfoDrawer.h)
+    MbfoLoopFunction.cpp MbfoDrawer.cpp MbfoDrawer.h
+)
 
 # If Qt+OpenGL dependencies were found, descend into these directories
 if(ARGOS_COMPILE_QTOPENGL)

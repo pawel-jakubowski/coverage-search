@@ -14,3 +14,8 @@ add_subdirectory(controllers)
 add_subdirectory(loop_functions)
 add_subdirectory(utils)
 add_subdirectory(configurations EXCLUDE_FROM_ALL)
+
+set(ARGOS_SRC_DIR ${ARGOS3_DIR})
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/ARGoS.conf
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/.config/Iridia-ULB/ARGoS.conf)

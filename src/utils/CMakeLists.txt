@@ -6,4 +6,4 @@ set(SRC
         liang-barsky.cpp
         CoverageGrid.cpp)
 
-add_library(${PROJECT_NAME} MODULE ${SRC})
+add_library(${PROJECT_NAME} SHARED ${SRC})
