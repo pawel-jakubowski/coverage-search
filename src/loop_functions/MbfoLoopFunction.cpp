@@ -7,18 +7,21 @@ using namespace boost::polygon;
 void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     voronoi.setArenaLimits(GetSpace().GetArenaLimits());
     coverage.initGrid(GetSpace().GetArenaLimits());
+    PreStep();
     update();
 }
 
 void MbfoLoopFunction::PreStep() {
-    update();
+    auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
+    updateRobotsPositions(entities);
+}
+
+void MbfoLoopFunction::PostStep() {
+    for (auto& position : robotsPositions)
+        coverage.getCell(position).concentration /= 2;
 }
 
 void MbfoLoopFunction::update() {
-    auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
-    updateRobotsPositions(entities);
-    for (auto& position : robotsPositions)
-        coverage.getCell(position).isCovered = true;
     voronoi.calculate(robotsPositions);
 }
 
@@ -31,16 +34,12 @@ void MbfoLoopFunction::updateRobotsPositions(const CSpace::TMapPerType &entities
     }
 }
 
-std::vector<std::vector<CoverageGrid::Cell>> MbfoLoopFunction::getCoverageGrid() {
+const std::vector<std::vector<CoverageGrid::Cell>>& MbfoLoopFunction::getCoverageGrid() {
     return coverage.getGrid();
 }
 
-std::vector<argos::CVector3> MbfoLoopFunction::getVoronoiVertices() {
-    return voronoi.getVertices();
-}
-
-std::vector<CRay3> MbfoLoopFunction::getVoronoiEdges() {
-    return voronoi.getEdges();
+const std::vector<VoronoiDiagram::Cell>& MbfoLoopFunction::getVoronoiCells() {
+    return voronoi.getCells();
 }
 
 REGISTER_LOOP_FUNCTIONS(MbfoLoopFunction, "mbfo_loop_fcn")

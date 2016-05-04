@@ -17,7 +17,7 @@ set(SRC
 
 # If Qt+OpenGL dependencies were found, descend into these directories
 if(ARGOS_COMPILE_QTOPENGL)
-    add_library(${PROJECT_NAME} MODULE ${SRC})
+    add_library(${PROJECT_NAME} SHARED ${SRC})
 
     target_link_libraries(${PROJECT_NAME}
         coverage_search_utils

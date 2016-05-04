@@ -5,7 +5,8 @@
 #include <plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
 #include <plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
 
-#include <random>
+#include <loop_functions/MbfoLoopFunction.h>
+
 
 namespace argos {
 
@@ -25,12 +26,15 @@ private:
     Real minDistanceFromObstacle;
     CRange<CDegrees> minAngleFromObstacle;
 
+    MbfoLoopFunction& loopFnc;
+
     enum class Direction {
         left, right
     };
 
     CVector2 getWeightedProximityReading();
     bool isRoadClear(const CVector2& obstacleProximity);
+    void avoidObstacle(const CVector2& obstacleProximity);
     Direction getRotationDirection(const CDegrees& obstacleAngle);
     void rotate(Direction rotationDirection);
 };

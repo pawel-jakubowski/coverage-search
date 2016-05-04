@@ -4,6 +4,12 @@ project(mbfo)
 set(CONFIG_FILE mbfo.argos)
 set(ARGOS_TEXTURES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../textures)
 
+set(ARGOS_ROBOTS_NUMBER 3)
+set(ARGOS_WALL_THICKNESS_IN_M 0.01)
+set(ARGOS_AREA_HALF_SIDE_IN_M 3)
+math(EXPR ARGOS_AREA_SIDE_IN_M ${ARGOS_AREA_HALF_SIDE_IN_M}*2)
+math(EXPR ARGOS_CAMERA_1 ${ARGOS_AREA_SIDE_IN_M}*2)
+
 # Copy configuration files to output directory
 configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_FILE}

@@ -7,15 +7,17 @@
 
 class MbfoLoopFunction : public argos::CLoopFunctions {
 public:
-    MbfoLoopFunction() {}
+    static constexpr int maxCellConcentration = std::numeric_limits<int>::max();
+
+    MbfoLoopFunction() : coverage(maxCellConcentration) {}
     virtual ~MbfoLoopFunction() {}
     virtual void Init(argos::TConfigurationNode& t_tree) override;
+    virtual void PreStep() override;
+    virtual void PostStep() override;
 
-    void PreStep() override;
     void update();
-    std::vector<std::vector<CoverageGrid::Cell>> getCoverageGrid();
-    std::vector<argos::CVector3> getVoronoiVertices();
-    std::vector<argos::CRay3> getVoronoiEdges();
+    const std::vector<std::vector<CoverageGrid::Cell>>& getCoverageGrid();
+    const std::vector<VoronoiDiagram::Cell>& getVoronoiCells();
 
 private:
     CoverageGrid coverage;
@@ -24,5 +26,3 @@ private:
 
     void updateRobotsPositions(const argos::CSpace::TMapPerType& entities);
 };
-
-

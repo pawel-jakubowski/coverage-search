@@ -1,21 +1,18 @@
 #pragma once
 
-#include <argos3/core/utility/math/vector3.h>
-#include <argos3/core/utility/math/ray3.h>
 #include <boost/polygon/point_data.hpp>
 #include <boost/polygon/voronoi.hpp>
+#include "VoronoiCell.h"
 
 class VoronoiDiagram {
 public:
-    struct Cell {
-        std::vector<argos::CVector3> vertices;
-        std::vector<argos::CRay3> edges;
-    };
+    using Cell = VoronoiCell;
 
     void calculate(std::vector<argos::CVector3> points);
     void setArenaLimits(argos::CRange<argos::CVector3> limits);
     std::vector<argos::CVector3> getVertices() const;
     std::vector<argos::CRay3> getEdges() const;
+    const std::vector<Cell>& getCells() const;
 
 private:
     using CoordinateType = argos::Real;
@@ -30,7 +27,7 @@ private:
     };
 
     const int scaleVectorToMilimeters = 100000;
-    const argos::Real diagramLiftOnZ = 0.1f;
+    const argos::Real diagramLiftOnZ = 0.02f;
     argos::CRange<argos::CVector3> arenaLimits;
     std::vector<Point> boostPoints;
     std::vector<Cell> cells;
@@ -44,9 +41,4 @@ private:
     argos::CVector3 ToVector3(const Vertex& vertex) const;
     argos::CRay3 ToVoronoiEdge(const Edge& edge) const;
     argos::CRay3 getRayBoundedToArena(const argos::CRay3 &ray) const;
-
-    bool areVectorsEqual(const argos::CVector3 &a, const argos::CVector3 &b) const;
-    bool areOnSameSide(const argos::CVector3 &a, const argos::CVector3 &b) const;
 };
-
-

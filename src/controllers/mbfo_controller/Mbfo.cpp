@@ -12,6 +12,7 @@ Mbfo::Mbfo()
     , velocity(5.0f)
     , minDistanceFromObstacle(0.1f)
     , minAngleFromObstacle(CDegrees(-45.0f), CDegrees(45.0f))
+    , loopFnc(dynamic_cast<MbfoLoopFunction&>(CSimulator::GetInstance().GetLoopFunctions()))
 {}
 
 void Mbfo::Init(TConfigurationNode& configuration) {
@@ -28,14 +29,10 @@ void Mbfo::Init(TConfigurationNode& configuration) {
 
 void Mbfo::ControlStep() {
     CVector2 obstacleProximity = getWeightedProximityReading();
-    if (isRoadClear(obstacleProximity)) {
+    if (isRoadClear(obstacleProximity))
         wheelsEngine->SetLinearVelocity(velocity, velocity);
-    }
-    else {
-        auto obstacleAngle = ToDegrees(obstacleProximity.Angle());
-        auto rotationDirection = getRotationDirection(obstacleAngle);
-        rotate(rotationDirection);
-    }
+    else
+        avoidObstacle(obstacleProximity);
 }
 
 CVector2 Mbfo::getWeightedProximityReading() {
@@ -54,6 +51,12 @@ bool Mbfo::isRoadClear(const CVector2& obstacleProximity) {
     return (minAngleFromObstacle.WithinMinBoundIncludedMaxBoundIncluded(obstacleAngle)
             && obstacleProximity.Length() < minDistanceFromObstacle) ||
             (obstacleAngle < -safeAngle || obstacleAngle > safeAngle);
+}
+
+void Mbfo::avoidObstacle(const CVector2& obstacleProximity) {
+    auto obstacleAngle = ToDegrees(obstacleProximity.Angle());
+    auto rotationDirection = getRotationDirection(obstacleAngle);
+    rotate(rotationDirection);
 }
 
 Mbfo::Direction Mbfo::getRotationDirection(const CDegrees& obstacleAngle) {

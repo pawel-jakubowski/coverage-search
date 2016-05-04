@@ -4,6 +4,8 @@ project(coverage_search_utils)
 set(SRC
         VoronoiDiagram.cpp
         liang-barsky.cpp
-        CoverageGrid.cpp)
+        CoverageGrid.cpp
+        VoronoiCell.cpp
+)
 
 add_library(${PROJECT_NAME} SHARED ${SRC})

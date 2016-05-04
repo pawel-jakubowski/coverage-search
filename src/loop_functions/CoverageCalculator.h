@@ -5,7 +5,9 @@
 
 class CoverageCalculator : public argos::CLoopFunctions {
 public:
-    CoverageCalculator() {}
+    static constexpr int maxCellConcentration = 1e4;
+
+    CoverageCalculator() : coverage(maxCellConcentration) {}
     virtual ~CoverageCalculator() {}
     virtual void Init(argos::TConfigurationNode& t_tree) override;
 
@@ -13,5 +15,3 @@ public:
 private:
     CoverageGrid coverage;
 };
-
-

@@ -3,7 +3,8 @@
 using namespace argos;
 
 MbfoDrawer::MbfoDrawer()
-        : mbfo(dynamic_cast<MbfoLoopFunction&>(CSimulator::GetInstance().GetLoopFunctions())) {}
+    : mbfo(dynamic_cast<MbfoLoopFunction&>(CSimulator::GetInstance().GetLoopFunctions()))
+{}
 
 void MbfoDrawer::DrawInWorld() {
     drawVoronoi();
@@ -29,26 +30,31 @@ void MbfoDrawer::drawCell(const CoverageGrid::Cell &cell) {
     for (auto& edge : cell.edges)
         points.emplace_back(edge.GetEnd().GetX(), edge.GetEnd().GetY());
     points.pop_back();
+    auto maxConcentration = mbfo.maxCellConcentration;
+    auto color = gridFloorDiff * (static_cast<double>(cell.concentration) / maxConcentration);
+    color += gridColor;
     DrawPolygon(
             CVector3(0,0,start.GetZ()),
             CQuaternion(CRadians::ZERO, CVector3(1,0,0)),
             points,
-            gridColor,
-            cell.isCovered);
+            CColor(color, color, color),
+            true);
 }
 
 void MbfoDrawer::drawEdges() {
-    auto voronoiEdges = mbfo.getVoronoiEdges();
-    LOG << "Draw " << voronoiEdges.size() << " edges" "\n";
-    for (auto& edge : voronoiEdges)
-        DrawRay(edge, CColor::RED, 3.0f);
+    auto voronoiCells = mbfo.getVoronoiCells();
+    for (auto& cell : voronoiCells)
+        for (auto& edge : cell.edges)
+            DrawRay(edge, CColor::RED, 3.0f);
 }
 
 void MbfoDrawer::drawVertices() {
-    auto voronoiVertices = mbfo.getVoronoiVertices();
-    LOG << "Draw " << voronoiVertices.size() << " vertices" "\n";
-    for (auto& vertex : voronoiVertices)
-        DrawPoint(vertex, voronoiVertexColor, vertexSize);
+    auto voronoiCells = mbfo.getVoronoiCells();
+    for (auto& cell : voronoiCells)
+        for (auto& edge : cell.edges) {
+            auto &vertex = edge.GetStart();
+            DrawPoint(vertex, voronoiVertexColor, vertexSize);
+        }
 }
 
 REGISTER_QTOPENGL_USER_FUNCTIONS(MbfoDrawer, "draw_mbfo")

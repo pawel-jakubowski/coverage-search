@@ -6,7 +6,7 @@
     <!-- ************************* -->
     <framework>
         <system threads="0" />
-        <experiment length="0"
+        <experiment length="100000"
                     ticks_per_second="10"
                     random_seed="123"/>
     </framework>
@@ -38,7 +38,7 @@
     <!-- *********************** -->
     <!-- * Arena configuration * -->
     <!-- *********************** -->
-    <arena size="4, 4, 1" center="0,0,0.5">
+    <arena size="@ARGOS_AREA_SIDE_IN_M@,@ARGOS_AREA_SIDE_IN_M@,1" center="0,0,0.5">
         <floor id="floor"
                source="image"
                path="@ARGOS_TEXTURES_DIR@/ground_plain.png" />
@@ -46,26 +46,28 @@
         <!-- ********* -->
         <!-- * Walls * -->
         <!-- ********* -->
-        <box id="wall_north" size="4.1,0.1,0.5" movable="false">
-            <body position="0,2.05,0" orientation="0,0,0" />
+        <box id="wall_north" size="@ARGOS_AREA_SIDE_IN_M@,@ARGOS_WALL_THICKNESS_IN_M@, 0.5" movable="false">
+            <body position="0, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" orientation="0,0,0" />
         </box>
-        <box id="wall_south" size="4.1,0.1,0.5" movable="false">
-            <body position="0,-2.05,0" orientation="0,0,0" />
+        <box id="wall_south" size="@ARGOS_AREA_SIDE_IN_M@,@ARGOS_WALL_THICKNESS_IN_M@,0.5" movable="false">
+            <body position="0,-@ARGOS_AREA_HALF_SIDE_IN_M@,0" orientation="0,0,0" />
         </box>
-        <box id="wall_east" size="0.1,4.1,0.5" movable="false">
-            <body position="2.05,0,0" orientation="0,0,0" />
+        <box id="wall_east" size="@ARGOS_WALL_THICKNESS_IN_M@,@ARGOS_AREA_SIDE_IN_M@,0.5" movable="false">
+            <body position="@ARGOS_AREA_HALF_SIDE_IN_M@,0,0" orientation="0,0,0" />
         </box>
-        <box id="wall_west" size="0.1,4.1,0.5" movable="false">
-            <body position="-2.05,0,0" orientation="0,0,0" />
+        <box id="wall_west" size="@ARGOS_WALL_THICKNESS_IN_M@,@ARGOS_AREA_SIDE_IN_M@,0.5" movable="false">
+            <body position="-@ARGOS_AREA_HALF_SIDE_IN_M@,0,0" orientation="0,0,0" />
         </box>
 
         <!-- ********** -->
         <!-- * Robots * -->
         <!-- ********** -->
         <distribute>
-            <position method="uniform" min="-1.8,-1.8,0" max="1.8,1.8,0" />
+            <position method="uniform"
+                min="-@ARGOS_AREA_HALF_SIDE_IN_M@, -@ARGOS_AREA_HALF_SIDE_IN_M@, 0"
+                max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" />
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="3" max_trials="100">
+            <entity quantity="@ARGOS_ROBOTS_NUMBER@" max_trials="100">
                 <foot-bot id="fb">
                     <controller config="mbfo" />
                 </foot-bot>
@@ -106,7 +108,7 @@
                 library="loop_functions/libloop_functions"
                 label="draw_mbfo" />
             <camera>
-                <placement idx="0" position="0,0,8" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>
                 <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>
                 <placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>
                 <placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>

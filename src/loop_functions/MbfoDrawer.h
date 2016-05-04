@@ -10,7 +10,8 @@ public:
     virtual ~MbfoDrawer() {}
     void DrawInWorld() override;
 private:
-    const argos::CColor gridColor = argos::CColor::GRAY90;
+    const argos::UInt8 gridColor = 40;
+    const argos::UInt8 gridFloorDiff = 255 - gridColor;
     const argos::CColor voronoiVertexColor = argos::CColor::BLACK;
     const argos::Real vertexSize = 5.0f;
     MbfoLoopFunction& mbfo;
@@ -23,5 +24,3 @@ private:
 
     void drawCell(const CoverageGrid::Cell &cell);
 };
-
-

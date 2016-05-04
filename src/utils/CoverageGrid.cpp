@@ -2,14 +2,20 @@
 
 using namespace argos;
 
+CoverageGrid::CoverageGrid(int maxCellConcentration, Real cellSizeInMeters, Real gridLiftOnZ)
+        : maxCellConcentration(maxCellConcentration)
+        , cellSizeInMeters(cellSizeInMeters)
+        , gridLiftOnZ(gridLiftOnZ)
+{}
+
 void CoverageGrid::initGrid(CRange<CVector3> limits) {
     Real minX = limits.GetMin().GetX();
     Real maxX = limits.GetMax().GetX();
     Real minY = limits.GetMin().GetY();
     Real maxY = limits.GetMax().GetY();
 
-    unsigned horizontalSize = static_cast<unsigned>((maxX - minX)/cellSizeInMeters) + 1;
-    unsigned verticalSize = static_cast<unsigned>((maxY - minY)/cellSizeInMeters) + 1;
+    unsigned horizontalSize = static_cast<unsigned>((maxX - minX)/cellSizeInMeters);
+    unsigned verticalSize = static_cast<unsigned>((maxY - minY)/cellSizeInMeters);
 
     Real x, y;
     grid.resize(verticalSize);
@@ -35,6 +41,9 @@ CoverageGrid::Cell CoverageGrid::createCell(Real x, Real y) const {
     CVector3 rightLowerPoint(x + cellSizeInMeters, y, gridLiftOnZ);
 
     Cell cell;
+    const auto centerOffset = cellSizeInMeters / 2;
+    cell.center = CVector3(x + centerOffset, y + centerOffset, gridLiftOnZ * 2);
+    cell.concentration = maxCellConcentration;
     cell.edges.push_back(CRay3(leftUpperPoint, rightUpperPoint));
     cell.edges.push_back(CRay3(rightUpperPoint, rightLowerPoint));
     cell.edges.push_back(CRay3(rightLowerPoint, leftLowerPoint));
@@ -47,8 +56,8 @@ const std::vector<std::vector<CoverageGrid::Cell>>& CoverageGrid::getGrid() cons
 }
 
 CoverageGrid::Cell& CoverageGrid::getCell(const CVector3& position) {
-    int translation = (grid.size() / 2);
-    int x = static_cast<int>(std::round(position.GetX() / cellSizeInMeters)) + translation;
-    int y = static_cast<int>(std::round(position.GetY() / cellSizeInMeters)) + translation;
+    int translation = static_cast<int>(grid.size() / 2);
+    int x = static_cast<int>(std::floor(position.GetX() / cellSizeInMeters)) + translation;
+    int y = static_cast<int>(std::floor(position.GetY() / cellSizeInMeters)) + translation;
     return grid.at(x).at(y);
 }

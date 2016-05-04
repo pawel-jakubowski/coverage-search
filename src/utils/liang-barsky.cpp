@@ -43,11 +43,10 @@ bool LiangBarsky (double edgeLeft, double edgeRight, double edgeBottom, double e
 
 double checkLimits(double x, double l1, double l2) {
     double newX = x;
-    double epsilon = 5e-15;
+    double epsilon = 1e-10;
     if (fabs(x - l1) < epsilon)
         newX = l1;
     else if (fabs(x - l2) < epsilon)
         newX = l2;
     return newX;
 }
-
