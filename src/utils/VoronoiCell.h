@@ -5,7 +5,14 @@
 
 class VoronoiCell {
 public:
+    struct CoverageCell {
+        int x;
+        int y;
+        CoverageCell(int x, int y) : x(x), y(y) {}
+    };
+
     std::vector<argos::CRay3> edges;
+    std::vector<CoverageCell> coverageCells;
 
     VoronoiCell(argos::Real diagramLiftOnZ = 0.02f);
     void fillMissingEdges(const argos::CRange<argos::CVector3>& limits);

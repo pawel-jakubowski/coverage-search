@@ -15,6 +15,15 @@ void VoronoiDiagram::calculate(std::vector<CVector3> points) {
     updateVoronoiDiagram();
 }
 
+void VoronoiDiagram::calculate(std::vector<CVector3> points, const std::vector<std::vector<CoverageCell>>& grid) {
+    calculate(std::move(points));
+    for (auto& cell : cells)
+        for (int i = 0; i < grid.size(); i++)
+            for (int j = 0; j < grid.at(i).size(); j++)
+                if (cell.isInside(grid.at(i).at(j).center))
+                    cell.coverageCells.emplace_back(i, j);
+}
+
 void VoronoiDiagram::reset() {
     boostPoints.clear();
     cells.clear();

@@ -22,15 +22,34 @@ void MbfoLoopFunction::PostStep() {
 }
 
 void MbfoLoopFunction::update() {
-    voronoi.calculate(robotsPositions);
+    voronoi.calculate(robotsPositions, coverage.getGrid());
+    for (auto& id : robotsIds)
+        cellsPerId[id] = nullptr;
+
+    int gridCounter = 0;
+    auto idCellPair = cellsPerId.begin();
+    for (auto& voronoiCell : voronoi.getCells()) {
+        // Assume that voronoi cells are in the same order as robots
+        assert(idCellPair != cellsPerId.end());
+        idCellPair->second = &voronoiCell;
+        idCellPair++;
+
+        gridCounter += voronoiCell.coverageCells.size();
+    }
+    assert(idCellPair == cellsPerId.end());
+    auto gridCellsCount = coverage.getGrid().size();
+    gridCellsCount *= gridCellsCount;
+    assert(gridCounter == gridCellsCount);
 }
 
 void MbfoLoopFunction::updateRobotsPositions(const CSpace::TMapPerType &entities) {
     robotsPositions.clear();
+    robotsIds.clear();
     for (const auto& entity : entities) {
         auto& footbot = *(any_cast<CFootBotEntity*>(entity.second));
         auto position = footbot.GetEmbodiedEntity().GetOriginAnchor().Position;
         robotsPositions.push_back(position);
+        robotsIds.push_back(footbot.GetId());
     }
 }
 
@@ -40,6 +59,10 @@ const std::vector<std::vector<CoverageGrid::Cell>>& MbfoLoopFunction::getCoverag
 
 const std::vector<VoronoiDiagram::Cell>& MbfoLoopFunction::getVoronoiCells() {
     return voronoi.getCells();
+}
+
+const VoronoiDiagram::Cell* MbfoLoopFunction::getVoronoiCell(std::string id) {
+    return cellsPerId.at(id);
 }
 
 REGISTER_LOOP_FUNCTIONS(MbfoLoopFunction, "mbfo_loop_fcn")

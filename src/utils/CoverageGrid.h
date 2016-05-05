@@ -1,18 +1,13 @@
 #pragma once
 
-#include <argos3/core/utility/math/ray3.h>
+#include "CoverageCell.h"
 #include <argos3/core/utility/math/range.h>
-#include <list>
 
 class CoverageGrid {
 public:
-    const int maxCellConcentration;
+    using Cell = CoverageCell;
 
-    struct Cell {
-        std::list<argos::CRay3> edges;
-        argos::CVector3 center;
-        int concentration;
-    };
+    const int maxCellConcentration;
 
     CoverageGrid(int maxCellConcentration, argos::Real cellSizeInMeters = 0.05f, argos::Real gridLiftOnZ = 0.01f);
     void initGrid(argos::CRange<argos::CVector3> limits);

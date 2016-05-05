@@ -29,8 +29,12 @@ void Mbfo::Init(TConfigurationNode& configuration) {
 
 void Mbfo::ControlStep() {
     CVector2 obstacleProximity = getWeightedProximityReading();
-    if (isRoadClear(obstacleProximity))
+    if (isRoadClear(obstacleProximity)) {
         wheelsEngine->SetLinearVelocity(velocity, velocity);
+        auto& id = GetId();
+        const auto cell = loopFnc.getVoronoiCell(id);
+        assert(cell != nullptr);
+    }
     else
         avoidObstacle(obstacleProximity);
 }

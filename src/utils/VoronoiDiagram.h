@@ -3,12 +3,14 @@
 #include <boost/polygon/point_data.hpp>
 #include <boost/polygon/voronoi.hpp>
 #include "VoronoiCell.h"
+#include "CoverageCell.h"
 
 class VoronoiDiagram {
 public:
     using Cell = VoronoiCell;
 
     void calculate(std::vector<argos::CVector3> points);
+    void calculate(std::vector<argos::CVector3> points, const std::vector<std::vector<CoverageCell>>& grid);
     void setArenaLimits(argos::CRange<argos::CVector3> limits);
     std::vector<argos::CVector3> getVertices() const;
     std::vector<argos::CRay3> getEdges() const;
