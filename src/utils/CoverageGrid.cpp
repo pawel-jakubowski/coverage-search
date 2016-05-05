@@ -55,9 +55,19 @@ const std::vector<std::vector<CoverageGrid::Cell>>& CoverageGrid::getGrid() cons
     return grid;
 }
 
-CoverageGrid::Cell& CoverageGrid::getCell(const CVector3& position) {
+CVector2 CoverageGrid::getCellIndex(const CVector3& position) const {
     int translation = static_cast<int>(grid.size() / 2);
     int x = static_cast<int>(std::floor(position.GetX() / cellSizeInMeters)) + translation;
     int y = static_cast<int>(std::floor(position.GetY() / cellSizeInMeters)) + translation;
-    return grid.at(x).at(y);
+    return CVector2(x, y);
+}
+
+CoverageGrid::Cell& CoverageGrid::getCell(const CVector3& position) {
+    CVector2 i = getCellIndex(position);
+    return grid.at(i.GetX()).at(i.GetY());
+}
+
+const CoverageGrid::Cell& CoverageGrid::getCell(const CVector3& position) const {
+    CVector2 i = getCellIndex(position);
+    return grid.at(i.GetX()).at(i.GetY());
 }

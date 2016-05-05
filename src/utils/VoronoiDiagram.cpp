@@ -4,19 +4,21 @@
 
 #include "assert.h"
 
-
+using namespace std;
 using namespace argos;
 using namespace boost::polygon;
 
-void VoronoiDiagram::calculate(std::vector<CVector3> points) {
+void VoronoiDiagram::calculate(map<string, CVector3> points) {
     reset();
-    for (const auto& point : points)
-        boostPoints.push_back(ToPoint(point));
+    for (const auto& idPointPair : points) {
+        ids.push_back(idPointPair.first);
+        boostPoints.push_back(ToPoint(idPointPair.second));
+    }
     updateVoronoiDiagram();
 }
 
-void VoronoiDiagram::calculate(std::vector<CVector3> points, const std::vector<std::vector<CoverageCell>>& grid) {
-    calculate(std::move(points));
+void VoronoiDiagram::calculate(map<string, CVector3> points, const vector<vector<CoverageCell>>& grid) {
+    calculate(move(points));
     for (auto& cell : cells)
         for (int i = 0; i < grid.size(); i++)
             for (int j = 0; j < grid.at(i).size(); j++)
@@ -25,6 +27,7 @@ void VoronoiDiagram::calculate(std::vector<CVector3> points, const std::vector<s
 }
 
 void VoronoiDiagram::reset() {
+    ids.clear();
     boostPoints.clear();
     cells.clear();
 }
@@ -58,17 +61,18 @@ argos::CVector3 VoronoiDiagram::ToVector3(const Vertex& point) const {
 void VoronoiDiagram::updateEdges(const Diagram& diagram) {
     //LOG << "Boost voronoi has " << diagram.cells().size() << " cells\n";
     for (auto& cell : diagram.cells()) {
+        assert(cell.contains_point()); // Cell should be created by point seed
         const voronoi_diagram<Real>::edge_type* edge = cell.incident_edge();
-        assert(edge != nullptr);
         assert(edge->is_linear()); // For points all edges should be linear
-        cells.emplace_back(diagramLiftOnZ);
+        assert(edge != nullptr);
+        cells.emplace_back(ids.at(cell.source_index()), diagramLiftOnZ);
         auto& lastCell = cells.at(cells.size() - 1);
         do {
             if (edge->is_primary()) {
                 auto voronoiEdge = ToVoronoiEdge(*edge);
                 try {
                     voronoiEdge = getRayBoundedToArena(voronoiEdge);
-                    lastCell.edges.push_back(std::move(voronoiEdge));
+                    lastCell.edges.push_back(move(voronoiEdge));
                 }
                 catch(EdgeNotInArea& e) {
                     // Do not add this edge
@@ -102,7 +106,7 @@ CRay3 VoronoiDiagram::ToVoronoiEdge(const Edge& edge) const {
         direction.y(p2.x() - p1.x());
 
         Real side = arenaLimits.GetMax().GetX()*2;
-        Real koef = side / std::max(fabs(direction.x()), fabs(direction.y()));
+        Real koef = side / max(fabs(direction.x()), fabs(direction.y()));
         if (edge.vertex0() == NULL) {
             CVector3 start;
             start.SetX(origin.x() - (direction.x() * koef));
@@ -147,22 +151,22 @@ void VoronoiDiagram::setArenaLimits(CRange<CVector3> limits) {
     arenaLimits = limits;
 }
 
-std::vector<CVector3> VoronoiDiagram::getVertices() const {
-    std::vector<argos::CVector3> vertices;
+vector<CVector3> VoronoiDiagram::getVertices() const {
+    vector<argos::CVector3> vertices;
     for (const auto& cell : cells)
         for (const auto& edge : cell.edges)
             vertices.emplace_back(edge.GetEnd());
     return vertices;
 }
 
-std::vector<CRay3> VoronoiDiagram::getEdges() const {
-    std::vector<CRay3> edges;
+vector<CRay3> VoronoiDiagram::getEdges() const {
+    vector<CRay3> edges;
     for (const auto& cell : cells)
         for (const auto& edge : cell.edges)
             edges.emplace_back(edge);
     return edges;
 }
 
-const std::vector<VoronoiDiagram::Cell>& VoronoiDiagram::getCells() const {
+const vector<VoronoiDiagram::Cell>& VoronoiDiagram::getCells() const {
     return cells;
 }

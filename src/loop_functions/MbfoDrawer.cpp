@@ -18,7 +18,7 @@ void MbfoDrawer::drawVoronoi() {
 
 void MbfoDrawer::drawGrid() {
     auto grid = mbfo.getCoverageGrid();
-    for (auto& row : grid)
+    for (auto& row : grid.getGrid())
         for (auto& cell : row)
             drawCell(cell);
 }

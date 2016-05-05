@@ -17,7 +17,7 @@ public:
 
 private:
     VoronoiDiagram voronoi;
-    std::vector<argos::CVector3> robotsPositions;
+    std::map<std::string, argos::CVector3> robotsPositions;
 
     void updateRobotsPositions(const argos::CSpace::TMapPerType& entities);
 };

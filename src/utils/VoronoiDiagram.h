@@ -9,8 +9,8 @@ class VoronoiDiagram {
 public:
     using Cell = VoronoiCell;
 
-    void calculate(std::vector<argos::CVector3> points);
-    void calculate(std::vector<argos::CVector3> points, const std::vector<std::vector<CoverageCell>>& grid);
+    void calculate(std::map<std::string, argos::CVector3> points);
+    void calculate(std::map<std::string, argos::CVector3> points, const std::vector<std::vector<CoverageCell>>& grid);
     void setArenaLimits(argos::CRange<argos::CVector3> limits);
     std::vector<argos::CVector3> getVertices() const;
     std::vector<argos::CRay3> getEdges() const;
@@ -31,6 +31,7 @@ private:
     const int scaleVectorToMilimeters = 100000;
     const argos::Real diagramLiftOnZ = 0.02f;
     argos::CRange<argos::CVector3> arenaLimits;
+    std::vector<std::string> ids;
     std::vector<Point> boostPoints;
     std::vector<Cell> cells;
 

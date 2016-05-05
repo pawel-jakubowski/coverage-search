@@ -18,43 +18,32 @@ void MbfoLoopFunction::PreStep() {
 
 void MbfoLoopFunction::PostStep() {
     for (auto& position : robotsPositions)
-        coverage.getCell(position).concentration /= 2;
+        coverage.getCell(position.second).concentration /= 2;
 }
 
 void MbfoLoopFunction::update() {
     voronoi.calculate(robotsPositions, coverage.getGrid());
-    for (auto& id : robotsIds)
-        cellsPerId[id] = nullptr;
 
     int gridCounter = 0;
-    auto idCellPair = cellsPerId.begin();
     for (auto& voronoiCell : voronoi.getCells()) {
-        // Assume that voronoi cells are in the same order as robots
-        assert(idCellPair != cellsPerId.end());
-        idCellPair->second = &voronoiCell;
-        idCellPair++;
-
+        robotsCells[voronoiCell.seedId] = &voronoiCell;
         gridCounter += voronoiCell.coverageCells.size();
     }
-    assert(idCellPair == cellsPerId.end());
     auto gridCellsCount = coverage.getGrid().size();
     gridCellsCount *= gridCellsCount;
     assert(gridCounter == gridCellsCount);
 }
 
 void MbfoLoopFunction::updateRobotsPositions(const CSpace::TMapPerType &entities) {
-    robotsPositions.clear();
-    robotsIds.clear();
     for (const auto& entity : entities) {
         auto& footbot = *(any_cast<CFootBotEntity*>(entity.second));
         auto position = footbot.GetEmbodiedEntity().GetOriginAnchor().Position;
-        robotsPositions.push_back(position);
-        robotsIds.push_back(footbot.GetId());
+        robotsPositions[footbot.GetId()] = position;
     }
 }
 
-const std::vector<std::vector<CoverageGrid::Cell>>& MbfoLoopFunction::getCoverageGrid() {
-    return coverage.getGrid();
+const CoverageGrid& MbfoLoopFunction::getCoverageGrid() {
+    return coverage;
 }
 
 const std::vector<VoronoiDiagram::Cell>& MbfoLoopFunction::getVoronoiCells() {
@@ -62,7 +51,7 @@ const std::vector<VoronoiDiagram::Cell>& MbfoLoopFunction::getVoronoiCells() {
 }
 
 const VoronoiDiagram::Cell* MbfoLoopFunction::getVoronoiCell(std::string id) {
-    return cellsPerId.at(id);
+    return robotsCells.at(id);
 }
 
 REGISTER_LOOP_FUNCTIONS(MbfoLoopFunction, "mbfo_loop_fcn")

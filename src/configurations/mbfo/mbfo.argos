@@ -22,6 +22,7 @@
             </actuators>
             <sensors>
                 <footbot_proximity implementation="default" show_rays="true" />
+                <positioning implementation="default" /> <!--pos_noise_range="-0.05:0.05" />-->
             </sensors>
             <params velocity="5" delta="0.05" />
         </mbfo_controller>

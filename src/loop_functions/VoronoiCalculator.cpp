@@ -20,7 +20,7 @@ void VoronoiCalculator::updateRobotsPositions(const CSpace::TMapPerType &entitie
     for (const auto& entity : entities) {
         auto& footbot = *(any_cast<CFootBotEntity*>(entity.second));
         auto position = footbot.GetEmbodiedEntity().GetOriginAnchor().Position;
-        robotsPositions.push_back(position);
+        robotsPositions[footbot.GetId()] = position;
     }
 }
 
