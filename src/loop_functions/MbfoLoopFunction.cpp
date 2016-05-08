@@ -54,4 +54,12 @@ const VoronoiDiagram::Cell* MbfoLoopFunction::getVoronoiCell(std::string id) {
     return robotsCells.at(id);
 }
 
+const std::map<std::string, CVector3> MbfoLoopFunction::getRobotsPositions() {
+    return robotsPositions;
+}
+
+//void MbfoLoopFunction::getClockTick() {
+//    return GetSimulator()::GetPhysicsEngine()
+//}
+
 REGISTER_LOOP_FUNCTIONS(MbfoLoopFunction, "mbfo_loop_fcn")

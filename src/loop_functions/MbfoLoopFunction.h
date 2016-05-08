@@ -19,6 +19,8 @@ public:
     const CoverageGrid& getCoverageGrid();
     const std::vector<VoronoiDiagram::Cell>& getVoronoiCells();
     const VoronoiDiagram::Cell* getVoronoiCell(std::string id);
+    const std::map<std::string, argos::CVector3> getRobotsPositions();
+//    void getClockTick();
 
 private:
     CoverageGrid coverage;

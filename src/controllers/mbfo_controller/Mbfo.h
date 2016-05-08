@@ -21,25 +21,33 @@ public:
     virtual void Reset() {}
     virtual void Destroy() {}
 private:
+    enum class Direction {
+        left, right
+    };
+
+    struct NextDirection {
+        int value;
+        Real distance;
+        CDegrees angle;
+    };
+
     CCI_DifferentialSteeringActuator* wheelsEngine;
     CCI_FootBotProximitySensor* proximitySensor;
     CCI_PositioningSensor* positioningSensor;
 
     Real velocity;
+    Real rotationSpeed;
     Real minDistanceFromObstacle;
     CRange<CDegrees> minAngleFromObstacle;
-
     MbfoLoopFunction& loopFnc;
+
+    unsigned long step;
+    CDegrees desiredDirection;
     const CoverageGrid* coverage;
 
-    enum class Direction {
-        left, right
-    };
-
     /* Bacteria behavior */
-    CVector3 findNextBestPositionInVoronoiCell(const VoronoiDiagram::Cell &cell) const;
+    std::vector<NextDirection> findNextBestDirectionsInVoronoiCell(const VoronoiDiagram::Cell &cell) const;
 
-    const CVector2 getCurrentPosition() const;
     const Real calculateDistance(const CVector2& a, const CVector2& b) const;
     const CoverageGrid::Cell& getCoverageCell(CVector2 index) const;
     const VoronoiDiagram::Cell& getVoronoiCell();
@@ -50,6 +58,12 @@ private:
     void avoidObstacle(const CVector2& obstacleProximity);
     Direction getRotationDirection(const CDegrees& obstacleAngle);
     void rotate(Direction rotationDirection);
+
+    CDegrees getAngleBetweenPoints(const CVector3 &a, const CVector3 &b) const;
+
+    void swim() const;
+
+    void tumble(const CDegrees &robotsOrientation);
 };
 
 }
