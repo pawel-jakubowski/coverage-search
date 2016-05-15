@@ -1,4 +1,5 @@
 #include "CoverageGrid.h"
+#include "assert.h"
 
 using namespace argos;
 
@@ -9,28 +10,16 @@ CoverageGrid::CoverageGrid(int maxCellConcentration, Real cellSizeInMeters, Real
 {}
 
 void CoverageGrid::initGrid(CRange<CVector3> limits) {
-    Real minX = limits.GetMin().GetX();
-    Real maxX = limits.GetMax().GetX();
-    Real minY = limits.GetMin().GetY();
-    Real maxY = limits.GetMax().GetY();
+    arenaLimits = limits;
+    Real minX = arenaLimits.GetMin().GetX();
+    Real maxX = arenaLimits.GetMax().GetX();
+    Real minY = arenaLimits.GetMin().GetY();
+    Real maxY = arenaLimits.GetMax().GetY();
 
-    unsigned horizontalSize = static_cast<unsigned>((maxX - minX)/cellSizeInMeters);
-    unsigned verticalSize = static_cast<unsigned>((maxY - minY)/cellSizeInMeters);
-
-    Real x, y;
-    grid.resize(verticalSize);
-    for (unsigned i = 0; i < verticalSize; i++) {
-        grid.at(i).resize(horizontalSize);
-        x = minX + i*cellSizeInMeters;
-        if (x > maxX)
-            x = maxX;
-        for (unsigned j = 0; j < horizontalSize; j++) {
-            y = minY + j*cellSizeInMeters;
-            if (y > maxY)
-                y = maxY;
-
-            grid.at(i).at(j) = createCell(x, y);
-        }
+    for (Real x = minX; x < maxX; x += cellSizeInMeters) {
+        grid.emplace_back();
+        for (Real y = minY; y < maxY; y += cellSizeInMeters)
+            grid.back().push_back(createCell(x, y));
     }
 }
 
@@ -51,23 +40,45 @@ CoverageGrid::Cell CoverageGrid::createCell(Real x, Real y) const {
     return cell;
 }
 
+std::vector<std::vector<CoverageGrid::Cell>>& CoverageGrid::getGrid() {
+    return grid;
+}
+
 const std::vector<std::vector<CoverageGrid::Cell>>& CoverageGrid::getGrid() const {
     return grid;
 }
 
-CVector2 CoverageGrid::getCellIndex(const CVector3& position) const {
-    int translation = static_cast<int>(grid.size() / 2);
-    int x = static_cast<int>(std::floor(position.GetX() / cellSizeInMeters)) + translation;
-    int y = static_cast<int>(std::floor(position.GetY() / cellSizeInMeters)) + translation;
-    return CVector2(x, y);
+CoverageGrid::CellIndex CoverageGrid::getCellIndex(const CVector3& position) const {
+    if (!arenaLimits.WithinMinBoundIncludedMaxBoundIncluded(position)) {
+        std::stringstream s;
+        s << "Position (" << position << ") is outside area!";
+        THROW_ARGOSEXCEPTION(s.str())
+    }
+    unsigned translation = static_cast<unsigned>(grid.size() / 2);
+    unsigned x = static_cast<unsigned>(std::floor(position.GetX() / cellSizeInMeters) + translation);
+    unsigned y = static_cast<unsigned>(std::floor(position.GetY() / cellSizeInMeters) + translation);
+    if (x == grid.size())
+        x--;
+    if (y == grid.size())
+        y--;
+    if (x >= grid.size() || y >= grid.size()) {
+        std::stringstream s;
+        s << "Bad cell index (" << x << "," << y << ") calculated for (" << position << ")";
+        THROW_ARGOSEXCEPTION(s.str())
+    }
+    return {x, y};
 }
 
 CoverageGrid::Cell& CoverageGrid::getCell(const CVector3& position) {
-    CVector2 i = getCellIndex(position);
-    return grid.at(i.GetX()).at(i.GetY());
+    auto i = getCellIndex(position);
+    return grid.at(i.first).at(i.second);
 }
 
 const CoverageGrid::Cell& CoverageGrid::getCell(const CVector3& position) const {
-    CVector2 i = getCellIndex(position);
-    return grid.at(i.GetX()).at(i.GetY());
+    auto i = getCellIndex(position);
+    return grid.at(i.first).at(i.second);
+}
+
+const CoverageGrid::Meters CoverageGrid::getCellSize() const {
+    return cellSizeInMeters;
 }

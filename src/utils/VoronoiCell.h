@@ -11,11 +11,16 @@ public:
         CoverageCell(int x, int y) : x(x), y(y) {}
     };
 
-    std::string seedId;
+    struct Seed {
+        std::string id;
+        argos::CVector3 position;
+    };
+
+    Seed seed;
     std::vector<argos::CRay3> edges;
     std::vector<CoverageCell> coverageCells;
 
-    VoronoiCell(std::string seedId, argos::Real diagramLiftOnZ = 0.02f);
+    VoronoiCell(Seed seed, argos::Real diagramLiftOnZ = 0.02f);
     void fillMissingEdges(const argos::CRange<argos::CVector3>& limits);
     bool isInside(argos::CVector3 point) const;
 

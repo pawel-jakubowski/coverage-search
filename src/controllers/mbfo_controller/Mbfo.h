@@ -20,6 +20,7 @@ public:
     virtual void ControlStep();
     virtual void Reset() {}
     virtual void Destroy() {}
+
 private:
     enum class Direction {
         left, right
@@ -29,28 +30,37 @@ private:
         int value;
         Real distance;
         CDegrees angle;
+        CVector2 index;
     };
 
-    CCI_DifferentialSteeringActuator* wheelsEngine;
-    CCI_FootBotProximitySensor* proximitySensor;
-    CCI_PositioningSensor* positioningSensor;
+    const Real angleEpsilon = 1;
 
+    CCI_DifferentialSteeringActuator* wheelsEngine = nullptr;
+    CCI_FootBotProximitySensor* proximitySensor = nullptr;
+    CCI_PositioningSensor* positioningSensor = nullptr;
+
+    bool stopped;
     Real velocity;
     Real rotationSpeed;
     Real minDistanceFromObstacle;
     CRange<CDegrees> minAngleFromObstacle;
     MbfoLoopFunction& loopFnc;
 
+    std::string currentCellId;
     unsigned long step;
     CDegrees desiredDirection;
-    const CoverageGrid* coverage;
+    const CoverageGrid* coverage = nullptr;
 
     /* Bacteria behavior */
     std::vector<NextDirection> findNextBestDirectionsInVoronoiCell(const VoronoiDiagram::Cell &cell) const;
 
-    const Real calculateDistance(const CVector2& a, const CVector2& b) const;
+    template<class Vector>
+    const Real calculateDistance(const Vector& a, const Vector& b) const {
+        return (a - b).SquareLength();
+    }
     const CoverageGrid::Cell& getCoverageCell(CVector2 index) const;
-    const VoronoiDiagram::Cell& getVoronoiCell();
+    const VoronoiDiagram::Cell& getVoronoiCell(std::string cellId);
+    CDegrees getAngleBetweenPoints(const CVector3 &a, const CVector3 &b) const;
 
     /* Obstacle avoidance */
     CVector2 getWeightedProximityReading();
@@ -59,11 +69,13 @@ private:
     Direction getRotationDirection(const CDegrees& obstacleAngle);
     void rotate(Direction rotationDirection);
 
-    CDegrees getAngleBetweenPoints(const CVector3 &a, const CVector3 &b) const;
-
     void swim() const;
-
     void tumble(const CDegrees &robotsOrientation);
+	void determineNewDirection();
+    CDegrees getOrientationOnXY();
+    void chooseBestDirectionFromVector(std::vector<Mbfo::NextDirection>& nextBestDirections);
+
+    bool isCellDone(const VoronoiDiagram::Cell& cell) const;
 };
 
 }

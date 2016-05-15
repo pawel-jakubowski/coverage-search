@@ -12,14 +12,34 @@ void MbfoDrawer::DrawInWorld() {
 }
 
 void MbfoDrawer::drawVoronoi() {
-    drawVertices();
-    drawEdges();
+    auto voronoiCells = mbfo.getVoronoiCells();
+    for (auto& cell : voronoiCells) {
+        drawCellId(cell);
+        for (auto& edge : cell.edges) {
+            drawEdge(edge);
+            drawVertex(edge);
+        }
+    }
+}
+
+void MbfoDrawer::drawCellId(const VoronoiDiagram::Cell& cell) {
+    auto textPosition = cell.seed.position;
+    Real zAxisLift = 0.05f;
+    textPosition.SetZ(textPosition.GetZ() + zAxisLift);
+    DrawText(textPosition, cell.seed.id, CColor::WHITE);
+}
+
+void MbfoDrawer::drawEdge(const CRay3& edge) { DrawRay(edge, CColor::RED, 3.0f); }
+
+void MbfoDrawer::drawVertex(CRay3& edge) {
+    auto &vertex = edge.GetStart();
+    DrawPoint(vertex, voronoiVertexColor, vertexSize);
 }
 
 void MbfoDrawer::drawGrid() {
     auto grid = mbfo.getCoverageGrid();
     for (auto& row : grid.getGrid())
-        for (auto& cell : row)
+        for (auto &cell : row)
             drawCell(cell);
 }
 
@@ -39,22 +59,6 @@ void MbfoDrawer::drawCell(const CoverageGrid::Cell &cell) {
             points,
             CColor(color, color, color),
             true);
-}
-
-void MbfoDrawer::drawEdges() {
-    auto voronoiCells = mbfo.getVoronoiCells();
-    for (auto& cell : voronoiCells)
-        for (auto& edge : cell.edges)
-            DrawRay(edge, CColor::RED, 3.0f);
-}
-
-void MbfoDrawer::drawVertices() {
-    auto voronoiCells = mbfo.getVoronoiCells();
-    for (auto& cell : voronoiCells)
-        for (auto& edge : cell.edges) {
-            auto &vertex = edge.GetStart();
-            DrawPoint(vertex, voronoiVertexColor, vertexSize);
-        }
 }
 
 REGISTER_QTOPENGL_USER_FUNCTIONS(MbfoDrawer, "draw_mbfo")

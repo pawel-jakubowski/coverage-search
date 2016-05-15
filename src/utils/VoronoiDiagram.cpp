@@ -11,7 +11,7 @@ using namespace boost::polygon;
 void VoronoiDiagram::calculate(map<string, CVector3> points) {
     reset();
     for (const auto& idPointPair : points) {
-        ids.push_back(idPointPair.first);
+        seeds.push_back(Cell::Seed{idPointPair.first, idPointPair.second});
         boostPoints.push_back(ToPoint(idPointPair.second));
     }
     updateVoronoiDiagram();
@@ -27,7 +27,7 @@ void VoronoiDiagram::calculate(map<string, CVector3> points, const vector<vector
 }
 
 void VoronoiDiagram::reset() {
-    ids.clear();
+    seeds.clear();
     boostPoints.clear();
     cells.clear();
 }
@@ -65,7 +65,7 @@ void VoronoiDiagram::updateEdges(const Diagram& diagram) {
         const voronoi_diagram<Real>::edge_type* edge = cell.incident_edge();
         assert(edge->is_linear()); // For points all edges should be linear
         assert(edge != nullptr);
-        cells.emplace_back(ids.at(cell.source_index()), diagramLiftOnZ);
+        cells.emplace_back(seeds.at(cell.source_index()), diagramLiftOnZ);
         auto& lastCell = cells.at(cells.size() - 1);
         do {
             if (edge->is_primary()) {

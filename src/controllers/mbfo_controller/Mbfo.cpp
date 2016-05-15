@@ -10,13 +10,17 @@ namespace argos {
 static const Real INTERWHEEL_DISTANCE        = 0.14f;
 static const Real HALF_INTERWHEEL_DISTANCE   = INTERWHEEL_DISTANCE * 0.5f;
 static const Real HALF_INTERWHEEL_DISTANCE_IN_CM = HALF_INTERWHEEL_DISTANCE * 100;
+
+/* Simulator parameters */
 static const Real TICKS_PER_SEC = 10;
 static const unsigned long CHEMOTAXIS_LENGTH = 10;
 
 Mbfo::Mbfo()
     : wheelsEngine(nullptr)
     , proximitySensor(nullptr)
+    , stopped(false)
     , velocity(5.0f)
+    , rotationSpeed(0)
     , minDistanceFromObstacle(0.1f)
     , minAngleFromObstacle(CDegrees(-45.0f), CDegrees(45.0f))
     , loopFnc(dynamic_cast<MbfoLoopFunction&>(CSimulator::GetInstance().GetLoopFunctions()))
@@ -24,6 +28,7 @@ Mbfo::Mbfo()
 {}
 
 void Mbfo::Init(TConfigurationNode& configuration) {
+    currentCellId = GetId();
     wheelsEngine = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     proximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     positioningSensor = GetSensor<CCI_PositioningSensor>("positioning");
@@ -42,69 +47,112 @@ void Mbfo::Init(TConfigurationNode& configuration) {
 
 void Mbfo::ControlStep() {
     CVector2 obstacleProximity = getWeightedProximityReading();
-//    if (isRoadClear(obstacleProximity)) {
-        CRadians angleX, angleY, angleZ;
-        positioningSensor->GetReading().Orientation.ToEulerAngles(angleX, angleY, angleZ);
-        CDegrees robotsOrientation = ToDegrees(angleX);
-
-        Real angleEpsilon = 1;
-
-        if (step % CHEMOTAXIS_LENGTH == 0) {
-            const auto& cell = getVoronoiCell();
-            auto nextBestDirections = findNextBestDirectionsInVoronoiCell(cell);
-
-            // Tumble or swim
-            LOG << "[" << GetId() << "] "
-                << "(possible directions: " << nextBestDirections.size() << ") "
-                << robotsOrientation << " -> "
-                << desiredDirection
-                << std::endl;
-
-            // Determine new direction
-            auto sameDirection = std::find_if(nextBestDirections.begin(), nextBestDirections.end(),
-                [&](NextDirection d){ return (d.angle - this->desiredDirection).GetAbsoluteValue() < angleEpsilon; });
-            if (sameDirection == nextBestDirections.end()) {
-                auto randomIndex = rand() % nextBestDirections.size();
-                desiredDirection = nextBestDirections.at(randomIndex).angle;
-            }
-        }
+    if (!stopped) {
+        CDegrees robotsOrientation = getOrientationOnXY();
+        if (step % CHEMOTAXIS_LENGTH == 0)
+            determineNewDirection();
 
         if ((robotsOrientation - desiredDirection).GetAbsoluteValue() > angleEpsilon)
             tumble(robotsOrientation);
         else
             swim();
-//    }
-//    else
-//        avoidObstacle(obstacleProximity);
+    }
+    else {
+        wheelsEngine->SetLinearVelocity(0,0);
+    }
     step++;
+}
+
+CDegrees Mbfo::getOrientationOnXY() {
+    CRadians angleX, angleY, angleZ;
+    positioningSensor->GetReading().Orientation.ToEulerAngles(angleX, angleY, angleZ);
+    CDegrees robotsOrientation = ToDegrees(angleX);
+    return robotsOrientation;
+}
+
+void Mbfo::determineNewDirection() {
+    const auto& cell = getVoronoiCell(currentCellId);
+
+    if (isCellDone(cell)) {
+        auto otherCells = loopFnc.getNeighbouringVoronoiCells(GetId());
+        const auto robotsPosition = positioningSensor->GetReading().Position;
+        auto closestCellComparator = [&, robotsPosition](const VoronoiCell* a, const VoronoiCell* b)
+            { return calculateDistance(a->seed.position, robotsPosition) < calculateDistance(b->seed.position,
+                                                                                             robotsPosition); };
+        std::sort(otherCells.begin(), otherCells.end(), closestCellComparator);
+
+        const VoronoiCell* nextCellPtr = nullptr;
+        for(auto cellPtr : otherCells)
+            if (!isCellDone(*cellPtr)) {
+                nextCellPtr = cellPtr;
+                break;
+            }
+
+        if (nextCellPtr != nullptr) {
+            currentCellId = nextCellPtr->seed.id;
+            LOG << "[" << GetId() << "] Go now to cell " << currentCellId << endl;
+        }
+        else {
+            if (!stopped)
+                LOG << "[" << GetId() << "] No cells to cover! Stop" << endl;
+            stopped = true;
+        }
+    }
+
+    if (!stopped) {
+        auto nextBestDirections = findNextBestDirectionsInVoronoiCell(cell);
+
+        // Determine new direction
+        if (nextBestDirections.size() != 0)
+            chooseBestDirectionFromVector(nextBestDirections);
+    }
+}
+
+bool Mbfo::isCellDone(const VoronoiDiagram::Cell& cell) const {
+    bool isCellDone = false;
+    int maxCellConcentration = 0;
+    for (auto cellIndex : cell.coverageCells) {
+        int concentration = coverage->getGrid().at(cellIndex.x).at(cellIndex.y).concentration;
+        if (concentration > maxCellConcentration)
+            maxCellConcentration = concentration;
+    }
+    isCellDone = maxCellConcentration == 0;
+    return isCellDone;
+}
+
+void Mbfo::chooseBestDirectionFromVector(vector<Mbfo::NextDirection>& nextBestDirections) {
+    auto angleComparator = [&](NextDirection d) {
+        return (d.angle - this->desiredDirection).GetAbsoluteValue() < this->angleEpsilon;
+    };
+    auto sameDirection = std::find_if(nextBestDirections.begin(), nextBestDirections.end(),
+                                      angleComparator);
+    if (sameDirection == nextBestDirections.end()) {
+        auto randomIndex = rand() % nextBestDirections.size();
+        this->desiredDirection = nextBestDirections.at(randomIndex).angle;
+    }
 }
 
 void Mbfo::tumble(const CDegrees &robotsOrientation) {
     auto angleDiff = (robotsOrientation - desiredDirection).SignedNormalize();
     auto rotationDirection = getRotationDirection(angleDiff);
-    rotationSpeed = ToRadians(angleDiff).GetAbsoluteValue() * HALF_INTERWHEEL_DISTANCE_IN_CM * TICKS_PER_SEC;
-    LOG << "[" << GetId() << "] "
-        << "tumble "
-        << "(start: "   << robotsOrientation
-        << ", end: "    << desiredDirection
-        << ", diff: "   << angleDiff
-        << ", speed: "  << rotationSpeed
-        << ")" << std::endl;
+    rotationSpeed = ToRadians(angleDiff).GetAbsoluteValue()
+        * HALF_INTERWHEEL_DISTANCE_IN_CM
+        * TICKS_PER_SEC;
     rotate(rotationDirection);
 }
 
 void Mbfo::swim() const {
-    LOG << "[" << GetId() << "] swim (speed: " << velocity << ")" << std::endl;
     wheelsEngine->SetLinearVelocity(this->velocity, this->velocity);
 }
 
 CDegrees Mbfo::getAngleBetweenPoints(const CVector3 &a, const CVector3 &b) const {
-    return ToDegrees(ATan2(b.GetX() - a.GetX(), b.GetY() - a.GetY()));
+    return ToDegrees(ATan2(b.GetY() - a.GetY(), b.GetX() - a.GetX()));
 }
 
 std::vector<Mbfo::NextDirection> Mbfo::findNextBestDirectionsInVoronoiCell(const VoronoiDiagram::Cell &cell) const {
     const CVector3 realPosition = positioningSensor->GetReading().Position;
-    const CVector2 positionCellIndex = loopFnc.getCoverageGrid().getCellIndex(realPosition);
+    auto index = loopFnc.getCoverageGrid().getCellIndex(realPosition);
+    const CVector2 positionCellIndex(index.first, index.second);
 
     // Complete search
     std::vector<Mbfo::NextDirection> nextDirections;
@@ -118,7 +166,7 @@ std::vector<Mbfo::NextDirection> Mbfo::findNextBestDirectionsInVoronoiCell(const
             bestValue = gridCell.concentration;
             Real distance = calculateDistance(v, positionCellIndex);
             CDegrees angle = getAngleBetweenPoints(realPosition, gridCell.center);
-            nextDirections.push_back(NextDirection{gridCell.concentration, distance, angle});
+            nextDirections.push_back(NextDirection{gridCell.concentration, distance, angle, v});
         }
     }
 
@@ -145,12 +193,8 @@ const CoverageGrid::Cell& Mbfo::getCoverageCell(CVector2 index) const {
     return coverage->getGrid().at(index.GetX()).at(index.GetY());
 }
 
-const Real Mbfo::calculateDistance(const CVector2& a, const CVector2& b) const {
-    return (a - b).SquareLength();
-}
-
-const VoronoiDiagram::Cell& Mbfo::getVoronoiCell() {
-    const auto cell = loopFnc.getVoronoiCell(GetId());
+const VoronoiDiagram::Cell& Mbfo::getVoronoiCell(string cellId) {
+    const auto cell = loopFnc.getVoronoiCell(cellId);
     assert(cell != nullptr);
     return *cell;
 }
@@ -189,6 +233,7 @@ void Mbfo::rotate(Direction rotationDirection) {
     else if (rotationDirection == Direction::left)
         wheelsEngine->SetLinearVelocity(-rotationSpeed, rotationSpeed);
 }
+
 
 }
 

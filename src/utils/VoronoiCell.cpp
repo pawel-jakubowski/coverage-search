@@ -6,8 +6,8 @@
 
 using namespace argos;
 
-VoronoiCell::VoronoiCell(std::string seedId, Real diagramLiftOnZ)
-    : seedId(seedId)
+VoronoiCell::VoronoiCell(Seed seed, Real diagramLiftOnZ)
+    : seed(seed)
     , diagramLiftOnZ(diagramLiftOnZ)
 {}
 

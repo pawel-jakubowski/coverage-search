@@ -31,7 +31,7 @@ private:
     const int scaleVectorToMilimeters = 100000;
     const argos::Real diagramLiftOnZ = 0.02f;
     argos::CRange<argos::CVector3> arenaLimits;
-    std::vector<std::string> ids;
+    std::vector<Cell::Seed> seeds;
     std::vector<Point> boostPoints;
     std::vector<Cell> cells;
 

@@ -16,7 +16,7 @@ void RobotsIdsDrawer::Draw(CFootBotEntity& c_entity) {
      * See also the description in
      * $ argos3 -q foot-bot
      */
-    GetOpenGLWidget().renderText(0.0, 0.0, 0.1,             // position
+    GetQTOpenGLWidget().renderText(0.0, 0.0, 0.1,             // position
             c_entity.GetId().c_str()); // text
 
     /* Restore face culling */

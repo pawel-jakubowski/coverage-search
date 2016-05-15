@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 project(coverage_search)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_STANDARD 14)
 
 set(ARGOS3_DIR ${CMAKE_CURRENT_SOURCE_DIR}/argos3/src)
 set(ARGOS3_CMAKE_DIR ${ARGOS3_DIR}/cmake)
