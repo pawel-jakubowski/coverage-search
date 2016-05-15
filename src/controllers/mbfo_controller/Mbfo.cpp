@@ -46,12 +46,10 @@ void Mbfo::Init(TConfigurationNode& configuration) {
 }
 
 void Mbfo::ControlStep() {
-    CVector2 obstacleProximity = getWeightedProximityReading();
     if (!stopped) {
         CDegrees robotsOrientation = getOrientationOnXY();
         if (step % CHEMOTAXIS_LENGTH == 0)
             determineNewDirection();
-
         if ((robotsOrientation - desiredDirection).GetAbsoluteValue() > angleEpsilon)
             tumble(robotsOrientation);
         else
@@ -105,7 +103,29 @@ void Mbfo::determineNewDirection() {
         // Determine new direction
         if (nextBestDirections.size() != 0)
             chooseBestDirectionFromVector(nextBestDirections);
+
+        CVector3 robotsInteractionForce = calculateRobotsInteractionForce();
+        CDegrees robotsInteractionAngle = ToDegrees(robotsInteractionForce.GetZAngle());
+
+        const auto a = 0.025;
+        const auto b = (1 - a);
+        desiredDirection *= b;
+        desiredDirection += a*robotsInteractionAngle;
+        desiredDirection.SignedNormalize();
     }
+}
+
+CVector3 Mbfo::calculateRobotsInteractionForce() const {
+    const auto robotsPosition = positioningSensor->GetReading().Position;
+    auto robotsPositions = loopFnc.getRobotsPositions();
+    CVector3 robotsInteractionForce;
+    for (auto& position : robotsPositions) {
+            if (position.first == GetId())
+                continue;
+            auto diff = (robotsPosition - position.second);
+            robotsInteractionForce += diff / diff.SquareLength();
+        }
+    return robotsInteractionForce;
 }
 
 bool Mbfo::isCellDone(const VoronoiDiagram::Cell& cell) const {

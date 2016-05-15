@@ -74,8 +74,8 @@ private:
 	void determineNewDirection();
     CDegrees getOrientationOnXY();
     void chooseBestDirectionFromVector(std::vector<Mbfo::NextDirection>& nextBestDirections);
-
     bool isCellDone(const VoronoiDiagram::Cell& cell) const;
+    CVector3 calculateRobotsInteractionForce() const;
 };
 
 }
