@@ -14,6 +14,7 @@ set(SRC
     CoverageCalculator.cpp
     MbfoLoopFunction.cpp
     MbfoDrawer.cpp
+    DynamicMbfoLoopFunction.cpp
 )
 
 # If Qt+OpenGL dependencies were found, descend into these directories

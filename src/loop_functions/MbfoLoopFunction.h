@@ -9,8 +9,8 @@ class MbfoLoopFunction : public argos::CLoopFunctions {
 public:
     static constexpr int maxCellConcentration = std::numeric_limits<int>::max();
 
-    MbfoLoopFunction() : coverage(maxCellConcentration) {}
-    virtual ~MbfoLoopFunction() {}
+    MbfoLoopFunction() : coverage(maxCellConcentration, 0.1f) {}
+    virtual ~MbfoLoopFunction() = default;
     virtual void Init(argos::TConfigurationNode& t_tree) override;
     virtual void PreStep() override;
     virtual void PostStep() override;
@@ -33,9 +33,7 @@ private:
 
     void updateRobotsPositions(const argos::CSpace::TMapPerType& entities);
     void addRobotsRays(argos::CFootBotEntity& footbot);
-
     void wrapPointToArenaLimits(argos::CVector3 &point);
-
     std::vector<CoverageGrid::CellIndex> getCellsCoveredByRobots() const;
     void removeDuplicates(std::vector<CoverageGrid::CellIndex>& cells) const;
     void updateCoverageCells(const std::vector<CoverageGrid::CellIndex>& affectedCells);

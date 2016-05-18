@@ -77,12 +77,12 @@ void MbfoLoopFunction::update() {
     }
     auto gridCellsCount = coverage.getGrid().size();
     gridCellsCount *= gridCellsCount;
-    if (gridCounter != gridCellsCount) {
-        std::stringstream s;
-        s << "There is " << gridCellsCount - gridCounter
-            << " cells unassigned to voronoi cells!";
-        THROW_ARGOSEXCEPTION(s.str());
-    }
+//    if (gridCounter != gridCellsCount) {
+//        std::stringstream s;
+//        s << "There is " << gridCellsCount - gridCounter
+//            << " cells unassigned to voronoi cells!";
+//        THROW_ARGOSEXCEPTION(s.str());
+//    }
 }
 
 void MbfoLoopFunction::updateRobotsPositions(const CSpace::TMapPerType &entities) {

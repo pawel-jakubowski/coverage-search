@@ -14,3 +14,4 @@ add_subdirectory(random_with_voronoi)
 add_subdirectory(random_with_grid)
 
 add_subdirectory(mbfo)
+add_subdirectory(dynamic_mbfo)

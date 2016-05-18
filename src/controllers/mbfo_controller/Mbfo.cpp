@@ -129,15 +129,13 @@ CVector3 Mbfo::calculateRobotsInteractionForce() const {
 }
 
 bool Mbfo::isCellDone(const VoronoiDiagram::Cell& cell) const {
-    bool isCellDone = false;
     int maxCellConcentration = 0;
     for (auto cellIndex : cell.coverageCells) {
         int concentration = coverage->getGrid().at(cellIndex.x).at(cellIndex.y).concentration;
         if (concentration > maxCellConcentration)
             maxCellConcentration = concentration;
     }
-    isCellDone = maxCellConcentration == 0;
-    return isCellDone;
+    return maxCellConcentration == 0;
 }
 
 void Mbfo::chooseBestDirectionFromVector(vector<Mbfo::NextDirection>& nextBestDirections) {
