@@ -35,6 +35,7 @@
     <!-- ****************** -->
     <loop_functions library="loop_functions/libloop_functions"
                     label="mbfo_loop_fcn">
+        <voronoi assertion="true" />
         <log path="mbfo.log">
             <threshold value="40" />
             <threshold value="60" />

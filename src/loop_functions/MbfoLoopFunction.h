@@ -32,6 +32,7 @@ private:
     std::list<double> thresholdsToLog;
     CoverageGrid coverage;
     VoronoiDiagram voronoi;
+    bool voronoiAssertion = false;
     std::map<std::string, argos::CVector3> robotsPositions;
     std::map<std::string, const VoronoiDiagram::Cell*> robotsCells;
     std::vector<argos::CRay3> rays;
@@ -44,4 +45,7 @@ private:
     std::vector<CoverageGrid::CellIndex> getCellsCoveredByRobots() const;
     void removeDuplicates(std::vector<CoverageGrid::CellIndex>& cells) const;
     void updateCoverageCells(const std::vector<CoverageGrid::CellIndex>& affectedCells);
+
+    void parseLogConfig(argos::TConfigurationNode& t_tree);
+    void parseVoronoiConfig(argos::TConfigurationNode& t_tree);
 };

@@ -9,6 +9,23 @@ using namespace boost::polygon;
 std::mutex tagetPositionUpdateMutex;
 
 void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
+    parseLogConfig(t_tree);
+    parseVoronoiConfig(t_tree);
+    Reset();
+    logFile << "{\n";
+}
+
+void MbfoLoopFunction::parseVoronoiConfig(TConfigurationNode& t_tree) {
+    try {
+        TConfigurationNode& conf = GetNode(t_tree, "voronoi");
+        GetNodeAttributeOrDefault(conf, "assertion", voronoiAssertion, false);
+    }
+    catch (CARGoSException& e) {
+        LOGERR << "Error parsing voronoi config! " <<  e.what();
+    }
+}
+
+void MbfoLoopFunction::parseLogConfig(TConfigurationNode& t_tree) {
     string logFileName = "mbfo.log";
     try {
         TConfigurationNode& conf = GetNode(t_tree, "log");
@@ -25,11 +42,9 @@ void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
         }
     }
     catch (CARGoSException& e) {
-        LOGERR << "Error parsing loop functions! " <<  e.what();
+        LOGERR << "Error parsing log config! " <<  e.what();
     }
-    Reset();
     logFile.open(logFileName);
-    logFile << "{\n";
 }
 
 void MbfoLoopFunction::PreStep() {
@@ -120,12 +135,12 @@ void MbfoLoopFunction::update() {
     }
     auto gridCellsCount = coverage.getGrid().size();
     gridCellsCount *= gridCellsCount;
-//    if (gridCounter != gridCellsCount) {
-//        std::stringstream s;
-//        s << "There is " << gridCellsCount - gridCounter
-//            << " cells unassigned to voronoi cells!";
-//        THROW_ARGOSEXCEPTION(s.str());
-//    }
+    if (voronoiAssertion && gridCounter != gridCellsCount) {
+        std::stringstream s;
+        s << "There is " << gridCellsCount - gridCounter
+            << " cells unassigned to voronoi cells!";
+        THROW_ARGOSEXCEPTION(s.str());
+    }
 }
 
 void MbfoLoopFunction::addSingleTargetPosition(double certainty, const argos::CVector3& position) {
