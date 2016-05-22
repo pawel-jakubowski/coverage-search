@@ -29,6 +29,7 @@ void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     }
     Reset();
     logFile.open(logFileName);
+    logFile << "{\n";
 }
 
 void MbfoLoopFunction::PreStep() {
@@ -49,9 +50,16 @@ void MbfoLoopFunction::PostStep() {
     if (thresholdsToLog.size() > 0) {
         const auto percentageCoverage = coverage.getCoverageValue();
         if (percentageCoverage > thresholdsToLog.front()) {
-            logFile << GetSpace().GetSimulationClock() << ", "
-            << std::fixed << std::setprecision(2) << percentageCoverage << "\n";
+            logFile << "\t" "\"threshold\" : {\n"
+                    << "\t\t" "\"step\" : " << GetSpace().GetSimulationClock() << ",\n"
+                    << "\t\t" "\"coverage\" : "
+                    << std::fixed << std::setprecision(2) << percentageCoverage << ",\n"
+                    << "\t\t" "\"target\" : [" << targetsPosition << "]\n"
+                    << "\t}";
             thresholdsToLog.pop_front();
+            if (thresholdsToLog.size() > 0)
+                logFile << ",";
+            logFile << "\n";
         }
     }
 }
@@ -98,6 +106,7 @@ void MbfoLoopFunction::Reset() {
 }
 
 void MbfoLoopFunction::Destroy() {
+    logFile << "}";
     logFile.close();
 }
 
