@@ -1,12 +1,32 @@
 #include "MbfoLoopFunction.h"
 #include <argos3/plugins/simulator/entities/proximity_sensor_equipped_entity.h>
 
+using namespace std;
 using namespace argos;
 using namespace boost::polygon;
 
 
 void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
+    string logFileName = "mbfo.log";
+    try {
+        TConfigurationNode& conf = GetNode(t_tree, "log");
+        GetNodeAttribute(conf, "path", logFileName);
+        LOG << "Log file: " << logFileName << endl;
+        TConfigurationNodeIterator it("threshold");
+        it = it.begin(&conf);
+        double threshold = 0;
+        while (it != NULL) {
+            GetNodeAttribute(*it, "value", threshold);
+            LOG << "Threshold: " << threshold << endl;
+            thresholdsToLog.push_back(threshold);
+            it++;
+        }
+    }
+    catch (CARGoSException& e) {
+        LOGERR << "Error parsing loop functions! " <<  e.what();
+    }
     Reset();
+    logFile.open(logFileName);
 }
 
 void MbfoLoopFunction::PreStep() {
@@ -22,6 +42,15 @@ void MbfoLoopFunction::PostStep() {
     }
     catch(std::exception& e) {
         THROW_ARGOSEXCEPTION_NESTED("Error during concentration update!", e)
+    }
+
+    if (thresholdsToLog.size() > 0) {
+        const auto percentageCoverage = coverage.getCoverageValue();
+        if (percentageCoverage > thresholdsToLog.front()) {
+            logFile << GetSpace().GetSimulationClock() << ", "
+            << std::fixed << std::setprecision(2) << percentageCoverage << "\n";
+            thresholdsToLog.pop_front();
+        }
     }
 }
 
@@ -64,6 +93,10 @@ void MbfoLoopFunction::Reset() {
     coverage.initGrid(GetSpace().GetArenaLimits());
     PreStep();
     update();
+}
+
+void MbfoLoopFunction::Destroy() {
+    logFile.close();
 }
 
 void MbfoLoopFunction::update() {

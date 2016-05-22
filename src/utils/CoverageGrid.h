@@ -20,9 +20,12 @@ public:
     const Cell& getCell(const argos::CVector3& position) const;
     const Meters getCellSize() const;
 
+    const double getCoverageValue();
+
 private:
     const Meters cellSizeInMeters;
     const argos::Real gridLiftOnZ;
+    int size;
     std::vector<std::vector<Cell>> grid;
     argos::CRange<argos::CVector3> arenaLimits;
 

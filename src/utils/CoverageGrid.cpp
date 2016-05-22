@@ -16,10 +16,12 @@ void CoverageGrid::initGrid(CRange<CVector3> limits) {
     Real minY = arenaLimits.GetMin().GetY();
     Real maxY = arenaLimits.GetMax().GetY();
 
+    size = 0;
     for (Real x = minX; x < maxX; x += cellSizeInMeters) {
         grid.emplace_back();
         for (Real y = minY; y < maxY; y += cellSizeInMeters)
             grid.back().push_back(createCell(x, y));
+        size += grid.back().size();
     }
 }
 
@@ -82,3 +84,19 @@ const CoverageGrid::Cell& CoverageGrid::getCell(const CVector3& position) const 
 const CoverageGrid::Meters CoverageGrid::getCellSize() const {
     return cellSizeInMeters;
 }
+
+const double CoverageGrid::getCoverageValue() {
+    double percentCoverage = 0;
+    double cellCoverage;
+    const double maxConcentration = static_cast<double>(maxCellConcentration);
+    const double gridSize = static_cast<double>(size);
+    for (auto& row : grid) {
+        for (auto& cell : row) {
+            cellCoverage = (1 - (cell.concentration / maxConcentration)) * 100;
+            percentCoverage += cellCoverage / gridSize;
+        }
+    }
+    return percentCoverage;
+}
+
+

@@ -34,6 +34,12 @@
     <!-- ****************** -->
     <loop_functions library="loop_functions/libloop_functions"
                     label="mbfo_loop_fcn">
+        <log path="mbfo.log">
+            <threshold value="40" />
+            <threshold value="60" />
+            <threshold value="80" />
+            <threshold value="95" />
+        </log>
     </loop_functions>
 
     <!-- *********************** -->

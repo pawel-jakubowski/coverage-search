@@ -4,6 +4,7 @@
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 #include <utils/VoronoiDiagram.h>
 #include <utils/CoverageGrid.h>
+#include <iostream>
 
 class MbfoLoopFunction : public argos::CLoopFunctions {
 public:
@@ -15,6 +16,7 @@ public:
     virtual void PreStep() override;
     virtual void PostStep() override;
     virtual void Reset() override;
+    virtual void Destroy() override;
 
     void update();
     const CoverageGrid& getCoverageGrid();
@@ -25,6 +27,8 @@ public:
     const std::vector<argos::CRay3> getRays();
 
 private:
+    std::ofstream logFile;
+    std::list<double> thresholdsToLog;
     CoverageGrid coverage;
     VoronoiDiagram voronoi;
     std::map<std::string, argos::CVector3> robotsPositions;
