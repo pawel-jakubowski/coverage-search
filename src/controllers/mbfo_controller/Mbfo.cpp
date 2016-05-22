@@ -32,6 +32,7 @@ void Mbfo::Init(TConfigurationNode& configuration) {
     wheelsEngine = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     proximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     positioningSensor = GetSensor<CCI_PositioningSensor>("positioning");
+    lightSensor = GetSensor<CCI_LightSensor>("light");
 
     GetNodeAttributeOrDefault(configuration, "velocity", velocity, velocity);
     GetNodeAttributeOrDefault(configuration, "min_distance", minDistanceFromObstacle,
@@ -42,6 +43,7 @@ void Mbfo::Init(TConfigurationNode& configuration) {
     assert(wheelsEngine != nullptr);
     assert(proximitySensor != nullptr);
     assert(positioningSensor != nullptr);
+    assert(lightSensor != nullptr);
     assert(coverage != nullptr);
 }
 
@@ -58,7 +60,17 @@ void Mbfo::ControlStep() {
     else {
         wheelsEngine->SetLinearVelocity(0,0);
     }
+    detectTarget();
     step++;
+}
+
+void Mbfo::detectTarget() const {
+    auto lightReadings = lightSensor->GetReadings();
+    double averageReading = 0;
+    for (auto& reading : lightReadings)
+        averageReading += reading;
+    averageReading /= lightReadings.size();
+    loopFnc.addSingleTargetPosition(averageReading, positioningSensor->GetReading().Position);
 }
 
 CDegrees Mbfo::getOrientationOnXY() {

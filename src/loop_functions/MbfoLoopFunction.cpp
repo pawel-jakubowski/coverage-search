@@ -1,10 +1,12 @@
 #include "MbfoLoopFunction.h"
 #include <argos3/plugins/simulator/entities/proximity_sensor_equipped_entity.h>
+#include <mutex>
 
 using namespace std;
 using namespace argos;
 using namespace boost::polygon;
 
+std::mutex tagetPositionUpdateMutex;
 
 void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     string logFileName = "mbfo.log";
@@ -115,6 +117,15 @@ void MbfoLoopFunction::update() {
 //            << " cells unassigned to voronoi cells!";
 //        THROW_ARGOSEXCEPTION(s.str());
 //    }
+}
+
+void MbfoLoopFunction::addSingleTargetPosition(double certainty, const argos::CVector3& position) {
+    if (certainty > targetsPositionCertainty) {
+        std::lock_guard<std::mutex> guard(tagetPositionUpdateMutex);
+        targetsPosition = position;
+        targetsPositionCertainty = certainty;
+        LOG << "New target position estimation: " << targetsPosition << "\n";
+    }
 }
 
 void MbfoLoopFunction::updateRobotsPositions(const CSpace::TMapPerType &entities) {
