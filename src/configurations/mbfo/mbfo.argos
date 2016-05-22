@@ -22,7 +22,8 @@
             </actuators>
             <sensors>
                 <footbot_proximity implementation="default" show_rays="true" />
-                <positioning implementation="default" /> <!--pos_noise_range="-0.05:0.05" />-->
+                <positioning implementation="default" /> <!-- pos_noise_range="-0.05:0.05" /> -->
+                <light implementation="default" /> <!-- noise_level="0.0" /> -->
             </sensors>
             <params velocity="5" delta="0.05" />
         </mbfo_controller>
@@ -92,6 +93,15 @@
             <!--</entity>-->
         <!--</distribute>-->
 
+        <!-- ********** -->
+        <!-- * Target * -->
+        <!-- ********** -->
+        <light id="light"
+               position="0,0,0.5"
+               orientation="0,0,0"
+               color="yellow"
+               intensity="0.5"
+               medium="leds" />
     </arena>
 
     <!-- ******************* -->
@@ -104,7 +114,9 @@
     <!-- ********* -->
     <!-- * Media * -->
     <!-- ********* -->
-    <media />
+    <media>
+        <led id="leds" />
+    </media>
 
     <!-- ****************** -->
     <!-- * Visualization * -->
