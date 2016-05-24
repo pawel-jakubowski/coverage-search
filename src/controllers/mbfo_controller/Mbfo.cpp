@@ -100,11 +100,11 @@ void Mbfo::determineNewDirection() {
 
         if (nextCellPtr != nullptr) {
             currentCellId = nextCellPtr->seed.id;
-            LOG << "[" << GetId() << "] Go now to cell " << currentCellId << endl;
+//            LOG << "[" << GetId() << "] Go now to cell " << currentCellId << endl;
         }
         else {
-            if (!stopped)
-                LOG << "[" << GetId() << "] No cells to cover! Stop" << endl;
+//            if (!stopped)
+//                LOG << "[" << GetId() << "] No cells to cover! Stop" << endl;
             stopped = true;
         }
     }

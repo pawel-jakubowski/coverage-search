@@ -5,8 +5,8 @@
     <!-- * General configuration * -->
     <!-- ************************* -->
     <framework>
-        <system threads="0" />
-        <experiment length="100000"
+        <system threads="4" />
+        <experiment length="1000"
                     ticks_per_second="10"
                     random_seed="123"/>
     </framework>
@@ -23,6 +23,7 @@
             <sensors>
                 <footbot_proximity implementation="default" show_rays="true" />
                 <positioning implementation="default" /> <!--pos_noise_range="-0.05:0.05" />-->
+                <light implementation="default" /> <!-- noise_level="0.0" /> -->
             </sensors>
             <params velocity="5" delta="0.05" />
         </mbfo_controller>
@@ -34,6 +35,16 @@
     <!-- ****************** -->
     <loop_functions library="loop_functions/libloop_functions"
                     label="dynamic_mbfo_loop_fcn">
+        <voronoi assertion="false" />
+        <log path="dynamic_mbfo.log">
+            <threshold value="0.01" />
+            <threshold value="10" />
+            <threshold value="25" />
+            <threshold value="40" />
+            <threshold value="60" />
+            <threshold value="80" />
+            <threshold value="95" />
+        </log>
     </loop_functions>
 
     <!-- *********************** -->
@@ -86,6 +97,15 @@
             <!--</entity>-->
         <!--</distribute>-->
 
+        <!-- ********** -->
+        <!-- * Target * -->
+        <!-- ********** -->
+        <light id="light"
+               position="0,0,0.5"
+               orientation="0,0,0"
+               color="yellow"
+               intensity="0.5"
+               medium="leds" />
     </arena>
 
     <!-- ******************* -->
@@ -98,7 +118,9 @@
     <!-- ********* -->
     <!-- * Media * -->
     <!-- ********* -->
-    <media />
+    <media>
+        <led id="leds" />
+    </media>
 
     <!-- ****************** -->
     <!-- * Visualization * -->

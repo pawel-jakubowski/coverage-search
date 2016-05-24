@@ -48,8 +48,10 @@ void VoronoiDiagram::updateVoronoiDiagram() {
 }
 
 void VoronoiDiagram::fillMissingEdges() {
-    for (auto& cell : cells)
+    for (auto& cell : cells) {
         cell.fillMissingEdges(arenaLimits);
+        cell.finish();
+    }
 }
 
 argos::CVector3 VoronoiDiagram::ToVector3(const Vertex& point) const {
@@ -72,7 +74,7 @@ void VoronoiDiagram::updateEdges(const Diagram& diagram) {
                 auto voronoiEdge = ToVoronoiEdge(*edge);
                 try {
                     voronoiEdge = getRayBoundedToArena(voronoiEdge);
-                    lastCell.edges.push_back(move(voronoiEdge));
+                    lastCell.addEdge(move(voronoiEdge));
                 }
                 catch(EdgeNotInArea& e) {
                     // Do not add this edge
@@ -154,7 +156,7 @@ void VoronoiDiagram::setArenaLimits(CRange<CVector3> limits) {
 vector<CVector3> VoronoiDiagram::getVertices() const {
     vector<argos::CVector3> vertices;
     for (const auto& cell : cells)
-        for (const auto& edge : cell.edges)
+        for (const auto& edge : cell.getEdges())
             vertices.emplace_back(edge.GetEnd());
     return vertices;
 }
@@ -162,7 +164,7 @@ vector<CVector3> VoronoiDiagram::getVertices() const {
 vector<CRay3> VoronoiDiagram::getEdges() const {
     vector<CRay3> edges;
     for (const auto& cell : cells)
-        for (const auto& edge : cell.edges)
+        for (const auto& edge : cell.getEdges())
             edges.emplace_back(edge);
     return edges;
 }

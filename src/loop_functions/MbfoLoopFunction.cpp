@@ -61,16 +61,20 @@ void MbfoLoopFunction::PostStep() {
     catch(std::exception& e) {
         THROW_ARGOSEXCEPTION_NESTED("Error during concentration update!", e)
     }
+    checkPercentageCoverage();
+}
 
+void MbfoLoopFunction::checkPercentageCoverage() {
     if (thresholdsToLog.size() > 0) {
         const auto percentageCoverage = coverage.getCoverageValue();
         if (percentageCoverage > thresholdsToLog.front()) {
+            LOG << "Threshold " << thresholdsToLog.front() << "% achieved!" << endl;
             logFile << "\t" "\"threshold\" : {\n"
-                    << "\t\t" "\"step\" : " << GetSpace().GetSimulationClock() << ",\n"
-                    << "\t\t" "\"coverage\" : "
-                    << std::fixed << std::setprecision(2) << percentageCoverage << ",\n"
-                    << "\t\t" "\"target\" : [" << targetsPosition << "]\n"
-                    << "\t}";
+            << "\t\t" "\"step\" : " << GetSpace().GetSimulationClock() << ",\n"
+            << "\t\t" "\"coverage\" : "
+            << fixed << setprecision(2) << percentageCoverage << ",\n"
+            << "\t\t" "\"target\" : [" << targetsPosition << "]\n"
+            << "\t}";
             thresholdsToLog.pop_front();
             if (thresholdsToLog.size() > 0)
                 logFile << ",";
@@ -148,7 +152,6 @@ void MbfoLoopFunction::addSingleTargetPosition(double certainty, const argos::CV
         std::lock_guard<std::mutex> guard(tagetPositionUpdateMutex);
         targetsPosition = position;
         targetsPositionCertainty = certainty;
-        LOG << "New target position estimation: " << targetsPosition << "\n";
     }
 }
 

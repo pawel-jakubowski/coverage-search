@@ -36,6 +36,8 @@ private:
     std::map<std::string, argos::CVector3> robotsPositions;
     std::map<std::string, const VoronoiDiagram::Cell*> robotsCells;
     std::vector<argos::CRay3> rays;
+
+    const argos::Real targetSquareRadius = 0.01;
     argos::CVector3 targetsPosition;
     double targetsPositionCertainty = 0;
 
@@ -48,4 +50,6 @@ private:
 
     void parseLogConfig(argos::TConfigurationNode& t_tree);
     void parseVoronoiConfig(argos::TConfigurationNode& t_tree);
+
+    void checkPercentageCoverage();
 };

@@ -3,6 +3,11 @@ project(coverage_search_src)
 
 find_package(Lua52 REQUIRED)
 
+# Profiling
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions("-pg")
+endif()
+
 include_directories(
         .
         ..

@@ -21,7 +21,7 @@ private:
 
     void drawCell(const CoverageGrid::Cell &cell);
 
-    void drawVertex(argos::CRay3& edge);
+    void drawVertex(const argos::CRay3& edge);
     void drawEdge(const argos::CRay3& edge);
 
     void drawCellId(const VoronoiDiagram::Cell& cell);

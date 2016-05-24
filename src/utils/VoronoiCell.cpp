@@ -1,7 +1,6 @@
 #include "VoronoiCell.h"
 #include <assert.h>
 #include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 
 using namespace argos;
@@ -11,6 +10,46 @@ VoronoiCell::VoronoiCell(Seed seed, Real diagramLiftOnZ)
     , diagramLiftOnZ(diagramLiftOnZ)
 {}
 
+void VoronoiCell::addEdge(CRay3 edge) {
+    CVector3 max = roughCellBoundaries.GetMax();
+    CVector3 min = roughCellBoundaries.GetMin();
+
+    updateMinMax(edge.GetStart(), max, min);
+    updateMinMax(edge.GetEnd(), max, min);
+
+    roughCellBoundaries.Set(min, max);
+
+    edges.push_back(edge);
+}
+
+void VoronoiCell::finish() {
+    using namespace boost::geometry;
+
+    boostPolygon.clear();
+
+    std::vector<BoostPoint> points;
+    if (edges.size() > 0) {
+        auto& vertex = edges.at(0).GetStart();
+        points.emplace_back(vertex.GetX(), vertex.GetY());
+    }
+
+    for (auto& edge : edges) {
+        auto& vertex = edge.GetEnd();
+        points.emplace_back(vertex.GetX(), vertex.GetY());
+    }
+    assign_points(boostPolygon, points);
+}
+
+void VoronoiCell::updateMinMax(const CVector3& point, CVector3& max, CVector3& min) const {
+    max.SetX(std::max(point.GetX(), max.GetX()) );
+    min.SetX( std::min(point.GetX(), min.GetX()) );
+
+    max.SetY( std::max(point.GetY(), max.GetY()) );
+    min.SetY( std::min(point.GetY(), min.GetY()) );
+
+    max.SetZ( std::max(point.GetZ(), max.GetZ()) );
+    min.SetZ( std::min(point.GetZ(), min.GetZ()) );
+}
 
 // TODO: Refactor this!
 void VoronoiCell::fillMissingEdges(const CRange<CVector3>& limits) {
@@ -209,23 +248,12 @@ bool VoronoiCell::areVectorsEqual(const CVector3 &a, const CVector3 &b) const {
 }
 
 bool VoronoiCell::isInside(CVector3 point) const {
-    using namespace boost::geometry;
-    using Point = model::d2::point_xy<double>;
-    using Polygon = model::polygon<Point>;
+    if (!roughCellBoundaries.WithinMinBoundIncludedMaxBoundIncluded(point))
+        return false;
+    BoostPoint p(point.GetX(), point.GetY());
+    return boost::geometry::within(p, boostPolygon);
+}
 
-    Polygon polygon;
-    std::vector<Point> points;
-    if (edges.size() > 0) {
-        auto& vertex = edges.at(0).GetStart();
-        points.emplace_back(vertex.GetX(), vertex.GetY());
-    }
-
-    for (auto& edge : edges) {
-        auto& vertex = edge.GetEnd();
-        points.emplace_back(vertex.GetX(), vertex.GetY());
-    }
-    assign_points(polygon, points);
-
-    Point p(point.GetX(), point.GetY());
-    return within(p, polygon);
+const std::vector<CRay3>& VoronoiCell::getEdges() const {
+    return edges;
 }

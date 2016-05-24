@@ -14,8 +14,8 @@ void MbfoDrawer::DrawInWorld() {
 void MbfoDrawer::drawVoronoi() {
     auto voronoiCells = mbfo.getVoronoiCells();
     for (auto& cell : voronoiCells) {
-        drawCellId(cell);
-        for (auto& edge : cell.edges) {
+//        drawCellId(cell);
+        for (auto& edge : cell.getEdges()) {
             drawEdge(edge);
             drawVertex(edge);
         }
@@ -31,7 +31,7 @@ void MbfoDrawer::drawCellId(const VoronoiDiagram::Cell& cell) {
 
 void MbfoDrawer::drawEdge(const CRay3& edge) { DrawRay(edge, CColor::RED, 3.0f); }
 
-void MbfoDrawer::drawVertex(CRay3& edge) {
+void MbfoDrawer::drawVertex(const CRay3& edge) {
     auto &vertex = edge.GetStart();
     DrawPoint(vertex, voronoiVertexColor, vertexSize);
 }
