@@ -33,6 +33,7 @@ void Mbfo::Init(TConfigurationNode& configuration) {
     proximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     positioningSensor = GetSensor<CCI_PositioningSensor>("positioning");
     lightSensor = GetSensor<CCI_LightSensor>("light");
+    rabRx = GetSensor<CCI_RangeAndBearingSensor>("range_and_bearing");
 
     GetNodeAttributeOrDefault(configuration, "velocity", velocity, velocity);
     GetNodeAttributeOrDefault(configuration, "min_distance", minDistanceFromObstacle,
@@ -44,6 +45,7 @@ void Mbfo::Init(TConfigurationNode& configuration) {
     assert(proximitySensor != nullptr);
     assert(positioningSensor != nullptr);
     assert(lightSensor != nullptr);
+    assert(rabRx != nullptr);
     assert(coverage != nullptr);
 }
 
@@ -56,6 +58,17 @@ void Mbfo::ControlStep() {
             tumble(robotsOrientation);
         else
             swim();
+
+        auto packets = rabRx->GetReadings();
+        for(auto& packet : packets) {
+            int id;
+            Real posX, posY, posZ;
+            packet.Data >> id >> posX >> posY >> posZ;
+            if (id == 0)
+                continue;
+            LOG << "[" << GetId() << "] Found target " << id << " ("
+                << posX << ", " << posY << ", " << posZ << ")" << endl;
+        }
     }
     else {
         wheelsEngine->SetLinearVelocity(0,0);

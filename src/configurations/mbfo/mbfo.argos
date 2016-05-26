@@ -24,9 +24,21 @@
                 <footbot_proximity implementation="default" show_rays="true" />
                 <positioning implementation="default" /> <!-- pos_noise_range="-0.05:0.05" /> -->
                 <light implementation="default" /> <!-- noise_level="0.0" /> -->
+                <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
             </sensors>
             <params velocity="5" delta="0.05" />
         </mbfo_controller>
+
+        <target_controller id="target" library="controllers/libtarget_controller.so">
+            <actuators>
+                <range_and_bearing implementation="default" />
+            </actuators>
+            <sensors>
+                <positioning implementation="default" />
+                <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
+            </sensors>
+            <params />
+        </target_controller>
 
     </controllers>
 
@@ -77,9 +89,21 @@
                 max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" />
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
             <entity quantity="@ARGOS_ROBOTS_NUMBER@" max_trials="100">
-                <foot-bot id="fb">
+                <foot-bot id="fb" rab_range="0.2" rab_data_size="40">
                     <controller config="mbfo" />
                 </foot-bot>
+            </entity>
+        </distribute>
+
+        <distribute>
+            <position method="uniform"
+                      min="-@ARGOS_AREA_HALF_SIDE_IN_M@, -@ARGOS_AREA_HALF_SIDE_IN_M@, 0"
+                      max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" />
+            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
+            <entity quantity="@ARGOS_TARGETS_NUMBER@" max_trials="100" >
+                <target id="t" rab_range="0.25" rab_data_size="40">
+                    <controller config="target" />
+                </target>
             </entity>
         </distribute>
 
@@ -116,6 +140,7 @@
     <!-- * Media * -->
     <!-- ********* -->
     <media>
+        <range_and_bearing id="rab" />
         <led id="leds" />
     </media>
 
@@ -123,18 +148,18 @@
     <!-- * Visualization * -->
     <!-- ****************** -->
     <visualization>
-        <!--<qt-opengl>-->
-            <!--<user_functions-->
-                <!--library="loop_functions/libloop_functions"-->
-                <!--label="draw_mbfo" />-->
-            <!--<camera>-->
-                <!--<placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>-->
-            <!--</camera>-->
-        <!--</qt-opengl>-->
+        <qt-opengl>
+            <user_functions
+                library="loop_functions/libloop_functions"
+                label="draw_mbfo" />
+            <camera>
+                <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>
+                <placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>
+            </camera>
+        </qt-opengl>
     </visualization>
 
 </argos-configuration>

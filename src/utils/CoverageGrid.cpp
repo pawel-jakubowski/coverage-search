@@ -17,6 +17,7 @@ void CoverageGrid::initGrid(CRange<CVector3> limits) {
     Real maxY = arenaLimits.GetMax().GetY();
 
     size = 0;
+    grid.clear();
     for (Real x = minX; x < maxX; x += cellSizeInMeters) {
         grid.emplace_back();
         for (Real y = minY; y < maxY; y += cellSizeInMeters)

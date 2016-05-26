@@ -5,6 +5,7 @@ set(CONFIG_FILE mbfo.argos)
 set(ARGOS_TEXTURES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../textures)
 
 set(ARGOS_ROBOTS_NUMBER 5)
+set(ARGOS_TARGETS_NUMBER 5)
 set(ARGOS_WALL_THICKNESS_IN_M 0.01)
 set(ARGOS_AREA_HALF_SIDE_IN_M 3)
 math(EXPR ARGOS_AREA_SIDE_IN_M ${ARGOS_AREA_HALF_SIDE_IN_M}*2)
@@ -18,4 +19,9 @@ configure_file(
 add_custom_target(experiment_${PROJECT_NAME}
         COMMAND ${ENV_CMD} ./argos3 --config-file ${PROJECT_NAME}/${CONFIG_FILE} ${ARGOS_OPTIONS}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        DEPENDS mbfo_controller loop_functions argos3)
+        DEPENDS
+            mbfo_controller
+            target_controller
+            target_robot
+            loop_functions
+            argos3)

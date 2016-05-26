@@ -6,6 +6,7 @@
 #include <plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_light_sensor.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 
 #include <loop_functions/MbfoLoopFunction.h>
 
@@ -40,6 +41,7 @@ private:
     CCI_FootBotProximitySensor* proximitySensor = nullptr;
     CCI_PositioningSensor* positioningSensor = nullptr;
     CCI_LightSensor* lightSensor = nullptr;
+    CCI_RangeAndBearingSensor* rabRx = nullptr;
 
     bool stopped;
     Real velocity;
