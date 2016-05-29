@@ -4,15 +4,26 @@ project(dynamic_mbfo)
 set(CONFIG_FILE ${PROJECT_NAME}.argos)
 set(ARGOS_TEXTURES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../textures)
 
-#set(ARGOS_ROBOTS_NUMBER 50)
-#set(ARGOS_AREA_HALF_SIDE_IN_M 5)
-
-set(ARGOS_ROBOTS_NUMBER 3)
-set(ARGOS_AREA_HALF_SIDE_IN_M 1)
+if(NOT ARGOS_ROBOTS_NUMBER)
+    set(ARGOS_ROBOTS_NUMBER 5)
+endif()
+if(NOT ARGOS_TARGETS_NUMBER)
+    set(ARGOS_TARGETS_NUMBER 5)
+endif()
+if(NOT ARGOS_AREA_HALF_SIDE_IN_M)
+    set(ARGOS_AREA_HALF_SIDE_IN_M 3)
+endif()
+if(NOT ARGOS_AREA_SIDE_IN_M)
+    math(EXPR ARGOS_AREA_SIDE_IN_M ${ARGOS_AREA_HALF_SIDE_IN_M}*2)
+endif()
+if(NOT ARGOS_CAMERA_1)
+    math(EXPR ARGOS_CAMERA_1 ${ARGOS_AREA_SIDE_IN_M}*2)
+endif()
+if(NOT ARGOS_LOG)
+    set(ARGOS_LOG "mbfo.log")
+endif()
 
 set(ARGOS_WALL_THICKNESS_IN_M 0.01)
-math(EXPR ARGOS_AREA_SIDE_IN_M ${ARGOS_AREA_HALF_SIDE_IN_M}*2)
-math(EXPR ARGOS_CAMERA_1 ${ARGOS_AREA_SIDE_IN_M}*2)
 
 # Copy configuration files to output directory
 configure_file(

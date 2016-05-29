@@ -13,12 +13,17 @@ endif()
 if(NOT ARGOS_AREA_HALF_SIDE_IN_M)
     set(ARGOS_AREA_HALF_SIDE_IN_M 3)
 endif()
+if(NOT ARGOS_AREA_SIDE_IN_M)
+    math(EXPR ARGOS_AREA_SIDE_IN_M ${ARGOS_AREA_HALF_SIDE_IN_M}*2)
+endif()
+if(NOT ARGOS_CAMERA_1)
+    math(EXPR ARGOS_CAMERA_1 ${ARGOS_AREA_SIDE_IN_M}*2)
+endif()
 if(NOT ARGOS_LOG)
     set(ARGOS_LOG "mbfo.log")
 endif()
+
 set(ARGOS_WALL_THICKNESS_IN_M 0.01)
-math(EXPR ARGOS_AREA_SIDE_IN_M ${ARGOS_AREA_HALF_SIDE_IN_M}*2)
-math(EXPR ARGOS_CAMERA_1 ${ARGOS_AREA_SIDE_IN_M}*2)
 
 # Copy configuration files to output directory
 configure_file(
