@@ -72,13 +72,9 @@ void MbfoLoopFunction::checkPercentageCoverage() {
             logFile << "\t" "\"threshold\" : {\n"
             << "\t\t" "\"step\" : " << GetSpace().GetSimulationClock() << ",\n"
             << "\t\t" "\"coverage\" : "
-            << fixed << setprecision(2) << percentageCoverage << ",\n"
-            << "\t\t" "\"target\" : [" << targetsPosition << "]\n"
-            << "\t}";
+            << fixed << setprecision(2) << percentageCoverage << "\n"
+            << "\t},\n";
             thresholdsToLog.pop_front();
-            if (thresholdsToLog.size() > 0)
-                logFile << ",";
-            logFile << "\n";
         }
     }
 }
@@ -127,6 +123,7 @@ void MbfoLoopFunction::Reset() {
 void MbfoLoopFunction::Destroy() {
     logFile << "}";
     logFile.close();
+    LOG << "Found " << targets.size() << " targets!" << endl;
 }
 
 void MbfoLoopFunction::update() {
@@ -142,16 +139,34 @@ void MbfoLoopFunction::update() {
     if (voronoiAssertion && gridCounter != gridCellsCount) {
         std::stringstream s;
         s << "There is " << gridCellsCount - gridCounter
-            << " cells unassigned to voronoi cells!";
+            << " cells unassigned to voronoi cells!\n";
+        for (int i = 0; i < coverage.getGrid().size(); i++)
+            for (int j = 0; j < coverage.getGrid().size(); j++) {
+                s << "[" << i << "," << j << "] "
+                    << "(" << coverage.getGrid().at(i).at(j).center << ") ";
+                for (auto& voronoiCell : voronoi.getCells()) {
+                    auto it = find_if(voronoiCell.coverageCells.begin(), voronoiCell.coverageCells.end(), [i, j]
+                        (const VoronoiCell::CoverageCell& a) { return a.x == i && a.y == j; });
+                    if (it != voronoiCell.coverageCells.end())
+                        s << voronoiCell.seed.id;
+                }
+                s << "\n";
+            }
         THROW_ARGOSEXCEPTION(s.str());
     }
 }
 
-void MbfoLoopFunction::addSingleTargetPosition(double certainty, const argos::CVector3& position) {
-    if (certainty > targetsPositionCertainty) {
-        std::lock_guard<std::mutex> guard(tagetPositionUpdateMutex);
-        targetsPosition = position;
-        targetsPositionCertainty = certainty;
+void MbfoLoopFunction::addTargetPosition(int id, const CVector3& position) {
+    std::lock_guard<std::mutex> guard(tagetPositionUpdateMutex);
+    if (targets.find(id) == targets.end()) {
+        targets[id] = {GetSpace().GetSimulationClock(), position};
+
+        LOG << "Target was found!" << endl;
+        logFile << "\t" "\"target\" : {\n"
+                << "\t\t" "\"id\" : " << id << ",\n"
+                << "\t\t" "\"step\" : " << targets[id].step << ",\n"
+                << "\t\t" "\"position\" : " << targets[id].position << "\n"
+                << "\t},\n";
     }
 }
 

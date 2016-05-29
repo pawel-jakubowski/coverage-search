@@ -50,7 +50,6 @@ void VoronoiDiagram::updateVoronoiDiagram() {
 void VoronoiDiagram::fillMissingEdges() {
     for (auto& cell : cells) {
         cell.fillMissingEdges(arenaLimits);
-        cell.finish();
     }
 }
 

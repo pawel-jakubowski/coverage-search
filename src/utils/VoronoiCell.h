@@ -24,7 +24,6 @@ public:
 
     VoronoiCell(Seed seed, argos::Real diagramLiftOnZ = 0.02f);
     void addEdge(argos::CRay3 edge);
-    void finish();
     void fillMissingEdges(const argos::CRange<argos::CVector3>& limits);
     bool isInside(argos::CVector3 point) const;
     const std::vector<argos::CRay3>& getEdges() const;
@@ -35,13 +34,40 @@ private:
 
     std::vector<argos::CRay3> edges;
     const argos::Real diagramLiftOnZ;
-    argos::CRange<argos::CVector3> roughCellBoundaries;
+//    argos::CRange<argos::CVector3> roughCellBoundaries;
     BoostPolygon boostPolygon;
 
+    void finish();
     bool areVectorsEqual(const argos::CVector3 &a, const argos::CVector3 &b) const;
     bool areOnSameSide(const argos::CVector3 &a, const argos::CVector3 &b) const;
 
     void updateMinMax(const argos::CVector3& point, argos::CVector3& max, argos::CVector3& min) const;
+
+    bool areOnOppositeSides(const argos::CVector3& a, const argos::CVector3& b,
+                            const argos::CRange<argos::CVector3>& limits) const;
+
+    bool isHorizontalLimit(const argos::CVector3& vertex, const argos::CRange<argos::CVector3>& limits) const;
+
+    std::string getVerticesLog(const argos::CVector3& a, const argos::CVector3& b,
+                                const argos::CRange<argos::CVector3>& limits) const;
+
+    bool isVerticalLimit(const argos::CVector3& vertex, const argos::CRange<argos::CVector3>& limits) const;
+
+    argos::Real getHorizontalLimit(const argos::CVector3& startVertex, const argos::CVector3& endVertex,
+                            const argos::CRange<argos::CVector3>& limits) const;
+
+    argos::Real getVerticalLimit(const argos::CVector3& startVertex, const argos::CVector3& endVertex,
+                                 const argos::CRange<argos::CVector3>& limits) const;
+
+    argos::Real getClosestHorizontal(const argos::CVector3& startVertex, const argos::CVector3& endVertex,
+                                     const std::array<argos::CVector3,2> corners) const;
+
+    argos::Real getClosestVertical(const argos::CVector3& startVertex, const argos::CVector3& endVertex,
+                                   const std::array<argos::CVector3,2> corners) const;
+
+    argos::CVector3 getClosestCorner(const argos::CVector3& startVertex, const argos::CVector3& endVertex,
+                                     const std::array<argos::CVector3,2> corners,
+                                     const std::array<argos::CVector3,2> complementaryCorners) const;
 };
 
 

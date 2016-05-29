@@ -19,8 +19,8 @@ public:
     virtual ~Mbfo() {}
 
     virtual void Init(TConfigurationNode& configuration);
+    virtual void Reset();
     virtual void ControlStep();
-    virtual void Reset() {}
     virtual void Destroy() {}
 
 private:

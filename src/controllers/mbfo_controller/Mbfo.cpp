@@ -49,6 +49,10 @@ void Mbfo::Init(TConfigurationNode& configuration) {
     assert(coverage != nullptr);
 }
 
+void Mbfo::Reset() {
+    stopped = false;
+}
+
 void Mbfo::ControlStep() {
     if (!stopped) {
         CDegrees robotsOrientation = getOrientationOnXY();
@@ -58,17 +62,6 @@ void Mbfo::ControlStep() {
             tumble(robotsOrientation);
         else
             swim();
-
-        auto packets = rabRx->GetReadings();
-        for(auto& packet : packets) {
-            int id;
-            Real posX, posY, posZ;
-            packet.Data >> id >> posX >> posY >> posZ;
-            if (id == 0)
-                continue;
-            LOG << "[" << GetId() << "] Found target " << id << " ("
-                << posX << ", " << posY << ", " << posZ << ")" << endl;
-        }
     }
     else {
         wheelsEngine->SetLinearVelocity(0,0);
@@ -78,12 +71,25 @@ void Mbfo::ControlStep() {
 }
 
 void Mbfo::detectTarget() const {
-    auto lightReadings = lightSensor->GetReadings();
+    /*auto lightReadings = lightSensor->GetReadings();
     double averageReading = 0;
-    for (auto& reading : lightReadings)
+    for (auto& reading : lightReadings) {
         averageReading += reading;
-    averageReading /= lightReadings.size();
-    loopFnc.addSingleTargetPosition(averageReading, positioningSensor->GetReading().Position);
+    }
+    averageReading /= lightReadings.size();*/
+
+    auto packets = rabRx->GetReadings();
+    for(auto& packet : packets) {
+        int id;
+        Real posX, posY, posZ;
+        packet.Data >> id >> posX >> posY >> posZ;
+        if (id == 0) {
+            continue;
+        }
+//        LOG << "[" << GetId() << "] Found target " << id << " ("
+//        << posX << ", " << posY << ", " << posZ << ")" << endl;
+        loopFnc.addTargetPosition(id, CVector3(posX, posY, posZ));
+    }
 }
 
 CDegrees Mbfo::getOrientationOnXY() {
@@ -116,8 +122,8 @@ void Mbfo::determineNewDirection() {
 //            LOG << "[" << GetId() << "] Go now to cell " << currentCellId << endl;
         }
         else {
-//            if (!stopped)
-//                LOG << "[" << GetId() << "] No cells to cover! Stop" << endl;
+            if (!stopped)
+                LOG << "[" << GetId() << "] No cells to cover! Stop" << endl;
             stopped = true;
         }
     }

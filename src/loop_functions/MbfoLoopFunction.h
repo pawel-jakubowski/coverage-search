@@ -19,7 +19,7 @@ public:
     virtual void Destroy() override;
 
     void update();
-    void addSingleTargetPosition(double certainty, const argos::CVector3& position);
+    void addTargetPosition(int id, const argos::CVector3& position);
     const CoverageGrid& getCoverageGrid();
     const std::vector<VoronoiDiagram::Cell>& getVoronoiCells();
     const VoronoiDiagram::Cell* getVoronoiCell(std::string id);
@@ -28,6 +28,12 @@ public:
     const std::vector<argos::CRay3> getRays();
 
 private:
+    struct Target {
+        using Id = int;
+        argos::UInt32 step;
+        argos::CVector3 position;
+    };
+
     std::ofstream logFile;
     std::list<double> thresholdsToLog;
     CoverageGrid coverage;
@@ -37,9 +43,7 @@ private:
     std::map<std::string, const VoronoiDiagram::Cell*> robotsCells;
     std::vector<argos::CRay3> rays;
 
-    const argos::Real targetSquareRadius = 0.01;
-    argos::CVector3 targetsPosition;
-    double targetsPositionCertainty = 0;
+    std::map<int, Target> targets;
 
     void updateRobotsPositions(const argos::CSpace::TMapPerType& entities);
     void addRobotsRays(argos::CFootBotEntity& footbot);

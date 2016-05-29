@@ -12,14 +12,14 @@ public:
 private:
     const argos::UInt8 gridColor = 40;
     const argos::UInt8 gridFloorDiff = 255 - gridColor;
-    const argos::CColor voronoiVertexColor = argos::CColor::BLACK;
-    const argos::Real vertexSize = 5.0f;
+    const argos::CColor voronoiVertexColor = argos::CColor::CYAN;
+    const argos::Real vertexSize = 15.0f;
     MbfoLoopFunction& mbfo;
 
     void drawGrid();
     void drawVoronoi();
 
-    void drawCell(const CoverageGrid::Cell &cell);
+    void drawCell(const CoverageGrid::Cell &cell, bool faulty = false);
 
     void drawVertex(const argos::CRay3& edge);
     void drawEdge(const argos::CRay3& edge);
