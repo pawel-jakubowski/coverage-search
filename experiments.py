@@ -46,6 +46,22 @@ class CmakeCommand:
             raise
 
 
+def runExperiments(cmake, config):
+    for experiment in config["experiments"]:
+        for targets in config["targets"]:
+            for robots in config["robots"]:
+                configuration = {
+                        "experiment" : experiment,
+                        "robots" : robots,
+                        "targets" : targets,
+                        "log" : {
+                            "path" : cmake.buildDir + "/results/" + experiment,
+                            "name" : str(robots) + "_" + str(targets) + ".json"
+                            }
+                        }
+                runExperiment(cmake, configuration)
+
+
 def runExperiment(cmake, config):
     print "Experiment " + config["experiment"] +\
           " with " + str(config["robots"]) + " robots and " +\
@@ -62,8 +78,41 @@ def runExperiment(cmake, config):
     print "\t done!"
 
 
-def plotExperiment(ax, configuration):
-    file = configuration["log"]["path"] + "/" + configuration["log"]["name"]
+def plotExperiments(buildDir, config):
+    figNumber = 1
+    for experiment in config["experiments"]:
+        fig = plt.figure(figNumber)
+        fig.suptitle(experiment)
+        ax = fig.gca()
+        subplotNumber = len(config["targets"])*100 + 11
+        for targets in config["targets"]:
+            plt.subplot(subplotNumber)
+            for robots in config["robots"]:
+                configuration = {
+                        "experiment" : experiment,
+                        "robots" : robots,
+                        "targets" : targets,
+                        "log" : {
+                            "path" : buildDir + "/results/" + experiment,
+                            "name" : str(robots) + "_" + str(targets) + ".json"
+                            }
+                        }
+                plotExperiment(ax, configuration)
+            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.xlabel("Step")
+            plt.ylabel("Found targets")
+            plt.grid(True)
+            plt.legend(loc="lower right")
+            plt.title(str(targets) + " targets")
+            plt.tight_layout()
+            subplotNumber += 1
+        figNumber += 1
+    plt.show()
+
+
+def plotExperiment(ax, config):
+    file = config["log"]["path"] + "/" + config["log"]["name"]
     with open(file, mode='r') as json_file:
         json_data = json.load(json_file)
 
@@ -77,48 +126,21 @@ def plotExperiment(ax, configuration):
         targetsArray.append(foundTargets)
     
     timeArray.sort()
-    plotLabel = str(configuration["robots"]) + " robots"
-    baseline, = ax.plot(timeArray, targetsArray, label=plotLabel)
-    ax.plot(timeArray, targetsArray, 'o', color=baseline.get_color())
+    plotLabel = str(config["robots"]) + " robots"
+    baseline, = plt.plot(timeArray, targetsArray, label=plotLabel)
+    plt.plot(timeArray, targetsArray, 'o', color=baseline.get_color())
 
 
 sourceDir = os.getcwd()
 buildDir = sourceDir + "/build/release"
 cmake = CmakeCommand(sourceDir, buildDir)
 
-configurations = [
-        {
-            "experiment" : "dynamic_mbfo",
-            "robots" : 5,
-            "targets" : 5
-        },
-        {
-            "experiment" : "dynamic_mbfo",
-            "robots" : 10,
-            "targets" : 5
-        },
-        {
-            "experiment" : "dynamic_mbfo",
-            "robots" : 15,
-            "targets" : 5
+configuration = {
+        "experiments" : ["mbfo", "dynamic_mbfo"],
+        "robots" : [10, 25, 50],
+        "targets" : [5, 10, 15]
         }
-        ]
 
-ax = plt.figure().gca()
-
-for config in configurations:
-    config["log"] = {
-        "path" : buildDir + "/results/" + config["experiment"],
-        "name" : str(config["robots"]) + "_" + str(config["targets"]) + ".json"
-        }
-#    runExperiment(cmake, config)
-    plotExperiment(ax, config)
-
-ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-plt.xlabel("Step")
-plt.ylabel("Found targets")
-plt.grid(True)
-plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=4, mode="expand", borderaxespad=0.)
-plt.show()
+#runExperiments(cmake, configuration)
+plotExperiments(buildDir, configuration)
 
