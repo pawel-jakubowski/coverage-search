@@ -49,10 +49,18 @@
                     label="mbfo_loop_fcn">
         <voronoi assertion="true" />
         <log path="@ARGOS_LOG@">
+            <threshold value="0.01" />
+            <threshold value="10" />
+            <threshold value="20" />
+            <threshold value="30" />
             <threshold value="40" />
+            <threshold value="50" />
             <threshold value="60" />
+            <threshold value="70" />
             <threshold value="80" />
+            <threshold value="90" />
             <threshold value="95" />
+            <threshold value="100" />
         </log>
     </loop_functions>
 

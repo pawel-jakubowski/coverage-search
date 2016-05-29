@@ -12,7 +12,7 @@ void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     parseLogConfig(t_tree);
     parseVoronoiConfig(t_tree);
     Reset();
-    logFile << "{\n";
+    log.file << "{\n";
 }
 
 void MbfoLoopFunction::parseVoronoiConfig(TConfigurationNode& t_tree) {
@@ -44,7 +44,7 @@ void MbfoLoopFunction::parseLogConfig(TConfigurationNode& t_tree) {
     catch (CARGoSException& e) {
         LOGERR << "Error parsing log config! " <<  e.what();
     }
-    logFile.open(logFileName);
+    log.file.open(logFileName);
 }
 
 void MbfoLoopFunction::PreStep() {
@@ -69,11 +69,7 @@ void MbfoLoopFunction::checkPercentageCoverage() {
         const auto percentageCoverage = coverage.getCoverageValue();
         if (percentageCoverage > thresholdsToLog.front()) {
             LOG << "Threshold " << thresholdsToLog.front() << "% achieved!" << endl;
-            logFile << "\t" "\"threshold\" : {\n"
-            << "\t\t" "\"step\" : " << GetSpace().GetSimulationClock() << ",\n"
-            << "\t\t" "\"coverage\" : "
-            << fixed << setprecision(2) << percentageCoverage << "\n"
-            << "\t},\n";
+            log.thresholds[GetSpace().GetSimulationClock()] = percentageCoverage;
             thresholdsToLog.pop_front();
         }
     }
@@ -121,9 +117,29 @@ void MbfoLoopFunction::Reset() {
 }
 
 void MbfoLoopFunction::Destroy() {
-    logFile << "}";
-    logFile.close();
-    LOG << "Found " << targets.size() << " targets!" << endl;
+    log.file << "\"thresholds\" : [\n";
+    for (auto& threshold : log.thresholds)
+        log.file << "\t" "{ "
+            << "\"step\" : " << threshold.first << ", "
+            << "\"coverage\" : "
+            << fixed << setprecision(2) << threshold.second
+            << " },\n";
+    log.file.seekp(-2, std::ios_base::end);
+    log.file << "\n],\n";
+
+    log.file << "\"targets\" : [\n";
+    for (auto& target : log.targets)
+        log.file << "\t" "{ "
+            << "\"id\" : " << target.first << ", "
+            << "\"step\" : " << target.second.step << ", "
+            << "\"position\" : [" << target.second.position << "]"
+            << " },\n";
+    log.file.seekp(-2, std::ios_base::end);
+    log.file << "\n]\n";
+
+    log.file << "}";
+    log.file.close();
+    LOG << "Found " << log.targets.size() << " targets!" << endl;
 }
 
 void MbfoLoopFunction::update() {
@@ -158,15 +174,9 @@ void MbfoLoopFunction::update() {
 
 void MbfoLoopFunction::addTargetPosition(int id, const CVector3& position) {
     std::lock_guard<std::mutex> guard(tagetPositionUpdateMutex);
-    if (targets.find(id) == targets.end()) {
-        targets[id] = {GetSpace().GetSimulationClock(), position};
-
+    if (log.targets.find(id) == log.targets.end()) {
+        log.targets[id] = {GetSpace().GetSimulationClock(), position};
         LOG << "Target was found!" << endl;
-        logFile << "\t" "\"target\" : {\n"
-                << "\t\t" "\"id\" : " << id << ",\n"
-                << "\t\t" "\"step\" : " << targets[id].step << ",\n"
-                << "\t\t" "\"position\" : " << targets[id].position << "\n"
-                << "\t},\n";
     }
 }
 

@@ -33,8 +33,13 @@ private:
         argos::UInt32 step;
         argos::CVector3 position;
     };
+    struct MbfoLog {
+        std::ofstream file;
+        std::map<Target::Id, Target> targets;
+        std::map<argos::UInt32, double> thresholds;
+    };
 
-    std::ofstream logFile;
+    MbfoLog log;
     std::list<double> thresholdsToLog;
     CoverageGrid coverage;
     VoronoiDiagram voronoi;
@@ -42,8 +47,6 @@ private:
     std::map<std::string, argos::CVector3> robotsPositions;
     std::map<std::string, const VoronoiDiagram::Cell*> robotsCells;
     std::vector<argos::CRay3> rays;
-
-    std::map<int, Target> targets;
 
     void updateRobotsPositions(const argos::CSpace::TMapPerType& entities);
     void addRobotsRays(argos::CFootBotEntity& footbot);

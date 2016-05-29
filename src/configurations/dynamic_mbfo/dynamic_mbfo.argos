@@ -48,7 +48,7 @@
     <loop_functions library="loop_functions/libloop_functions"
                     label="dynamic_mbfo_loop_fcn">
         <voronoi assertion="false" />
-        <log path="dynamic_mbfo.log">
+        <log path="@ARGOS_LOG@">
             <threshold value="0.01" />
             <threshold value="10" />
             <threshold value="25" />
@@ -56,6 +56,7 @@
             <threshold value="60" />
             <threshold value="80" />
             <threshold value="95" />
+            <threshold value="100" />
         </log>
     </loop_functions>
 
