@@ -1,5 +1,7 @@
 #!/usr/bin/python
 import os
+import sys
+import getopt
 import errno
 import subprocess
 import json
@@ -78,8 +80,7 @@ def runExperiment(cmake, config):
     print "\t done!"
 
 
-def plotExperiments(buildDir, config):
-    figNumber = 1
+def plotFoundTargets(buildDir, config, figNumber = 1):
     for experiment in config["experiments"]:
         fig = plt.figure(figNumber)
         fig.suptitle(experiment)
@@ -97,21 +98,22 @@ def plotExperiments(buildDir, config):
                             "name" : str(robots) + "_" + str(targets) + ".json"
                             }
                         }
-                plotExperiment(ax, configuration)
+                subplotFoundTargets(ax, configuration)
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-            plt.xlabel("Step")
-            plt.ylabel("Found targets")
+            plt.xlim([0, targets])
+            plt.ylabel("Step")
+            plt.xlabel("Found targets")
             plt.grid(True)
-            plt.legend(loc="lower right")
+            plt.legend(loc="best")
             plt.title(str(targets) + " targets")
             plt.tight_layout()
             subplotNumber += 1
         figNumber += 1
-    plt.show()
+    return figNumber
 
 
-def plotExperiment(ax, config):
+def subplotFoundTargets(ax, config):
     file = config["log"]["path"] + "/" + config["log"]["name"]
     with open(file, mode='r') as json_file:
         json_data = json.load(json_file)
@@ -127,20 +129,96 @@ def plotExperiment(ax, config):
     
     timeArray.sort()
     plotLabel = str(config["robots"]) + " robots"
-    baseline, = plt.plot(timeArray, targetsArray, label=plotLabel)
-    plt.plot(timeArray, targetsArray, 'o', color=baseline.get_color())
+    baseline, = plt.plot(targetsArray, timeArray, label=plotLabel)
+    plt.plot(targetsArray, timeArray, 'o', color=baseline.get_color())
 
 
-sourceDir = os.getcwd()
-buildDir = sourceDir + "/build/release"
-cmake = CmakeCommand(sourceDir, buildDir)
+def plotCoverage(buildDir, config, figNumber = 1):
+    for experiment in config["experiments"]:
+        fig = plt.figure(figNumber)
+        fig.suptitle(experiment)
+        ax = fig.gca()
+        subplotNumber = len(config["targets"])*100 + 11
+        for targets in config["targets"]:
+            plt.subplot(subplotNumber)
+            for robots in config["robots"]:
+                configuration = {
+                        "experiment" : experiment,
+                        "robots" : robots,
+                        "targets" : targets,
+                        "log" : {
+                            "path" : buildDir + "/results/" + experiment,
+                            "name" : str(robots) + "_" + str(targets) + ".json"
+                            }
+                        }
+                subplotCoverage(ax, configuration)
+            ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+            plt.ylabel("Step")
+            plt.xlabel("Coverage [%]")
+            plt.grid(True)
+            plt.legend(loc="best")
+            plt.title(str(targets) + " targets")
+            plt.tight_layout()
+            subplotNumber += 1
+        figNumber += 1
+    return figNumber
 
-configuration = {
-        "experiments" : ["mbfo", "dynamic_mbfo"],
-        "robots" : [10, 25, 50],
-        "targets" : [5, 10, 15]
-        }
 
-#runExperiments(cmake, configuration)
-plotExperiments(buildDir, configuration)
+def subplotCoverage(ax, config):
+    file = config["log"]["path"] + "/" + config["log"]["name"]
+    with open(file, mode='r') as json_file:
+        json_data = json.load(json_file)
 
+    timeArray = []
+    coverageArray = []
+
+    for threshold in json_data["thresholds"]:
+        timeArray.append(threshold["step"])
+        coverageArray.append(threshold["coverage"])
+    
+    plotLabel = str(config["robots"]) + " robots"
+    baseline, = plt.plot(coverageArray, timeArray, label=plotLabel)
+    plt.plot(coverageArray, timeArray, 'o', color=baseline.get_color())
+
+
+#======#
+# MAIN #
+#======#
+def main(argv):
+    try:
+        opts, args = getopt.getopt(argv,"ntc",["no-exe","targets","coverage"])
+    except getopt.GetoptError:
+        print sys.argv[0] + ' -n -t -c'
+        sys.exit(2)
+    execute = True
+    targets = False
+    coverage = False
+    for opt, arg in opts:
+        if opt in ("-n", "--no-exe"):
+            execute = False
+        elif opt in ("-t", "--targets"):
+            targets = True
+        elif opt in ("-c", "--coverage"):
+            coverage = True
+
+    sourceDir = os.getcwd()
+    buildDir = sourceDir + "/build/release"
+    cmake = CmakeCommand(sourceDir, buildDir)
+
+    configuration = {
+            "experiments" : ["mbfo", "dynamic_mbfo"],
+            "robots" : [10, 25, 50],
+            "targets" : [5, 10, 15]
+            }
+
+    figNumber = 1
+    if execute:
+        runExperiments(cmake, configuration)
+    if targets:
+        figNumber = plotFoundTargets(buildDir, configuration, figNumber)
+    if coverage:
+        figNumber = plotCoverage(buildDir, configuration, figNumber)
+    plt.show()
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
