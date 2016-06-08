@@ -26,6 +26,11 @@ class CmakeCommand:
         self.srcDir = srcDir
         self.buildDir = buildDir
         self.flags = {}
+        self.stdout = subprocess.PIPE
+        self.stderr = subprocess.PIPE
+    def setVerbose(self):
+        self.stdout = None
+        self.stderr = None
     def makeBuildDir(self):
         mkdir(self.buildDir)
     def setFlag(self, key, value):
@@ -37,18 +42,18 @@ class CmakeCommand:
         cmakeCmd += " " + self.srcDir
         self.makeBuildDir()
         os.chdir(self.buildDir)
-        returnValue = subprocess.call(cmakeCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        returnValue = subprocess.call(cmakeCmd, stdout=self.stdout, stderr=self.stderr, shell=True)
         if returnValue != 0:
             raise
     def build(self, target):
         makeCmd = "make " + target + " -j" + str(self.threads)
         os.chdir(self.buildDir)
-        returnValue = subprocess.call(makeCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        returnValue = subprocess.call(makeCmd, stdout=self.stdout, stderr=self.stderr, shell=True)
         if returnValue != 0:
             raise
 
 
-def runExperiments(cmake, config):
+def runExperiments(cmake, config, verbose):
     for experiment in config["experiments"]:
         for targets in config["targets"]:
             for robots in config["robots"]:
@@ -61,10 +66,10 @@ def runExperiments(cmake, config):
                             "name" : str(robots) + "_" + str(targets) + ".json"
                             }
                         }
-                runExperiment(cmake, configuration)
+                runExperiment(cmake, configuration, verbose)
 
 
-def runExperiment(cmake, config):
+def runExperiment(cmake, config, verbose):
     print "Experiment " + config["experiment"] +\
           " with " + str(config["robots"]) + " robots and " +\
           str(config["targets"]) + " targets"
@@ -73,6 +78,8 @@ def runExperiment(cmake, config):
     cmake.setFlag("ARGOS_TARGETS_NUMBER", config["targets"])
     mkdir(config["log"]["path"])
     cmake.setFlag("ARGOS_LOG", config["log"]["path"] + "/" + config["log"]["name"])
+    if verbose:
+        cmake.setVerbose()
     print "\t configure..."
     cmake.configure()
     print "\t build & run..."
@@ -118,6 +125,26 @@ def configureSubplot(ax, title, labels, integerAxis = ["default", "default"], xl
     plt.title(title)
 
 
+def plotLightDistance(buildDir, config, figNumber = 1):
+    #for experiment in config["experiments"]:
+    experiment = "pso"
+    fig = plt.figure(figNumber)
+    fig.suptitle(experiment)
+    ax = fig.gca()
+    for robots in config["robots"]:
+        distancesArray = []
+        timeArray = []
+        configuration = generateConfig(buildDir, experiment, robots, 0)
+        for distance in getLogData(configuration["log"])["closest"]:
+            timeArray.append(distance["step"])
+            distancesArray.append(distance["distance"])
+        plt.plot(timeArray, distancesArray, label=str(robots) + " robots")
+        configureSubplot(ax, "", ["Step", "Distance [m]"], ["int", "default"])
+    plt.tight_layout()
+    figNumber += 1
+    return figNumber
+
+
 def plotFoundTargets(buildDir, config, figNumber = 1):
     for experiment in config["experiments"]:
         fig = plt.figure(figNumber)
@@ -156,29 +183,28 @@ def plotCoverage(buildDir, config, figNumber = 1):
         fig = plt.figure(figNumber)
         fig.suptitle(experiment)
         ax = fig.gca()
-        subplotNumber = len(config["targets"])*100 + 11
-        for targets in config["targets"]:
-            plt.subplot(subplotNumber)
-            for robots in config["robots"]:
-                subplotCoverage(ax, generateConfig(buildDir, experiment, robots, targets))
-                configureSubplot(ax, str(targets)+" targets", ["Coverage [%]", "Step"], ["default", "int"])
-            plt.tight_layout()
-            subplotNumber += 1
+        for robots in config["robots"]:
+            coverageArray = []
+            timeArray = []
+            for targets in config["targets"]:
+                configuration = generateConfig(buildDir, experiment, robots, targets)
+                index = 0
+                for threshold in getLogData(configuration["log"])["thresholds"]:
+                    try:
+                        timeArray[index] += threshold["step"]
+                        coverageArray[index] += threshold["coverage"]
+                    except IndexError:
+                        timeArray.append(threshold["step"])
+                        coverageArray.append(threshold["coverage"])
+                    index += 1
+            numberOfSamples = len(config["targets"])
+            timeArray = [x / numberOfSamples for x in timeArray]
+            coverageArray = [x / numberOfSamples for x in coverageArray]
+            joinPlot(str(robots) + " robots", coverageArray, timeArray)
+            configureSubplot(ax, "", ["Coverage [%]", "Step"], ["default", "int"])
+        plt.tight_layout()
         figNumber += 1
     return figNumber
-
-
-def subplotCoverage(ax, config):
-    data = getLogData(config["log"])
-
-    timeArray = []
-    coverageArray = []
-
-    for threshold in data["thresholds"]:
-        timeArray.append(threshold["step"])
-        coverageArray.append(threshold["coverage"])
-    
-    joinPlot(str(config["robots"]) + " robots", coverageArray, timeArray)
 
 
 def plotCompareCoverage(buildDir, config, figNumber = 1):
@@ -195,14 +221,15 @@ def plotCompareCoverage(buildDir, config, figNumber = 1):
                 index = 0
                 for threshold in getLogData(configuration["log"])["thresholds"]:
                     try:
-                        timeArray[index] = threshold["step"]
-                        coverageArray[index] = threshold["coverage"]
+                        timeArray[index] += threshold["step"]
+                        coverageArray[index] += threshold["coverage"]
                     except IndexError:
                         timeArray.append(threshold["step"])
                         coverageArray.append(threshold["coverage"])
                     index += 1
-            numberOfSamples = len(timeArray)
+            numberOfSamples = len(config["targets"])
             timeArray = [x / numberOfSamples for x in timeArray]
+            coverageArray = [x / numberOfSamples for x in coverageArray]
             joinPlot(experiment, coverageArray, timeArray)
             configureSubplot(ax, str(robots)+" robots", ["Coverage [%]", "Step"], ["default", "int"])
         plt.tight_layout()
@@ -240,9 +267,10 @@ def plotCompareTargets(buildDir, config, figNumber = 1):
 #======#
 def main():
     parser = argparse.ArgumentParser(description="Execute ARGoS experiments")
-    plotTypes = ["targets", "coverage", "compare-coverage", "compare-targets"]
-    parser.add_argument("--no-exe", action="store_true", help="Do not execute experiments")
-    parser.add_argument("--plot", nargs="+", choices=plotTypes, default=[], type=str, help="Plot given plot-type")
+    plotTypes = ["light", "targets", "coverage", "coverage-compare", "targets-compare"]
+    parser.add_argument("--no-exe", action="store_true", help="do not execute experiments")
+    parser.add_argument("--verbose", action="store_true", help="print verbose log")
+    parser.add_argument("--plot", nargs="+", choices=plotTypes, default=[], type=str, help="plot given plot-type")
     args = parser.parse_args()
 
     sourceDir = os.getcwd()
@@ -250,21 +278,23 @@ def main():
     cmake = CmakeCommand(sourceDir, buildDir)
 
     configuration = {
-            "experiments" : ["mbfo", "dynamic_mbfo"],
+            "experiments" : ["pso", "mbfo", "dynamic_mbfo"],
             "robots" : [10, 25, 50],
-            "targets" : [5, 10, 15]
+            "targets" : [0]
             }
 
     figNumber = 1
     if not args.no_exe:
-        runExperiments(cmake, configuration)
+        runExperiments(cmake, configuration, args.verbose)
+    if "light" in args.plot:
+        figNumber = plotLightDistance(buildDir, configuration, figNumber)
     if "targets" in args.plot:
         figNumber = plotFoundTargets(buildDir, configuration, figNumber)
     if "coverage" in args.plot:
         figNumber = plotCoverage(buildDir, configuration, figNumber)
-    if "compare-coverage" in args.plot:
+    if "coverage-compare" in args.plot:
         figNumber = plotCompareCoverage(buildDir, configuration, figNumber)
-    if "compare-targets" in args.plot:
+    if "targets-compare" in args.plot:
         figNumber = plotCompareTargets(buildDir, configuration, figNumber)
     plt.show()
 

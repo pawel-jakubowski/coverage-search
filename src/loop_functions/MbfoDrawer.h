@@ -12,8 +12,8 @@ public:
 private:
     const argos::UInt8 gridColor = 40;
     const argos::UInt8 gridFloorDiff = 255 - gridColor;
-    const argos::CColor voronoiVertexColor = argos::CColor::CYAN;
-    const argos::Real vertexSize = 15.0f;
+    const argos::CColor voronoiVertexColor = argos::CColor::RED;
+    const argos::Real vertexSize = 5.0f;
     MbfoLoopFunction& mbfo;
 
     void drawGrid();

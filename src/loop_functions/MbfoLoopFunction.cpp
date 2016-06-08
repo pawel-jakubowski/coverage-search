@@ -2,6 +2,7 @@
 #include <argos3/plugins/simulator/entities/proximity_sensor_equipped_entity.h>
 #include <mutex>
 
+
 using namespace std;
 using namespace argos;
 using namespace boost::polygon;
@@ -12,7 +13,6 @@ void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     parseLogConfig(t_tree);
     parseVoronoiConfig(t_tree);
     Reset();
-    log.file << "{\n";
 }
 
 void MbfoLoopFunction::parseVoronoiConfig(TConfigurationNode& t_tree) {
@@ -26,11 +26,11 @@ void MbfoLoopFunction::parseVoronoiConfig(TConfigurationNode& t_tree) {
 }
 
 void MbfoLoopFunction::parseLogConfig(TConfigurationNode& t_tree) {
-    string logFileName = "mbfo.log";
+    log.name = "mbfo.log";
     try {
         TConfigurationNode& conf = GetNode(t_tree, "log");
-        GetNodeAttribute(conf, "path", logFileName);
-        LOG << "Log file: " << logFileName << endl;
+        GetNodeAttribute(conf, "path", log.name);
+        LOG << "Log file: " << log.name << endl;
         TConfigurationNodeIterator it("threshold");
         it = it.begin(&conf);
         double threshold = 0;
@@ -44,7 +44,6 @@ void MbfoLoopFunction::parseLogConfig(TConfigurationNode& t_tree) {
     catch (CARGoSException& e) {
         LOGERR << "Error parsing log config! " <<  e.what();
     }
-    log.file.open(logFileName);
 }
 
 void MbfoLoopFunction::PreStep() {
@@ -117,29 +116,35 @@ void MbfoLoopFunction::Reset() {
 }
 
 void MbfoLoopFunction::Destroy() {
+    saveLog();
+}
+
+void MbfoLoopFunction::saveLog() {
+    log.file.open(log.name);
+    log.file << "{\n";
     log.file << "\"thresholds\" : [\n";
     for (auto& threshold : log.thresholds)
         log.file << "\t" "{ "
-            << "\"step\" : " << threshold.first << ", "
-            << "\"coverage\" : "
-            << fixed << setprecision(2) << threshold.second
-            << " },\n";
-    log.file.seekp(-2, std::ios_base::end);
+        << "\"step\" : " << threshold.first << ", "
+        << "\"coverage\" : "
+        << fixed << setprecision(2) << threshold.second
+        << " },\n";
+    log.file.seekp(-2, ios_base::end);
     log.file << "\n],\n";
 
     log.file << "\"targets\" : [\n";
-    for (auto& target : log.targets)
+    for (auto& target : log.targets) {
         log.file << "\t" "{ "
-            << "\"id\" : " << target.first << ", "
-            << "\"step\" : " << target.second.step << ", "
-            << "\"position\" : [" << target.second.position << "]"
-            << " },\n";
-    log.file.seekp(-2, std::ios_base::end);
+        << "\"id\" : " << target.first << ", "
+        << "\"step\" : " << target.second.step << ", "
+        << "\"position\" : [" << target.second.position << "]"
+        << " },\n";
+    }
+    log.file.seekp(-2, ios_base::end);
     log.file << "\n]\n";
 
     log.file << "}";
     log.file.close();
-    LOG << "Found " << log.targets.size() << " targets!" << endl;
 }
 
 void MbfoLoopFunction::update() {

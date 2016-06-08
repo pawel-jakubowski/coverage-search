@@ -1,0 +1,156 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+
+    <!-- ************************* -->
+    <!-- * General configuration * -->
+    <!-- ************************* -->
+    <framework>
+        <system threads="4"/>
+        <experiment length="1000"
+                    ticks_per_second="10"/>
+    </framework>
+
+    <!-- *************** -->
+    <!-- * Controllers * -->
+    <!-- *************** -->
+    <controllers>
+
+        <pso_controller id="pso_controller"
+                        library="controllers/libpso.so">
+            <actuators>
+                <differential_steering implementation="default"/>
+            </actuators>
+            <sensors>
+                <proximity implementation="default" show_rays="true"/>
+                <positioning implementation="default" pos_noise_range="-0.05:0.05"/>
+                <light implementation="default" noise_level="0.0"/>
+            </sensors>
+            <params max_velocity="1.24"
+                    rotate_speed="1.24"
+                    inertia="1.2"
+                    personal_weight="2"
+                    neighbourhood_weight="2"
+                    min_distance="0.01"/>
+        </pso_controller>
+
+    </controllers>
+
+    <!-- *********************** -->
+    <!-- * Arena configuration * -->
+    <!-- *********************** -->
+    <arena size="@ARGOS_AREA_SIDE_IN_M@, @ARGOS_AREA_SIDE_IN_M@, 1" center="0,0,0.5">
+
+        <!-- ********* -->
+        <!-- * Walls * -->
+        <!-- ********* -->
+        <box id="wall_north" size="@ARGOS_AREA_SIDE_IN_M@,@ARGOS_WALL_THICKNESS_IN_M@,0.5" movable="false">
+            <body position="0,@ARGOS_AREA_HALF_SIDE_IN_M@,0" orientation="0,0,0"/>
+        </box>
+        <box id="wall_south" size="@ARGOS_AREA_SIDE_IN_M@,@ARGOS_WALL_THICKNESS_IN_M@,0.5" movable="false">
+            <body position="0,-@ARGOS_AREA_HALF_SIDE_IN_M@,0" orientation="0,0,0"/>
+        </box>
+        <box id="wall_east" size="@ARGOS_WALL_THICKNESS_IN_M@,@ARGOS_AREA_SIDE_IN_M@,0.5" movable="false">
+            <body position="@ARGOS_AREA_HALF_SIDE_IN_M@,0,0" orientation="0,0,0"/>
+        </box>
+        <box id="wall_west" size="@ARGOS_WALL_THICKNESS_IN_M@,@ARGOS_AREA_SIDE_IN_M@,0.5" movable="false">
+            <body position="-@ARGOS_AREA_HALF_SIDE_IN_M@,0,0" orientation="0,0,0"/>
+        </box>
+
+        <!-- ********** -->
+        <!-- * Robots * -->
+        <!-- ********** -->
+        <distribute>
+            <position method="uniform"
+                      min="-@ARGOS_AREA_HALF_SIDE_IN_M@, -@ARGOS_AREA_HALF_SIDE_IN_M@, 0"
+                      max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0"/>
+            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0"/>
+            <entity quantity="@ARGOS_ROBOTS_NUMBER@" max_trials="100">
+                <e-puck id="fb">
+                    <controller config="pso_controller"/>
+                </e-puck>
+            </entity>
+        </distribute>
+
+        <!-- ************* -->
+        <!-- * Obstacles * -->
+        <!-- ************* -->
+        <!--<distribute>-->
+        <!--<position method="uniform" min="-1.75,-1.75,0" max="1.75,1.75,0" />-->
+        <!--<orientation method="constant" values="0,0,0" />-->
+        <!--<entity quantity="5" max_trials="100">-->
+        <!--<cylinder id="c" height="0.25" radius="0.1" movable="false" />-->
+        <!--</entity>-->
+        <!--</distribute>-->
+        <!---->
+        <!--<distribute>-->
+        <!--<position method="uniform" min="-1.75,-1.75,0" max="1.75,1.75,0" />-->
+        <!--<orientation method="uniform" min="0,0,0" max="90,0,0"/>-->
+        <!--<entity quantity="5" max_trials="100">-->
+        <!--<box id="b" size="0.1,0.6,0.3" movable="false" />-->
+        <!--</entity>-->
+        <!--</distribute>-->
+
+        <!-- ********** -->
+        <!-- * Target * -->
+        <!-- ********** -->
+        <light id="light"
+               position="0,0,0.5"
+               orientation="0,0,0"
+               color="yellow"
+               intensity="0.5"
+               medium="leds"/>
+
+    </arena>
+
+    <!-- ****************** -->
+    <!-- * Loop functions * -->
+    <!-- ****************** -->
+    <loop_functions library="loop_functions/libloop_functions"
+                    label="closest_distance">
+        <target position_x="0" position_y="0"/>
+        <log path="@ARGOS_LOG@">
+            <threshold value="0.01" />
+            <threshold value="10" />
+            <threshold value="20" />
+            <threshold value="30" />
+            <threshold value="40" />
+            <threshold value="50" />
+            <threshold value="60" />
+            <threshold value="70" />
+            <threshold value="80" />
+            <threshold value="90" />
+            <threshold value="95" />
+            <threshold value="100" />
+        </log>
+    </loop_functions>
+
+    <!-- ******************* -->
+    <!-- * Physics engines * -->
+    <!-- ******************* -->
+    <physics_engines>
+        <dynamics2d id="dyn2d"/>
+    </physics_engines>
+
+    <!-- ********* -->
+    <!-- * Media * -->
+    <!-- ********* -->
+    <media>
+        <led id="leds"/>
+    </media>
+
+    <!-- ****************** -->
+    <!-- * Visualization * -->
+    <!-- ****************** -->
+    <visualization>
+        <!--<qt-opengl>-->
+            <!--<camera>-->
+                <!--<placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>-->
+            <!--</camera>-->
+        <!--</qt-opengl>-->
+    </visualization>
+
+</argos-configuration>

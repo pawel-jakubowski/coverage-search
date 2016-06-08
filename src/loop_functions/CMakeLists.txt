@@ -16,6 +16,7 @@ set(SRC
     MbfoDrawer.cpp
     DynamicMbfoLoopFunction.cpp
     CellularDecomposition.cpp
+    ClosestDistance.cpp
 )
 
 # If Qt+OpenGL dependencies were found, descend into these directories

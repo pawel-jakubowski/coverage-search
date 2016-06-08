@@ -34,6 +34,7 @@ private:
         argos::CVector3 position;
     };
     struct MbfoLog {
+        std::string name;
         std::ofstream file;
         std::map<Target::Id, Target> targets;
         std::map<argos::UInt32, double> thresholds;
@@ -59,4 +60,6 @@ private:
     void parseVoronoiConfig(argos::TConfigurationNode& t_tree);
 
     void checkPercentageCoverage();
+
+    void saveLog() ;
 };
