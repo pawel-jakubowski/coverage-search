@@ -38,28 +38,28 @@ void ClosestDistance::parseTargetConfig(TConfigurationNode& t_tree) {
     }
 }
 
-void ClosestDistance::PostStep() {
-    auto& entities = GetSpace().GetEntitiesByType("e-puck");
+void ClosestDistance::Destroy() {
+    saveLog();
+}
 
-    Real closest = 10000;
-    for (const auto& entity : entities) {
-        auto& epuck = *(any_cast<CEPuckEntity*>(entity.second));
-        CVector2 epuckPosition;
-        epuck.GetEmbodiedEntity().GetOriginAnchor().Position.ProjectOntoXY(epuckPosition);
-        Real distance = (epuckPosition - position).Length();
-        if (distance < closest)
-            closest = distance;
-    }
+void ClosestDistance::addRobotPosition(CVector3 pos) {
+    CVector2 robotsPosition;
+    pos.ProjectOntoXY(robotsPosition);
+    Real distance = (robotsPosition - position).Length();
 
-    if (bestObtainedDistance > closest) {
-        log.closestDistances[GetSpace().GetSimulationClock()] = closest;
-        bestObtainedDistance = closest;
+    std::lock_guard<std::mutex> guard(robotDistanceUpdateMutex);
+    if (distance < bestObtainedDistance) {
+        bestObtainedDistance = distance;
+        log.closestDistances[GetSpace().GetSimulationClock()] = bestObtainedDistance;
     }
 }
 
-void ClosestDistance::Destroy() {
-    PostStep();
-    saveLog();
+void ClosestDistance::addTargetPosition(int id, const CVector3& position) {
+    std::lock_guard<std::mutex> guard(tagetPositionUpdateMutex);
+    if (log.targets.find(id) == log.targets.end()) {
+        log.targets[id] = { GetSpace().GetSimulationClock(), position };
+        LOG << "Target was found!" << endl;
+    }
 }
 
 void ClosestDistance::saveLog() {
@@ -72,7 +72,20 @@ void ClosestDistance::saveLog() {
         << "\"step\" : " << distance.first << ", "
         << "\"distance\" : " << distance.second
         << " },\n";
-    log.file.seekp(-2, ios_base::end);
+    if (log.closestDistances.size() != 0)
+        log.file.seekp(-2, ios_base::end);
+    log.file << "\n],\n";
+
+    log.file << "\"targets\" : [\n";
+    for (auto& target : log.targets) {
+        log.file << "\t" "{ "
+        << "\"id\" : " << target.first << ", "
+        << "\"step\" : " << target.second.step << ", "
+        << "\"position\" : [" << target.second.position << "]"
+        << " },\n";
+    }
+    if (log.targets.size() != 0)
+        log.file.seekp(-2, ios_base::end);
     log.file << "\n]\n";
 
     log.file << "}";

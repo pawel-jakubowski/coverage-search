@@ -6,8 +6,9 @@
     <!-- ************************* -->
     <framework>
         <system threads="4"/>
-        <experiment length="1000"
-                    ticks_per_second="10"/>
+        <experiment length="@ARGOS_EXPERIMENT_LENGTH@"
+                    ticks_per_second="@ARGOS_TICKS_PER_SEC@"
+                    @ARGOS_RANDOM_SEED@ />
     </framework>
 
     <!-- *************** -->
@@ -24,14 +25,27 @@
                 <proximity implementation="default" show_rays="true"/>
                 <positioning implementation="default" pos_noise_range="-0.05:0.05"/>
                 <light implementation="default" noise_level="0.0"/>
+                <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
             </sensors>
-            <params max_velocity="1.24"
+            <params target="robot"
+                    max_velocity="5"
                     rotate_speed="1.24"
-                    inertia="1.2"
+                    inertia="1"
                     personal_weight="2"
                     neighbourhood_weight="2"
                     min_distance="0.01"/>
         </pso_controller>
+
+        <target_controller id="target" library="controllers/libtarget_controller.so">
+            <actuators>
+                <range_and_bearing implementation="default" />
+            </actuators>
+            <sensors>
+                <positioning implementation="default" />
+                <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
+            </sensors>
+            <params />
+        </target_controller>
 
     </controllers>
 
@@ -65,7 +79,7 @@
                       max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0"/>
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0"/>
             <entity quantity="@ARGOS_ROBOTS_NUMBER@" max_trials="100">
-                <e-puck id="fb">
+                <e-puck id="fb" rab_range="0.2" rab_data_size="40">
                     <controller config="pso_controller"/>
                 </e-puck>
             </entity>
@@ -93,6 +107,18 @@
         <!-- ********** -->
         <!-- * Target * -->
         <!-- ********** -->
+        <distribute>
+            <position method="uniform"
+                      min="-@ARGOS_AREA_HALF_SIDE_IN_M@, -@ARGOS_AREA_HALF_SIDE_IN_M@, 0"
+                      max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" />
+            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
+            <entity quantity="@ARGOS_TARGETS_NUMBER@" max_trials="100" >
+                <target id="t" rab_range="0.25" rab_data_size="40">
+                    <controller config="target" />
+                </target>
+            </entity>
+        </distribute>
+
         <light id="light"
                position="0,0,0.5"
                orientation="0,0,0"
@@ -135,6 +161,7 @@
     <!-- * Media * -->
     <!-- ********* -->
     <media>
+        <range_and_bearing id="rab" />
         <led id="leds"/>
     </media>
 

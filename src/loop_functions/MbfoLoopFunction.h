@@ -5,6 +5,8 @@
 #include <utils/VoronoiDiagram.h>
 #include <utils/CoverageGrid.h>
 #include <iostream>
+#include <mutex>
+
 
 class MbfoLoopFunction : public argos::CLoopFunctions {
 public:
@@ -39,6 +41,8 @@ private:
         std::map<Target::Id, Target> targets;
         std::map<argos::UInt32, double> thresholds;
     };
+
+    std::mutex tagetPositionUpdateMutex;
 
     MbfoLog log;
     std::list<double> thresholdsToLog;

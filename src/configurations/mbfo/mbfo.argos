@@ -6,9 +6,9 @@
     <!-- ************************* -->
     <framework>
         <system threads="4" />
-        <experiment length="1000"
-                    ticks_per_second="10"
-                    random_seed="123"/>
+        <experiment length="@ARGOS_EXPERIMENT_LENGTH@"
+                    ticks_per_second="@ARGOS_TICKS_PER_SEC@"
+                    @ARGOS_RANDOM_SEED@ />
     </framework>
 
     <!-- *************** -->
@@ -129,11 +129,6 @@
                 </target>
             </entity>
         </distribute>
-
-        <!--<target id="t" rab_range="0.25" rab_data_size="40">-->
-            <!--<body position="0,0,0" orientation="0,0,0" />-->
-            <!--<controller config="target" />-->
-        <!--</target>-->
 
         <!--<light id="light"-->
                <!--position="0,0,0.5"-->

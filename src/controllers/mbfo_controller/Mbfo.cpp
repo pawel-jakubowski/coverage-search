@@ -83,9 +83,7 @@ void Mbfo::detectTarget() const {
         int id;
         Real posX, posY, posZ;
         packet.Data >> id >> posX >> posY >> posZ;
-        if (id == 0) {
-            continue;
-        }
+        if (id == 0) continue; // Skip default message send by mbfo robots
 //        LOG << "[" << GetId() << "] Found target " << id << " ("
 //        << posX << ", " << posY << ", " << posZ << ")" << endl;
         loopFnc.addTargetPosition(id, CVector3(posX, posY, posZ));

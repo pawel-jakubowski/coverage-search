@@ -8,6 +8,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions("-pg")
 endif()
 
+add_definitions("-Wl,--no-undefined")
+
 include_directories(
         .
         ..

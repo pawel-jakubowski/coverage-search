@@ -4,6 +4,7 @@ import sys
 import argparse
 import errno
 import subprocess
+import shlex
 import json
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -19,6 +20,7 @@ def mkdir(path):
 
 
 class CmakeCommand:
+    maxTries = 2
     threads = 4
     def __init__(self, srcDir, buildDir = None):
         if buildDir is None:
@@ -42,38 +44,73 @@ class CmakeCommand:
         cmakeCmd += " " + self.srcDir
         self.makeBuildDir()
         os.chdir(self.buildDir)
-        returnValue = subprocess.call(cmakeCmd, stdout=self.stdout, stderr=self.stderr, shell=True)
-        if returnValue != 0:
-            raise
+        proc = subprocess.Popen(shlex.split(cmakeCmd), stdout=self.stdout, stderr=self.stderr)
+        outs, errs = proc.communicate()
+        if proc.returncode:
+            print "Error!"
+            print errs
+            exit(-1)
+
     def build(self, target):
         makeCmd = "make " + target + " -j" + str(self.threads)
         os.chdir(self.buildDir)
-        returnValue = subprocess.call(makeCmd, stdout=self.stdout, stderr=self.stderr, shell=True)
-        if returnValue != 0:
-            raise
+        tryNumber = 0
+        run = True
+
+        while run:
+            proc = subprocess.Popen(shlex.split(makeCmd), stdout=self.stdout, stderr=self.stderr)
+            outs, errs = proc.communicate()
+            tryNumber += 1
+            if proc.returncode == 0 or tryNumber == self.maxTries:
+                run = False
+
+        if proc.returncode != 0:
+            print "Error!"
+            print errs
+            exit(-1)
+
+
+def printExperimentMsg(experiment, robots, targets, percentage):
+    if percentage < 100:
+        percMsg = "%2d%%" % percentage
+    else:
+        percMsg = "Done!"
+    print "[%s] Experiment %s with %d robots and %d targets" % (percMsg, experiment, robots, targets)
+
+
+def generateConfig(buildDir, experiment, robots, targets, i):
+    return {
+            "experiment" : experiment,
+            "robots" : robots,
+            "targets" : targets,
+            "log" : {
+                "path" : buildDir + "/results/" + experiment,
+                "name" : "r" + str(robots) + "t" + str(targets) + "_" + str(i) + ".json"
+                }
+            }
 
 
 def runExperiments(cmake, config, verbose):
+    runs = config["repetitions"]
     for experiment in config["experiments"]:
         for targets in config["targets"]:
             for robots in config["robots"]:
-                configuration = {
-                        "experiment" : experiment,
-                        "robots" : robots,
-                        "targets" : targets,
-                        "log" : {
-                            "path" : cmake.buildDir + "/results/" + experiment,
-                            "name" : str(robots) + "_" + str(targets) + ".json"
-                            }
-                        }
-                runExperiment(cmake, configuration, verbose)
+                for i in range(0, runs):
+                    configuration = generateConfig(cmake.buildDir, experiment, robots, targets, i) 
+                    printExperimentMsg(experiment, robots, targets, i*100/runs)
+                    runExperiment(cmake, configuration, config["debug"], verbose)
+                    sys.stdout.write("\033[F")
+                    if i+1 == runs:
+                        printExperimentMsg(experiment, robots, targets, 100)
 
 
-def runExperiment(cmake, config, verbose):
-    print "Experiment " + config["experiment"] +\
-          " with " + str(config["robots"]) + " robots and " +\
-          str(config["targets"]) + " targets"
-    cmake.setFlag("CMAKE_BUILD_TYPE", "Release")
+def runExperiment(cmake, config, debugMode, verbose):
+    if debugMode:
+        buildType = "Debug"
+    else:
+        buildType = "Release"
+    cmake.setFlag("CMAKE_BUILD_TYPE", buildType)
+
     cmake.setFlag("ARGOS_ROBOTS_NUMBER", config["robots"])
     cmake.setFlag("ARGOS_TARGETS_NUMBER", config["targets"])
     mkdir(config["log"]["path"])
@@ -84,19 +121,8 @@ def runExperiment(cmake, config, verbose):
     cmake.configure()
     print "\t build & run..."
     cmake.build("experiment_" + config["experiment"])
-    print "\t done!"
-
-
-def generateConfig(buildDir, experiment, robots, targets):
-    return {
-            "experiment" : experiment,
-            "robots" : robots,
-            "targets" : targets,
-            "log" : {
-                "path" : buildDir + "/results/" + experiment,
-                "name" : str(robots) + "_" + str(targets) + ".json"
-                }
-            }
+    sys.stdout.write("\033[F")
+    sys.stdout.write("\033[F")
 
 
 def getLogData(logConfig):
@@ -145,6 +171,34 @@ def plotLightDistance(buildDir, config, figNumber = 1):
     return figNumber
 
 
+def getTargetsData(buildDir, experiment, robots, targets, repetitions):
+    avgTimeArray = []
+    timeArrayUpdates = []
+    targetsArray = [0]
+
+    for i in range(0, repetitions):
+        config = generateConfig(buildDir, experiment, robots, targets, i)
+        data = getLogData(config["log"])
+        timeArray = [0]
+        foundTargets = 0
+        for target in data["targets"]:
+            foundTargets += 1
+            timeArray.append(target["step"])
+            if foundTargets >= len(targetsArray):
+                targetsArray.append(foundTargets)
+        timeArray.sort()
+        for index, time in enumerate(timeArray):
+            try:
+                avgTimeArray[index] += time
+                timeArrayUpdates[index] += 1
+            except IndexError:
+                avgTimeArray.append(time)
+                timeArrayUpdates.append(1)
+
+    avgTimeArray = [x / timeArrayUpdates[index] for index, x in enumerate(avgTimeArray)]
+    return avgTimeArray, targetsArray
+
+
 def plotFoundTargets(buildDir, config, figNumber = 1):
     for experiment in config["experiments"]:
         fig = plt.figure(figNumber)
@@ -154,7 +208,8 @@ def plotFoundTargets(buildDir, config, figNumber = 1):
         for targets in config["targets"]:
             plt.subplot(subplotNumber)
             for robots in config["robots"]:
-                subplotFoundTargets(ax, generateConfig(buildDir, experiment, robots, targets))
+                timeArray, targetsArray = getTargetsData(buildDir, experiment, robots, targets, config["repetitions"])
+                joinPlot(str(robots) + " robots", targetsArray, timeArray)
                 configureSubplot(ax, str(targets)+" targets", ["Found targets", "Step"], ["int", "int"], [0, targets])
             plt.tight_layout()
             subplotNumber += 1
@@ -162,44 +217,41 @@ def plotFoundTargets(buildDir, config, figNumber = 1):
     return figNumber
 
 
-def subplotFoundTargets(ax, config):
-    data = getLogData(config["log"])
-
-    timeArray = [0]
-    targetsArray = [0]
-    foundTargets = 0
-
-    for target in data["targets"]:
-        foundTargets += 1
-        timeArray.append(target["step"])
-        targetsArray.append(foundTargets)
-    
-    timeArray.sort()
-    joinPlot(str(config["robots"]) + " robots", targetsArray, timeArray)
+def getCoverageData(buildDir, experiment, robots, targetsArray, repetitions):
+    coverageArray = []
+    coverageArrayUpdates = []
+    timeArray = []
+    timeArrayUpdates = []
+    for targets in targetsArray:
+        for i in range(0, repetitions):
+            configuration = generateConfig(buildDir, experiment, robots, targets, i)
+            index = 0
+            for threshold in getLogData(configuration["log"])["thresholds"]:
+                try:
+                    timeArray[index] += threshold["step"]
+                    timeArrayUpdates[index] += 1
+                    coverageArray[index] += threshold["coverage"]
+                    coverageArrayUpdates[index] += 1
+                except IndexError:
+                    timeArray.append(threshold["step"])
+                    timeArrayUpdates.append(1)
+                    coverageArray.append(threshold["coverage"])
+                    coverageArrayUpdates.append(1)
+                index += 1
+    timeArray = [x / timeArrayUpdates[index] for index, x in enumerate(timeArray)]
+    coverageArray = [x / coverageArrayUpdates[index] for index, x in enumerate(coverageArray)]
+    return timeArray, coverageArray
 
 
 def plotCoverage(buildDir, config, figNumber = 1):
     for experiment in config["experiments"]:
+        if experiment == "pso":
+            continue
         fig = plt.figure(figNumber)
         fig.suptitle(experiment)
         ax = fig.gca()
         for robots in config["robots"]:
-            coverageArray = []
-            timeArray = []
-            for targets in config["targets"]:
-                configuration = generateConfig(buildDir, experiment, robots, targets)
-                index = 0
-                for threshold in getLogData(configuration["log"])["thresholds"]:
-                    try:
-                        timeArray[index] += threshold["step"]
-                        coverageArray[index] += threshold["coverage"]
-                    except IndexError:
-                        timeArray.append(threshold["step"])
-                        coverageArray.append(threshold["coverage"])
-                    index += 1
-            numberOfSamples = len(config["targets"])
-            timeArray = [x / numberOfSamples for x in timeArray]
-            coverageArray = [x / numberOfSamples for x in coverageArray]
+            timeArray, coverageArray = getCoverageData(buildDir, experiment, robots, config["targets"], config["repetitions"])
             joinPlot(str(robots) + " robots", coverageArray, timeArray)
             configureSubplot(ax, "", ["Coverage [%]", "Step"], ["default", "int"])
         plt.tight_layout()
@@ -214,22 +266,9 @@ def plotCompareCoverage(buildDir, config, figNumber = 1):
     for robots in config["robots"]:
         plt.subplot(subplotNumber)
         for experiment in config["experiments"]:
-            coverageArray = []
-            timeArray = []
-            for targets in config["targets"]:
-                configuration = generateConfig(buildDir, experiment, robots, targets)
-                index = 0
-                for threshold in getLogData(configuration["log"])["thresholds"]:
-                    try:
-                        timeArray[index] += threshold["step"]
-                        coverageArray[index] += threshold["coverage"]
-                    except IndexError:
-                        timeArray.append(threshold["step"])
-                        coverageArray.append(threshold["coverage"])
-                    index += 1
-            numberOfSamples = len(config["targets"])
-            timeArray = [x / numberOfSamples for x in timeArray]
-            coverageArray = [x / numberOfSamples for x in coverageArray]
+            if experiment == "pso":
+                continue
+            timeArray, coverageArray = getCoverageData(buildDir, experiment, robots, config["targets"], config["repetitions"])
             joinPlot(experiment, coverageArray, timeArray)
             configureSubplot(ax, str(robots)+" robots", ["Coverage [%]", "Step"], ["default", "int"])
         plt.tight_layout()
@@ -244,16 +283,8 @@ def plotCompareTargets(buildDir, config, figNumber = 1):
     for robots in config["robots"]:
         plt.subplot(subplotNumber)
         for experiment in config["experiments"]:
-            targetsArray = [0]
-            timeArray = [0]
             targets = config["targets"][-1]
-            configuration = generateConfig(buildDir, experiment, robots, targets)
-            targetsNumber = 1
-            for target in getLogData(configuration["log"])["targets"]:
-                timeArray.append(target["step"])
-                targetsArray.append(targetsNumber)
-                targetsNumber += 1
-            timeArray.sort()
+            timeArray, targetsArray = getTargetsData(buildDir, experiment, robots, targets, config["repetitions"])
             joinPlot(experiment, targetsArray, timeArray)
             configureSubplot(ax, str(robots)+" robots", ["Targets", "Step"], ["int", "int"], [0, targets])
         plt.tight_layout()
@@ -271,18 +302,40 @@ def main():
     parser.add_argument("--no-exe", action="store_true", help="do not execute experiments")
     parser.add_argument("--verbose", action="store_true", help="print verbose log")
     parser.add_argument("--plot", nargs="+", choices=plotTypes, default=[], type=str, help="plot given plot-type")
+    parser.add_argument("--custom", action="store_true", help="give custom experiments configuration")
     args = parser.parse_args()
 
     sourceDir = os.getcwd()
     buildDir = sourceDir + "/build/release"
-    cmake = CmakeCommand(sourceDir, buildDir)
 
     configuration = {
+            "debug" : False,
             "experiments" : ["pso", "mbfo", "dynamic_mbfo"],
             "robots" : [10, 25, 50],
-            "targets" : [0]
+            "targets" : [5, 10, 15],
+            "repetitions": 100
             }
 
+    if args.custom:
+        isDebug = raw_input("Debug mode (y/N): ").lower()
+        if isDebug == 'y':
+            configuration["debug"] = True
+            buildDir = sourceDir + "/build/debug"
+        elif not isDebug in ('n', ''):
+            print "Error: Answer 'y' or 'n'"
+            exit()
+
+        configuration["experiments"] = raw_input("Experiments types: ").split(" ")
+        configuration["robots"] = [int(x) for x in raw_input("Number of robots: ").split(" ")]
+        configuration["targets"] = [int(x) for x in raw_input("Number of targets: ").split(" ")]
+        configuration["repetitions"] = int(raw_input("Repetitions: "))
+        
+    print "Configuration:", 
+    print configuration
+    print "Build dir:",
+    print buildDir
+
+    cmake = CmakeCommand(sourceDir, buildDir)
     figNumber = 1
     if not args.no_exe:
         runExperiments(cmake, configuration, args.verbose)

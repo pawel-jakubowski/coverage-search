@@ -7,8 +7,6 @@ using namespace std;
 using namespace argos;
 using namespace boost::polygon;
 
-std::mutex tagetPositionUpdateMutex;
-
 void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     parseLogConfig(t_tree);
     parseVoronoiConfig(t_tree);
@@ -236,8 +234,10 @@ const VoronoiDiagram::Cell* MbfoLoopFunction::getVoronoiCell(std::string id) {
 const std::vector<const VoronoiDiagram::Cell*> MbfoLoopFunction::getNeighbouringVoronoiCells(std::string id) {
     std::vector<const VoronoiDiagram::Cell*> robotsNeighbours;
     for (auto& cell : robotsCells)
-        if (cell.first != id)
+        if (cell.first != id) {
+            assert(cell.second != nullptr);
             robotsNeighbours.emplace_back(cell.second);
+        }
     return robotsNeighbours;
 }
 

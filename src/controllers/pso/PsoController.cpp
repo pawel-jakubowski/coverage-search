@@ -11,19 +11,28 @@ namespace argos {
 CVector2 PsoController::bestNeighbourhoodPosition = CVector2();
 Real PsoController::bestNeighbourhoodSolution = Real(0.0f);
 
-PsoController::PsoController() :
-        wheelsEngine(nullptr), proximitySensor(nullptr), positioningSensor(nullptr), lightSensor(
-                nullptr), rotationSpeed(0.0f), maxVelocity(0.0f), minDistanceFromObstacle(0.1f), inertia(
-                0.0f), personalWeight(0.0f), neighbourhoodWeight(0.0f), minAngleFromObstacle(
-                CDegrees(-45.0f), CDegrees(45.0f)), bestSolution(0.0f), stepCounter(0) {
-}
+PsoController::PsoController()
+    : loopFnc(dynamic_cast<ClosestDistance&>(CSimulator::GetInstance().GetLoopFunctions()))
+    , rotationSpeed(0.0f)
+    , maxVelocity(0.0f)
+    , minDistanceFromObstacle(0.1f)
+    , inertia(0.0f)
+    , personalWeight(0.0f)
+    , neighbourhoodWeight(0.0f)
+    , minAngleFromObstacle(CDegrees(-45.0f), CDegrees(45.0f))
+    , bestSolution(0.0f)
+    , stepCounter(0)
+{}
 
 void PsoController::Init(TConfigurationNode& configuration) {
     wheelsEngine = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
     proximitySensor = GetSensor<CCI_ProximitySensor>("proximity");
     positioningSensor = GetSensor<CCI_PositioningSensor>("positioning");
     lightSensor = GetSensor<CCI_LightSensor>("light");
+    rabRx = GetSensor<CCI_RangeAndBearingSensor>("range_and_bearing");
 
+    std::string targetTypeStr;
+    GetNodeAttribute(configuration, "target", targetTypeStr);
     GetNodeAttributeOrDefault(configuration, "max_velocity", maxVelocity, maxVelocity);
     GetNodeAttributeOrDefault(configuration, "rotate_speed", rotationSpeed, rotationSpeed);
     GetNodeAttributeOrDefault(configuration, "min_distance", minDistanceFromObstacle,
@@ -37,11 +46,17 @@ void PsoController::Init(TConfigurationNode& configuration) {
     assert(proximitySensor != nullptr);
     assert(positioningSensor != nullptr);
     assert(lightSensor != nullptr);
+    assert(rabRx != nullptr);
+
+    if (targetTypeStr == "light")
+        targetType = TargetType::Light;
+    else if (targetTypeStr == "robot")
+        targetType = TargetType::Robot;
+    else
+        THROW_ARGOSEXCEPTION("Unknown target type: " + targetTypeStr);
 
     positioningSensor->GetReading().Position.ProjectOntoXY(bestPosition);
     bestNeighbourhoodPosition = bestPosition;
-//    std::cout << "Best position: " << bestPosition << std::endl;
-//    std::cout << "Best neighboourhood position: " << bestNeighbourhoodPosition << std::endl;
 
     calculateNewVelocity(positioningSensor->GetReading());
 }
@@ -87,22 +102,50 @@ CVector2 PsoController::getWeightedProximityReading() {
 }
 
 void PsoController::updateUtilities(const CCI_PositioningSensor::SReading& positioningReading) {
+    double utilityValue = getCurrentUtilityValue();
+    checkIfBetterSolutionThan(utilityValue, positioningReading.Position, bestSolution,
+            bestPosition);
+    checkIfBetterSolutionThan(utilityValue, positioningReading.Position,
+            bestNeighbourhoodSolution, bestNeighbourhoodPosition);
+}
+
+double PsoController::getCurrentUtilityValue() {
+    if (targetType == TargetType::Light) {
+        loopFnc.addRobotPosition(positioningSensor->GetReading().Position);
+        return getAverageLightValue();
+    }
+    else if (targetType == TargetType::Robot) {
+        detectTargets();
+        return 0;
+    }
+    THROW_ARGOSEXCEPTION("PSO cannot calculate utility value!");
+}
+
+void PsoController::detectTargets() {
+    auto position = positioningSensor->GetReading().Position;
+    auto packets = rabRx->GetReadings();
+    for(auto& packet : packets) {
+        int id;
+        Real posX, posY, posZ;
+        packet.Data >> id >> posX >> posY >> posZ;
+        if (id == 0) continue; // Skip default message send by pso robots
+        CVector3 targetPosition(posX, posY, posZ);
+        loopFnc.addTargetPosition(id, targetPosition);
+    }
+}
+
+double PsoController::getAverageLightValue() const {
     auto lightReadings = lightSensor->GetReadings();
     double averageReading = 0;
     for (auto& reading : lightReadings)
         averageReading += reading;
     averageReading /= lightReadings.size();
-    checkIfBetterSolutionThan(averageReading, positioningReading.Position, bestSolution,
-            bestPosition);
-    checkIfBetterSolutionThan(averageReading, positioningReading.Position,
-            bestNeighbourhoodSolution, bestNeighbourhoodPosition);
-//    std::cout << "[" << GetId() << "] best solution: " << bestSolution << std::endl;
-//    std::cout << "Best neighbourhood solution: " << bestNeighbourhoodSolution << std::endl;
+    return averageReading;
 }
 
 void PsoController::checkIfBetterSolutionThan(double currentUtility, CVector3 currentPosition,
         double& bestSolution, CVector2& bestPosition) {
-    if (bestSolution < currentUtility) {
+    if (bestSolution <= currentUtility) {
         bestSolution = currentUtility;
         currentPosition.ProjectOntoXY(bestPosition);
     }
@@ -129,40 +172,33 @@ void PsoController::calculateNewVelocity(
     if (velocity.Length() > maxVelocity)
         velocity = CVector2(maxVelocity, velocity.Angle());
 
-//    std::cout << "[" << GetId() << "] new velocity (" << velocity.Length() << ", "
-//            << ToDegrees(velocity.Angle()) << ")" << std::endl;
 }
 
 void PsoController::move(const CCI_PositioningSensor::SReading& positioningReading) {
     CRadians angleX, angleY, angleZ;
     positioningReading.Orientation.ToEulerAngles(angleX, angleY, angleZ);
-//    std::cout << "[" << GetId() << "] orientation (" << ToDegrees(angleX) << ", "
-//            << ToDegrees(angleY) << ", " << ToDegrees(angleZ) << ")" << std::endl;
 
     CDegrees angleDifference = ToDegrees((angleX - velocity.Angle()));
-//    std::cout << "[" << GetId() << "] angle difference " << angleDifference << std::endl;
 
     CRange<CDegrees> angleDifferenceToTurnRight(acceptableDelta, acceptableDelta + CDegrees(180));
     CRange<CDegrees> angleDifferenceToTurnLeft(-acceptableDelta - CDegrees(180), -acceptableDelta);
     if (angleDifferenceToTurnRight.WithinMinBoundIncludedMaxBoundIncluded(angleDifference)
             || angleDifference.GetValue() < angleDifferenceToTurnLeft.GetMin().GetValue())
-        rotate(Direction::right);
+        rotate(Direction::Right);
     else if (angleDifference.GetValue() < angleDifferenceToTurnLeft.GetMax().GetValue())
-        rotate(Direction::left);
+        rotate(Direction::Left);
     else
         wheelsEngine->SetLinearVelocity(velocity.Length(), velocity.Length());
 }
 
 PsoController::Direction PsoController::getRotationDirection(const CDegrees& obstacleAngle) {
-    return obstacleAngle.GetValue() > 0.0f ? Direction::right : Direction::left;
+    return obstacleAngle.GetValue() > 0.0f ? Direction::Right : Direction::Left;
 }
 
 void PsoController::rotate(Direction rotationDirection) {
-    if (rotationDirection == Direction::right) {
-//        std::cout << "[" << GetId() << "] turn right" << std::endl;
+    if (rotationDirection == Direction::Right) {
         wheelsEngine->SetLinearVelocity(rotationSpeed, -rotationSpeed);
-    } else if (rotationDirection == Direction::left) {
-//        std::cout << "[" << GetId() << "] turn left" << std::endl;
+    } else if (rotationDirection == Direction::Left) {
         wheelsEngine->SetLinearVelocity(-rotationSpeed, rotationSpeed);
     }
 }
