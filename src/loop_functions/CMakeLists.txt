@@ -15,7 +15,7 @@ set(SRC
     MbfoLoopFunction.cpp
     MbfoDrawer.cpp
     DynamicMbfoLoopFunction.cpp
-    CellularDecomposition.cpp
+    #CellularDecomposition.cpp
     ClosestDistance.cpp
 )
 

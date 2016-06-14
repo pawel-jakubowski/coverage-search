@@ -84,8 +84,6 @@ void Mbfo::detectTarget() const {
         Real posX, posY, posZ;
         packet.Data >> id >> posX >> posY >> posZ;
         if (id == 0) continue; // Skip default message send by mbfo robots
-//        LOG << "[" << GetId() << "] Found target " << id << " ("
-//        << posX << ", " << posY << ", " << posZ << ")" << endl;
         loopFnc.addTargetPosition(id, CVector3(posX, posY, posZ));
     }
 }
@@ -115,10 +113,8 @@ void Mbfo::determineNewDirection() {
                 break;
             }
 
-        if (nextCellPtr != nullptr) {
+        if (nextCellPtr != nullptr)
             currentCellId = nextCellPtr->seed.id;
-//            LOG << "[" << GetId() << "] Go now to cell " << currentCellId << endl;
-        }
         else {
             if (!stopped)
                 LOG << "[" << GetId() << "] No cells to cover! Stop" << endl;
@@ -190,6 +186,7 @@ void Mbfo::tumble(const CDegrees &robotsOrientation) {
 
 void Mbfo::swim() const {
     wheelsEngine->SetLinearVelocity(this->velocity, this->velocity);
+
 }
 
 CDegrees Mbfo::getAngleBetweenPoints(const CVector3 &a, const CVector3 &b) const {

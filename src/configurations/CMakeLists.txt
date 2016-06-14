@@ -21,3 +21,5 @@ add_subdirectory(mbfo)
 add_subdirectory(dynamic_mbfo)
 
 add_subdirectory(pso)
+
+add_subdirectory(cellular_decomposition EXCLUDE_FROM_ALL)

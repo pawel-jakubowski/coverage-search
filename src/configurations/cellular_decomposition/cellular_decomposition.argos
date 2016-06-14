@@ -5,7 +5,7 @@
     <!-- * General configuration * -->
     <!-- ************************* -->
     <framework>
-        <system threads="4" />
+        <system threads="0" />
         <experiment length="@ARGOS_EXPERIMENT_LENGTH@"
                     ticks_per_second="@ARGOS_TICKS_PER_SEC@"
                     @ARGOS_RANDOM_SEED@ />
@@ -16,53 +16,55 @@
     <!-- *************** -->
     <controllers>
 
-        <mbfo_controller id="mbfo" library="controllers/libmbfo_controller.so">
+        <cellular_decomposition_controller
+                id="cellular_decomposition"
+                library="controllers/libcellular_decomposition_controller.so">
             <actuators>
                 <differential_steering implementation="default" />
             </actuators>
             <sensors>
                 <footbot_proximity implementation="default" show_rays="true" />
-                <positioning implementation="default" /> <!--pos_noise_range="-0.05:0.05" />-->
+                <positioning implementation="default" /> <!-- pos_noise_range="-0.05:0.05" /> -->
                 <light implementation="default" /> <!-- noise_level="0.0" /> -->
                 <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
             </sensors>
             <params velocity="5" delta="0.05" />
-        </mbfo_controller>
+        </cellular_decomposition_controller>
 
-        <target_controller id="target" library="controllers/libtarget_controller.so">
-            <actuators>
-                <range_and_bearing implementation="default" />
-            </actuators>
-            <sensors>
-                <positioning implementation="default" />
-                <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
-            </sensors>
-            <params />
-        </target_controller>
+        <!--<target_controller id="target" library="controllers/libtarget_controller.so">-->
+            <!--<actuators>-->
+                <!--<range_and_bearing implementation="default" />-->
+            <!--</actuators>-->
+            <!--<sensors>-->
+                <!--<positioning implementation="default" />-->
+                <!--<range_and_bearing implementation="medium" medium="rab" show_rays="true" />-->
+            <!--</sensors>-->
+            <!--<params />-->
+        <!--</target_controller>-->
 
     </controllers>
 
     <!-- ****************** -->
     <!-- * Loop functions * -->
     <!-- ****************** -->
-    <loop_functions library="loop_functions/libloop_functions"
-                    label="dynamic_mbfo_loop_fcn">
-        <voronoi assertion="false" />
-        <log path="@ARGOS_LOG@">
-            <threshold value="0.01" />
-            <threshold value="10" />
-            <threshold value="20" />
-            <threshold value="30" />
-            <threshold value="40" />
-            <threshold value="50" />
-            <threshold value="60" />
-            <threshold value="70" />
-            <threshold value="80" />
-            <threshold value="90" />
-            <threshold value="95" />
-            <threshold value="100" />
-        </log>
-    </loop_functions>
+    <!--<loop_functions library="loop_functions/libloop_functions"-->
+                    <!--label="mbfo_loop_fcn">-->
+        <!--<voronoi assertion="true" />-->
+        <!--<log path="@ARGOS_LOG@">-->
+            <!--<threshold value="0.01" />-->
+            <!--<threshold value="10" />-->
+            <!--<threshold value="20" />-->
+            <!--<threshold value="30" />-->
+            <!--<threshold value="40" />-->
+            <!--<threshold value="50" />-->
+            <!--<threshold value="60" />-->
+            <!--<threshold value="70" />-->
+            <!--<threshold value="80" />-->
+            <!--<threshold value="90" />-->
+            <!--<threshold value="95" />-->
+            <!--<threshold value="100" />-->
+        <!--</log>-->
+    <!--</loop_functions>-->
 
     <!-- *********************** -->
     <!-- * Arena configuration * -->
@@ -98,7 +100,7 @@
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
             <entity quantity="@ARGOS_ROBOTS_NUMBER@" max_trials="100">
                 <foot-bot id="fb" rab_range="0.2" rab_data_size="40">
-                    <controller config="mbfo" />
+                    <controller config="cellular_decomposition" />
                 </foot-bot>
             </entity>
         </distribute>
@@ -118,29 +120,24 @@
         <!-- * Target * -->
         <!-- ********** -->
 
-        <distribute>
-            <position method="uniform"
-                      min="-@ARGOS_AREA_HALF_SIDE_IN_M@, -@ARGOS_AREA_HALF_SIDE_IN_M@, 0"
-                      max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" />
-            <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
-            <entity quantity="@ARGOS_TARGETS_NUMBER@" max_trials="100" >
-                <target id="t" rab_range="0.25" rab_data_size="40">
-                    <controller config="target" />
-                </target>
-            </entity>
-        </distribute>
-
-        <!--<target id="t" rab_range="0.25" rab_data_size="40">-->
-        <!--<body position="0,0,0" orientation="0,0,0" />-->
-        <!--<controller config="target" />-->
-        <!--</target>-->
+        <!--<distribute>-->
+            <!--<position method="uniform"-->
+            <!--min="-@ARGOS_AREA_HALF_SIDE_IN_M@, -@ARGOS_AREA_HALF_SIDE_IN_M@, 0"-->
+            <!--max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" />-->
+                <!--<orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />-->
+                <!--<entity quantity="@ARGOS_TARGETS_NUMBER@" max_trials="100" >-->
+                    <!--<target id="t" rab_range="0.25" rab_data_size="40">-->
+                <!--<controller config="target" />-->
+                <!--</target>-->
+            <!--</entity>-->
+        <!--</distribute>-->
 
         <!--<light id="light"-->
-        <!--position="0,0,0.5"-->
-        <!--orientation="0,0,0"-->
-        <!--color="yellow"-->
-        <!--intensity="0.5"-->
-        <!--medium="leds" />-->
+               <!--position="0,0,0.5"-->
+               <!--orientation="0,0,0"-->
+               <!--color="yellow"-->
+               <!--intensity="0.5"-->
+               <!--medium="leds" />-->
     </arena>
 
     <!-- ******************* -->
@@ -162,18 +159,18 @@
     <!-- * Visualization * -->
     <!-- ****************** -->
     <visualization>
-        <!--<qt-opengl>-->
+        <qt-opengl>
             <!--<user_functions-->
                 <!--library="loop_functions/libloop_functions"-->
                 <!--label="draw_mbfo" />-->
-            <!--<camera>-->
-                <!--<placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>-->
-            <!--</camera>-->
-        <!--</qt-opengl>-->
+            <camera>
+                <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>
+                <placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>
+            </camera>
+        </qt-opengl>
     </visualization>
 
 </argos-configuration>
