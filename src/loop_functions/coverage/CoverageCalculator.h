@@ -1,7 +1,7 @@
 #pragma once
 
 #include <argos3/core/simulator/loop_functions.h>
-#include <utils/CoverageGrid.h>
+#include <utils/coverage/CoverageGrid.h>
 
 class CoverageCalculator : public argos::CLoopFunctions {
 public:

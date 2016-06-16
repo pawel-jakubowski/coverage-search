@@ -31,7 +31,7 @@
     <!-- ****************** -->
     <!-- * Loop functions * -->
     <!-- ****************** -->
-    <loop_functions library="loop_functions/libloop_functions"
+    <loop_functions library="loop_functions/libvoronoi"
                     label="calculate_voronoi">
     </loop_functions>
 
@@ -103,7 +103,7 @@
     <visualization>
         <qt-opengl>
             <user_functions
-                library="loop_functions/libloop_functions"
+                library="loop_functions/libvoronoi_qt"
                 label="draw_voronoi" />
             <camera>
                 <placement idx="0" position="0,0,8" look_at="0,0,0" lens_focal_length="50"/>

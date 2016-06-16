@@ -100,7 +100,7 @@
     <visualization>
         <qt-opengl>
             <user_functions
-                library="loop_functions/libloop_functions"
+                library="loop_functions/libcoverage_loop_function"
                 label="draw_coverage" />
             <camera>
                 <placement idx="0" position="0,0,8" look_at="0,0,0" lens_focal_length="50"/>

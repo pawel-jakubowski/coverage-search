@@ -3,6 +3,7 @@
 #include <argos3/core/simulator/loop_functions.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 #include <utils/CoverageGrid.h>
+#include <utils/Task.h>
 
 class CellularDecomposition : public argos::CLoopFunctions {
 public:
@@ -15,6 +16,7 @@ public:
     virtual void PostStep() override;
     virtual void Reset() override;
 
+    Task getNewTask(Task old);
     const CoverageGrid& getCoverageGrid();
     const std::map<std::string, argos::CVector3> getRobotsPositions();
     const std::vector<argos::CRay3> getRays();

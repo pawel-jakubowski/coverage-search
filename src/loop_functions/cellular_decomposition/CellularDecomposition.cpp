@@ -63,6 +63,16 @@ void CellularDecomposition::Reset() {
     PreStep();
 }
 
+Task CellularDecomposition::getNewTask(Task old) {
+    auto& limits = GetSpace().GetArenaLimits();
+    CVector2 leftBottomCorner(limits.GetMax().GetX(), limits.GetMax().GetY());
+    CVector2 leftUpperCorner(limits.GetMax().GetX(), limits.GetMin().GetY());
+    if (old.behavior == Task::Behavior::Idle)
+        return Task{0, leftBottomCorner, leftUpperCorner, Task::Behavior::FollowLeftBoundary, Task::Status::MoveToBegin};
+
+    return old;
+}
+
 void CellularDecomposition::updateRobotsPositions(const CSpace::TMapPerType &entities) {
     rays.clear();
     for (const auto& entity : entities) {
@@ -111,4 +121,4 @@ const std::vector<argos::CRay3> CellularDecomposition::getRays() {
     return rays;
 }
 
-REGISTER_LOOP_FUNCTIONS(CellularDecomposition, "cellular_decomposition_loop_fcn")
+REGISTER_LOOP_FUNCTIONS(CellularDecomposition, "cellular_loop_fcn")

@@ -1,5 +1,5 @@
 #include "VoronoiDiagram.h"
-#include "liang-barsky.h"
+#include <utils/math/liang-barsky.h>
 #include <argos3/core/utility/logging/argos_log.h>
 
 #include "assert.h"

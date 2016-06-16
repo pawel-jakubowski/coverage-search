@@ -119,19 +119,19 @@
             </entity>
         </distribute>
 
-        <light id="light"
-               position="0,0,0.5"
-               orientation="0,0,0"
-               color="yellow"
-               intensity="0.5"
-               medium="leds"/>
+        <!--<light id="light"-->
+               <!--position="0,0,0.5"-->
+               <!--orientation="0,0,0"-->
+               <!--color="yellow"-->
+               <!--intensity="0.5"-->
+               <!--medium="leds"/>-->
 
     </arena>
 
     <!-- ****************** -->
     <!-- * Loop functions * -->
     <!-- ****************** -->
-    <loop_functions library="loop_functions/libloop_functions"
+    <loop_functions library="loop_functions/libpso_loop_function"
                     label="closest_distance">
         <target position_x="0" position_y="0"/>
         <log path="@ARGOS_LOG@">

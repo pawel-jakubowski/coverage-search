@@ -35,4 +35,6 @@ add_custom_target(experiment_${PROJECT_NAME}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
         DEPENDS
             cellular_decomposition_controller
+            cellular_loop_function
+            cellular_loop_function_qt
             argos3)

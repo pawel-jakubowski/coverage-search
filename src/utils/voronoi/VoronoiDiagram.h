@@ -2,8 +2,8 @@
 
 #include <boost/polygon/point_data.hpp>
 #include <boost/polygon/voronoi.hpp>
+#include <utils/coverage/CoverageCell.h>
 #include "VoronoiCell.h"
-#include "CoverageCell.h"
 
 class VoronoiDiagram {
 public:

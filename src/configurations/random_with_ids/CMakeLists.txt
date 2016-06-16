@@ -12,4 +12,4 @@ configure_file(
 add_custom_target(experiment_${PROJECT_NAME}
         COMMAND ${ENV_CMD} ./argos3 --config-file ${PROJECT_NAME}/${CONFIG_FILE}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        DEPENDS random_controller loop_functions argos3)
+        DEPENDS random_controller robots_ids_loop_function_qt argos3)

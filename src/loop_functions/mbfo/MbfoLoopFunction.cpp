@@ -1,6 +1,5 @@
 #include "MbfoLoopFunction.h"
 #include <argos3/plugins/simulator/entities/proximity_sensor_equipped_entity.h>
-#include <mutex>
 
 
 using namespace std;
@@ -46,6 +45,7 @@ void MbfoLoopFunction::parseLogConfig(TConfigurationNode& t_tree) {
 
 void MbfoLoopFunction::PreStep() {
     auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
+    assert(entities.size() >= 3);
     updateRobotsPositions(entities);
 }
 
@@ -159,8 +159,8 @@ void MbfoLoopFunction::update() {
         std::stringstream s;
         s << "There is " << gridCellsCount - gridCounter
             << " cells unassigned to voronoi cells!\n";
-        for (int i = 0; i < coverage.getGrid().size(); i++)
-            for (int j = 0; j < coverage.getGrid().size(); j++) {
+        for (size_t i = 0; i < coverage.getGrid().size(); i++)
+            for (size_t j = 0; j < coverage.getGrid().size(); j++) {
                 s << "[" << i << "," << j << "] "
                     << "(" << coverage.getGrid().at(i).at(j).center << ") ";
                 for (auto& voronoiCell : voronoi.getCells()) {

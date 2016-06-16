@@ -45,7 +45,7 @@
     <!-- ****************** -->
     <!-- * Loop functions * -->
     <!-- ****************** -->
-    <loop_functions library="loop_functions/libloop_functions"
+    <loop_functions library="loop_functions/libmbfo_loop_function"
                     label="dynamic_mbfo_loop_fcn">
         <voronoi assertion="false" />
         <log path="@ARGOS_LOG@">
@@ -164,7 +164,7 @@
     <visualization>
         <!--<qt-opengl>-->
             <!--<user_functions-->
-                <!--library="loop_functions/libloop_functions"-->
+                <!--library="loop_functions/libmbfo_loop_function_qt"-->
                 <!--label="draw_mbfo" />-->
             <!--<camera>-->
                 <!--<placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>-->

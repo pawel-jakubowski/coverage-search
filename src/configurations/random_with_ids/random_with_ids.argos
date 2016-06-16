@@ -91,7 +91,8 @@
     <!-- ****************** -->
     <visualization>
         <qt-opengl>
-            <user_functions library="loop_functions/libloop_functions" label="show_id" />
+            <user_functions library="loop_functions/librobots_ids_loop_function_qt"
+                label="show_id" />
         </qt-opengl>
     </visualization>
 

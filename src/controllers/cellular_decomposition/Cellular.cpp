@@ -15,7 +15,10 @@ static const Real PROXIMITY_SENSOR_RING_RANGE = 0.1f;
 static const Real TICKS_PER_SEC = 10;
 
 
-Cellular::Cellular() {}
+Cellular::Cellular()
+    : loopFnc(dynamic_cast<CellularDecomposition&>(CSimulator::GetInstance().GetLoopFunctions()))
+    , currentTask{0, CVector2(0,0), CVector2(0,0), Task::Behavior::Idle, Task::Status::Wait}
+{}
 
 void Cellular::Init(TConfigurationNode& configuration) {
     wheelsEngine = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
@@ -38,7 +41,14 @@ void Cellular::Init(TConfigurationNode& configuration) {
 void Cellular::ControlStep() {
 //    CDegrees rotationAngle = getRotationAngle();
 //    move(rotationAngle);
-    moveToPoint({0,0});
+    currentTask = loopFnc.getNewTask(currentTask);
+    LOG << "Task [" << currentTask.id << ", (" << currentTask.begin << "), (" << currentTask.end << "), " <<
+        static_cast<unsigned>(currentTask.behavior) << ", " << static_cast<unsigned>(currentTask.status) << "]" << endl;
+
+    if (currentTask.status == Task::Status::MoveToBegin)
+        moveToPoint(currentTask.begin);
+    else if (currentTask.status == Task::Status::MoveToEnd)
+        moveToPoint(currentTask.end);
 }
 
 void Cellular::moveToPoint(const CVector2& point) {
@@ -68,12 +78,12 @@ CDegrees Cellular::getRotationAngle() const {
     CDegrees sideAngle;
     CVector2 accumulator;
 
-    if (behavior == Behavior::FollowLeftBoundary) {
+    if (currentTask.behavior == Task::Behavior::FollowLeftBoundary) {
         sideAngle = CDegrees(90);
         accumulator = getAccumulatedVector(frontReadings)
             + getAccumulatedVector(leftReadings);
     }
-    else if (behavior == Behavior::FollowRightBoundary) {
+    else if (currentTask.behavior == Task::Behavior::FollowRightBoundary) {
         sideAngle = CDegrees(-90);
         accumulator = getAccumulatedVector(frontReadings)
             + getAccumulatedVector(rightReadings);

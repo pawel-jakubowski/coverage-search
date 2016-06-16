@@ -33,10 +33,22 @@ configure_file(
 add_custom_target(experiment_${PROJECT_NAME}
         COMMAND ${ENV_CMD} ./argos3 --config-file ${PROJECT_NAME}/${CONFIG_FILE} ${ARGOS_OPTIONS}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        DEPENDS mbfo_controller loop_functions argos3)
+        DEPENDS
+            mbfo_controller
+            mbfo_loop_function
+            mbfo_loop_function_qt
+            target_controller
+            target_robot
+            argos3)
 
 #Profiling
 add_custom_target(profile_${PROJECT_NAME}
         COMMAND valgrind --tool=callgrind ./argos3 --config-file ${PROJECT_NAME}/${CONFIG_FILE} ${ARGOS_OPTIONS}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        DEPENDS mbfo_controller loop_functions argos3)
+        DEPENDS
+            mbfo_controller
+            mbfo_loop_function
+            mbfo_loop_function_qt
+            target_controller
+            target_robot
+            argos3)

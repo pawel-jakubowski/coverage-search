@@ -8,7 +8,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions("-pg")
 endif()
 
-add_definitions("-Wl,--no-undefined")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 
 include_directories(
         .

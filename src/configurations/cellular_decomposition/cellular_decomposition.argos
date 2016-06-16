@@ -47,24 +47,23 @@
     <!-- ****************** -->
     <!-- * Loop functions * -->
     <!-- ****************** -->
-    <!--<loop_functions library="loop_functions/libloop_functions"-->
-                    <!--label="mbfo_loop_fcn">-->
-        <!--<voronoi assertion="true" />-->
-        <!--<log path="@ARGOS_LOG@">-->
-            <!--<threshold value="0.01" />-->
-            <!--<threshold value="10" />-->
-            <!--<threshold value="20" />-->
-            <!--<threshold value="30" />-->
-            <!--<threshold value="40" />-->
-            <!--<threshold value="50" />-->
-            <!--<threshold value="60" />-->
-            <!--<threshold value="70" />-->
-            <!--<threshold value="80" />-->
-            <!--<threshold value="90" />-->
-            <!--<threshold value="95" />-->
-            <!--<threshold value="100" />-->
-        <!--</log>-->
-    <!--</loop_functions>-->
+    <loop_functions library="loop_functions/libcellular_loop_function"
+                    label="cellular_loop_fcn">
+        <log path="@ARGOS_LOG@">
+            <threshold value="0.01" />
+            <threshold value="10" />
+            <threshold value="20" />
+            <threshold value="30" />
+            <threshold value="40" />
+            <threshold value="50" />
+            <threshold value="60" />
+            <threshold value="70" />
+            <threshold value="80" />
+            <threshold value="90" />
+            <threshold value="95" />
+            <threshold value="100" />
+        </log>
+    </loop_functions>
 
     <!-- *********************** -->
     <!-- * Arena configuration * -->
@@ -160,9 +159,9 @@
     <!-- ****************** -->
     <visualization>
         <qt-opengl>
-            <!--<user_functions-->
-                <!--library="loop_functions/libloop_functions"-->
-                <!--label="draw_mbfo" />-->
+            <user_functions
+                library="loop_functions/libcellular_loop_function_qt"
+                label="cellular_loop_function_qt" />
             <camera>
                 <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>
                 <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>

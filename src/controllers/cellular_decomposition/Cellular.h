@@ -8,7 +8,8 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_light_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 
-#include <utils/TasksTypes.h>
+#include <loop_functions/cellular_decomposition/CellularDecomposition.h>
+#include <utils/Task.h>
 
 
 namespace argos {
@@ -39,21 +40,18 @@ private:
     CDegrees lastRotation;
 
     Real distanceFromWall;
-    Behavior behavior;
+    Task currentTask;
+
+    CellularDecomposition& loopFnc;
 
     void rotateForAnAngle(const CDegrees &angle);
     CDegrees getOrientationOnXY();
     Direction getRotationDirection(const CDegrees& obstacleAngle);
     void rotate(Direction rotationDirection);
-
     void move(const CDegrees& rotationAngle);
-
     CVector2 getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings) const;
-
     CDegrees getRotationAngle() const;
-
     CDegrees getAngleBetweenPoints(const CVector2& a, const CVector2& b) const;
-
     void moveToPoint(const CVector2& point);
 };
 

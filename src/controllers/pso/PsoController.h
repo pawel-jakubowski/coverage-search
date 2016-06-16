@@ -7,7 +7,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_light_sensor.h>
 
-#include <loop_functions/ClosestDistance.h>
+#include <loop_functions/pso/ClosestDistance.h>
 #include <random>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 

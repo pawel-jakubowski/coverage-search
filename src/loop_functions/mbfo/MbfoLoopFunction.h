@@ -2,8 +2,8 @@
 
 #include <argos3/core/simulator/loop_functions.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
-#include <utils/VoronoiDiagram.h>
-#include <utils/CoverageGrid.h>
+#include <utils/voronoi/VoronoiDiagram.h>
+#include <utils/coverage/CoverageGrid.h>
 #include <iostream>
 #include <mutex>
 

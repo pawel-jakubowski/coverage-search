@@ -35,7 +35,7 @@ add_custom_target(experiment_${PROJECT_NAME}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
         DEPENDS
             pso
+            pso_loop_function
             target_controller
             target_robot
-            loop_functions
             argos3)

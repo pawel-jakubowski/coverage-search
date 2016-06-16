@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.2)
 project(coverage_search_utils)
 
-set(SRC
-        VoronoiDiagram.cpp
-        liang-barsky.cpp
-        CoverageGrid.cpp
-        VoronoiCell.cpp
-)
+add_definitions("-fPIC")
 
-add_library(${PROJECT_NAME} SHARED ${SRC})
+add_subdirectory(coverage)
+add_subdirectory(math)
+add_subdirectory(voronoi)
