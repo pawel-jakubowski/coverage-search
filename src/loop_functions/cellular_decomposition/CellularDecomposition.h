@@ -2,8 +2,8 @@
 
 #include <argos3/core/simulator/loop_functions.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
-#include <utils/CoverageGrid.h>
-#include <utils/Task.h>
+#include <utils/coverage/CoverageGrid.h>
+#include <utils/task/Task.h>
 
 class CellularDecomposition : public argos::CLoopFunctions {
 public:

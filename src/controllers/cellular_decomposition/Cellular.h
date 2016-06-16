@@ -9,7 +9,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 
 #include <loop_functions/cellular_decomposition/CellularDecomposition.h>
-#include <utils/Task.h>
+#include <utils/task/Task.h>
 
 
 namespace argos {
