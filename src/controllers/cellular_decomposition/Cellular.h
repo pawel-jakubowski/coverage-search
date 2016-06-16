@@ -9,20 +9,21 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 
 #include <loop_functions/cellular_decomposition/CellularDecomposition.h>
-#include <utils/task/Task.h>
+#include <utils/task/TaskHandler.h>
 
 
 namespace argos {
 
-class Cellular : public CCI_Controller {
+class Cellular : public CCI_Controller, public TaskHandler {
     const Real angleEpsilon = 1;
 public:
     Cellular();
     virtual ~Cellular() {}
 
-    virtual void Init(TConfigurationNode& configuration);
-    virtual void ControlStep();
-    virtual void Destroy() {}
+    virtual void Init(TConfigurationNode& configuration) override;
+    virtual void ControlStep() override;
+
+    virtual CVector2 getPostion() override;
 
 private:
     enum class Direction { Left, Right };
@@ -36,21 +37,17 @@ private:
     Real velocity;
     Real rotationSpeed;
     Real minDistanceFromObstacle;
-    CRange<CDegrees> minAngleFromObstacle;
     CDegrees lastRotation;
-
-    Real distanceFromWall;
-    Task currentTask;
 
     CellularDecomposition& loopFnc;
 
     void rotateForAnAngle(const CDegrees &angle);
     CDegrees getOrientationOnXY();
     Direction getRotationDirection(const CDegrees& obstacleAngle);
+    CDegrees getRotationAngle() const;
     void rotate(Direction rotationDirection);
     void move(const CDegrees& rotationAngle);
     CVector2 getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings) const;
-    CDegrees getRotationAngle() const;
     CDegrees getAngleBetweenPoints(const CVector2& a, const CVector2& b) const;
     void moveToPoint(const CVector2& point);
 };

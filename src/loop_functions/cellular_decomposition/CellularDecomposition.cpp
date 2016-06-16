@@ -3,14 +3,33 @@
 
 using namespace argos;
 
+static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
 
 void CellularDecomposition::Init(TConfigurationNode& t_tree) {
+    CRange<CVector2> limits;
+
+    limits.SetMin(
+        CVector2(
+            GetSpace().GetArenaLimits().GetMin().GetX() + FOOTBOT_BODY_RADIUS,
+            GetSpace().GetArenaLimits().GetMin().GetY() + FOOTBOT_BODY_RADIUS
+        )
+    );
+
+    limits.SetMax(
+        CVector2(
+            GetSpace().GetArenaLimits().GetMax().GetX() - FOOTBOT_BODY_RADIUS,
+            GetSpace().GetArenaLimits().GetMax().GetY() - FOOTBOT_BODY_RADIUS
+        )
+    );
+
+    taskManager.setArenaLimits(limits);
     Reset();
 }
 
 void CellularDecomposition::PreStep() {
     auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
     updateRobotsPositions(entities);
+    taskManager.assignTasks();
 }
 
 void CellularDecomposition::PostStep() {
@@ -61,16 +80,6 @@ void CellularDecomposition::updateCoverageCells(const std::vector<CoverageGrid::
 void CellularDecomposition::Reset() {
     coverage.initGrid(GetSpace().GetArenaLimits());
     PreStep();
-}
-
-Task CellularDecomposition::getNewTask(Task old) {
-    auto& limits = GetSpace().GetArenaLimits();
-    CVector2 leftBottomCorner(limits.GetMax().GetX(), limits.GetMax().GetY());
-    CVector2 leftUpperCorner(limits.GetMax().GetX(), limits.GetMin().GetY());
-    if (old.behavior == Task::Behavior::Idle)
-        return Task{0, leftBottomCorner, leftUpperCorner, Task::Behavior::FollowLeftBoundary, Task::Status::MoveToBegin};
-
-    return old;
 }
 
 void CellularDecomposition::updateRobotsPositions(const CSpace::TMapPerType &entities) {

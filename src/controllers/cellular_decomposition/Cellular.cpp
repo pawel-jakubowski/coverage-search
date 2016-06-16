@@ -17,7 +17,6 @@ static const Real TICKS_PER_SEC = 10;
 
 Cellular::Cellular()
     : loopFnc(dynamic_cast<CellularDecomposition&>(CSimulator::GetInstance().GetLoopFunctions()))
-    , currentTask{0, CVector2(0,0), CVector2(0,0), Task::Behavior::Idle, Task::Status::Wait}
 {}
 
 void Cellular::Init(TConfigurationNode& configuration) {
@@ -36,22 +35,34 @@ void Cellular::Init(TConfigurationNode& configuration) {
     assert(positioningSensor != nullptr);
     assert(lightSensor != nullptr);
     assert(rabRx != nullptr);
+
+    loopFnc.registerToTaskManager(*this);
+}
+
+CVector2 Cellular::getPostion() {
+    CVector2 position;
+    positioningSensor->GetReading().Position.ProjectOntoXY(position);
+    return position;
 }
 
 void Cellular::ControlStep() {
 //    CDegrees rotationAngle = getRotationAngle();
 //    move(rotationAngle);
-    currentTask = loopFnc.getNewTask(currentTask);
-    LOG << "Task [" << currentTask.id << ", (" << currentTask.begin << "), (" << currentTask.end << "), " <<
+    LOG << "Task [(" << currentTask.begin << "), (" << currentTask.end << "), " <<
         static_cast<unsigned>(currentTask.behavior) << ", " << static_cast<unsigned>(currentTask.status) << "]" << endl;
 
-    if (currentTask.status == Task::Status::MoveToBegin)
+    if (currentTask.status == Task::Status::MoveToBegin) {
+        LOG << "Move to begin" << endl;
         moveToPoint(currentTask.begin);
-    else if (currentTask.status == Task::Status::MoveToEnd)
+    }
+    else if (currentTask.status == Task::Status::MoveToEnd) {
+        LOG << "Move to end" << endl;
         moveToPoint(currentTask.end);
+    }
 }
 
 void Cellular::moveToPoint(const CVector2& point) {
+    LOG << "Move to " << point << endl;
     CVector2 currentPoint;
     positioningSensor->GetReading().Position.ProjectOntoXY(currentPoint);
     CDegrees angle = getAngleBetweenPoints(currentPoint, point);
