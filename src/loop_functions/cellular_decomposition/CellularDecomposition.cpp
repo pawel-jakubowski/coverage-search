@@ -5,6 +5,10 @@ using namespace argos;
 
 static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
 
+CellularDecomposition::CellularDecomposition()
+    : coverage(maxCellConcentration, 0.1f)
+{}
+
 void CellularDecomposition::Init(TConfigurationNode& t_tree) {
     CRange<CVector2> limits;
 
@@ -22,7 +26,7 @@ void CellularDecomposition::Init(TConfigurationNode& t_tree) {
         )
     );
 
-    taskManager.setArenaLimits(limits);
+    taskManager.addNewCell(limits);
     Reset();
 }
 

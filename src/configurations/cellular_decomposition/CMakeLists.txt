@@ -23,7 +23,7 @@ if(NOT ARGOS_LOG)
     set(ARGOS_LOG "mbfo.log")
 endif()
 
-set(ARGOS_WALL_THICKNESS_IN_M 0.01)
+set(ARGOS_WALL_THICKNESS_IN_M 0.02)
 
 # Copy configuration files to output directory
 configure_file(

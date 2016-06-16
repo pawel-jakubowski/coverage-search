@@ -3,4 +3,5 @@ project(robots)
 
 include(ARGoSCheckQTOpenGL)
 
+add_subdirectory(custom-foot-bot)
 add_subdirectory(target)

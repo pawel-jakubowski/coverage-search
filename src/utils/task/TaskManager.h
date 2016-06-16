@@ -7,12 +7,13 @@
 
 class TaskManager {
 public:
-    void setArenaLimits(argos::CRange<argos::CVector2> limits) { this->limits = limits; }
+    TaskManager() = default;
+    void addNewCell(argos::CRange<argos::CVector2> limits);
     void registerHandler(TaskHandler& handler);
     void assignTasks();
 private:
-    argos::CRange<argos::CVector2> limits;
     std::vector<std::reference_wrapper<TaskHandler>> handlers;
+    std::list<Task> availableTasks;
 
     void finishWaitingTasks() const;
     void setStatusIfNearGoal(TaskHandler& handler, const Task::Status& status, const argos::CVector2& goal) const;

@@ -25,6 +25,8 @@ void Cellular::Init(TConfigurationNode& configuration) {
     positioningSensor = GetSensor<CCI_PositioningSensor>("positioning");
     lightSensor = GetSensor<CCI_LightSensor>("light");
     rabRx = GetSensor<CCI_RangeAndBearingSensor>("range_and_bearing");
+    leds = GetActuator<CCI_LEDsActuator>("leds");
+    camera = GetSensor<CCI_ColoredBlobOmnidirectionalCameraSensor>("colored_blob_omnidirectional_camera");
 
     GetNodeAttributeOrDefault(configuration, "velocity", velocity, velocity);
     GetNodeAttributeOrDefault(configuration, "min_distance", minDistanceFromObstacle,
@@ -35,8 +37,11 @@ void Cellular::Init(TConfigurationNode& configuration) {
     assert(positioningSensor != nullptr);
     assert(lightSensor != nullptr);
     assert(rabRx != nullptr);
+    assert(leds != nullptr);
+    assert(camera != nullptr);
 
     loopFnc.registerToTaskManager(*this);
+    camera->Enable();
 }
 
 CVector2 Cellular::getPostion() {
@@ -48,21 +53,58 @@ CVector2 Cellular::getPostion() {
 void Cellular::ControlStep() {
 //    CDegrees rotationAngle = getRotationAngle();
 //    move(rotationAngle);
-    LOG << "Task [(" << currentTask.begin << "), (" << currentTask.end << "), " <<
-        static_cast<unsigned>(currentTask.behavior) << ", " << static_cast<unsigned>(currentTask.status) << "]" << endl;
 
-    if (currentTask.status == Task::Status::MoveToBegin) {
-        LOG << "Move to begin" << endl;
+    LOG << "[" << GetId() << "]: ";
+    logCurrentTask();
+
+    if (currentTask.behavior == Task::Behavior::FollowLeftBoundary)
+        leds->SetAllColors(CColor::GREEN);
+    else if (currentTask.behavior == Task::Behavior::FollowRightBoundary)
+        leds->SetAllColors(CColor::RED);
+
+    if (currentTask.status == Task::Status::MoveToBegin)
         moveToPoint(currentTask.begin);
-    }
-    else if (currentTask.status == Task::Status::MoveToEnd) {
-        LOG << "Move to end" << endl;
+    else if (currentTask.status == Task::Status::MoveToEnd)
         moveToPoint(currentTask.end);
+
+    auto& blobs = camera->GetReadings();
+    for (auto& blob : blobs.BlobList) {
+        LOG << blob->Distance << ", " << ToDegrees(blob->Angle) << "\n";
     }
+    LOG.Flush();
+}
+
+void Cellular::logCurrentTask() const {
+    switch(currentTask.behavior) {
+        case Task::Behavior::Idle:
+            LOG << "IDLE";
+            break;
+        case Task::Behavior::Sweep:
+            LOG << "SWEEP";
+            break;
+        case Task::Behavior::FollowLeftBoundary:
+            LOG << "FOLLOW LEFT";
+            break;
+        case Task::Behavior::FollowRightBoundary:
+            LOG << "FOLLOW RIGHT";
+            break;
+    }
+    LOG << " -> ";
+    switch(currentTask.status) {
+        case Task::Status::Wait:
+            LOG << "WAIT";
+            break;
+        case Task::Status::MoveToBegin:
+            LOG << "MOVE TO BEGIN";
+            break;
+        case Task::Status::MoveToEnd:
+            LOG << "MOVE TO END";
+            break;
+    }
+    LOG << "\n";
 }
 
 void Cellular::moveToPoint(const CVector2& point) {
-    LOG << "Move to " << point << endl;
     CVector2 currentPoint;
     positioningSensor->GetReading().Position.ProjectOntoXY(currentPoint);
     CDegrees angle = getAngleBetweenPoints(currentPoint, point);

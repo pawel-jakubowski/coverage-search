@@ -9,7 +9,7 @@ class CellularDecomposition : public argos::CLoopFunctions {
 public:
     static constexpr int maxCellConcentration = std::numeric_limits<int>::max();
 
-    CellularDecomposition() : coverage(maxCellConcentration, 0.1f) {}
+    CellularDecomposition();
     virtual ~CellularDecomposition() = default;
     virtual void Init(argos::TConfigurationNode& t_tree) override;
     virtual void PreStep() override;

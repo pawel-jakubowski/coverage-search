@@ -10,30 +10,39 @@
 using namespace std;
 using namespace argos;
 
-void TaskManager::registerHandler(TaskHandler& handler) {
-    handlers.push_back(ref(handler));
-}
-
-void TaskManager::assignTasks() {
+void TaskManager::addNewCell(CRange<CVector2> limits)
+{
     CVector2 leftBottomCorner(limits.GetMax().GetX(), limits.GetMax().GetY());
     CVector2 leftUpperCorner(limits.GetMax().GetX(), limits.GetMin().GetY());
 
     CVector2 rightBottomCorner(limits.GetMin().GetX(), limits.GetMax().GetY());
     CVector2 rightUpperCorner(limits.GetMin().GetX(), limits.GetMin().GetY());
 
-    list <Task> availableTasks = {
+    availableTasks = {
         {leftBottomCorner,  leftUpperCorner,  Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin},
         {rightBottomCorner, rightUpperCorner, Task::Behavior::FollowRightBoundary, Task::Status::MoveToBegin}
     };
+}
 
+void TaskManager::registerHandler(TaskHandler& handler) {
+    handlers.push_back(ref(handler));
+}
+
+void TaskManager::assignTasks() {
     finishWaitingTasks();
     updateMovingHandlers();
     list<reference_wrapper<TaskHandler>> unassignedHandlers = getIdleHandlers();
 
-    for (auto task : availableTasks) {
+    LOG << __PRETTY_FUNCTION__ << "\n"
+        << "|- " << availableTasks.size() << " available tasks" << "\n"
+        << "|- " << handlers.size() << " handlers" << "\n"
+        << "|- " << unassignedHandlers.size() << " unassigned handlers" << endl;
+
+    for (auto taskIt = availableTasks.begin(); taskIt != availableTasks.end(); taskIt++) {
         if (unassignedHandlers.size() != 0) {
-            unassignedHandlers.front().get().update(task);
+            unassignedHandlers.front().get().update(*taskIt);
             unassignedHandlers.pop_front();
+            taskIt = availableTasks.erase(taskIt);
         }
     }
 }
