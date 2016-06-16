@@ -52,7 +52,6 @@ private:
     Real bestSolution;
 
     int stepCounter;
-    std::default_random_engine generator;
 
     CVector2 getWeightedProximityReading();
     bool isRoadClear(const CVector2& obstacleProximity);

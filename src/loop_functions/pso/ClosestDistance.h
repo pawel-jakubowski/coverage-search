@@ -12,6 +12,7 @@ public:
     virtual ~ClosestDistance() = default;
 
     virtual void Init(argos::TConfigurationNode& t_tree);
+    virtual bool IsExperimentFinished();
     virtual void Destroy();
 
     void addRobotPosition(argos::CVector3 pos);
@@ -35,6 +36,7 @@ private:
     std::mutex tagetPositionUpdateMutex;
 
     double bestObtainedDistance = std::numeric_limits<double>::max();
+    unsigned targetsNumber;
     argos::CVector2 position;
     PsoLog log;
 

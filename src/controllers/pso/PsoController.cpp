@@ -58,7 +58,12 @@ void PsoController::Init(TConfigurationNode& configuration) {
     positioningSensor->GetReading().Position.ProjectOntoXY(bestPosition);
     bestNeighbourhoodPosition = bestPosition;
 
-    calculateNewVelocity(positioningSensor->GetReading());
+    std::random_device r;
+    std::default_random_engine gen(r());
+    /* random velocity */
+    std::uniform_real_distribution<double> speedDist(maxVelocity/2, maxVelocity);
+    std::uniform_real_distribution<double> angleDist(0.0f, CRadians::TWO_PI.GetValue());
+    velocity = CVector2(speedDist(gen), CRadians(angleDist(gen)));
 }
 
 void PsoController::ControlStep() {
@@ -164,10 +169,12 @@ void PsoController::calculateNewVelocity(
     CVector2 position;
     positioningReading.Position.ProjectOntoXY(position);
 
+    std::random_device r;
+    std::default_random_engine gen(r());
     std::uniform_real_distribution<double> distribution(0.0f, 1.0f);
     velocity = inertia * velocity
-            + personalWeight * distribution(generator) * (bestPosition - position)
-            + neighbourhoodWeight * distribution(generator)
+            + personalWeight * distribution(gen) * (bestPosition - position)
+            + neighbourhoodWeight * distribution(gen)
                     * (bestNeighbourhoodPosition - position);
     if (velocity.Length() > maxVelocity)
         velocity = CVector2(maxVelocity, velocity.Angle());
