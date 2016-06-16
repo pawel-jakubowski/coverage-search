@@ -60,7 +60,6 @@
             <threshold value="80" />
             <threshold value="90" />
             <threshold value="95" />
-            <threshold value="100" />
         </log>
     </loop_functions>
 

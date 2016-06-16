@@ -9,6 +9,8 @@ using namespace boost::polygon;
 void MbfoLoopFunction::Init(TConfigurationNode& t_tree) {
     parseLogConfig(t_tree);
     parseVoronoiConfig(t_tree);
+    targetsNumber = this->GetSpace().GetEntitiesByType("target").size();
+    LOG << targetsNumber << " targets to found!" << endl;
     Reset();
 }
 
@@ -43,6 +45,10 @@ void MbfoLoopFunction::parseLogConfig(TConfigurationNode& t_tree) {
     }
 }
 
+bool MbfoLoopFunction::IsExperimentFinished() {
+    return thresholdsToLog.size() == 0 && log.targets.size() == targetsNumber;
+}
+
 void MbfoLoopFunction::PreStep() {
     auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
     assert(entities.size() >= 3);
@@ -64,7 +70,7 @@ void MbfoLoopFunction::PostStep() {
 void MbfoLoopFunction::checkPercentageCoverage() {
     if (thresholdsToLog.size() > 0) {
         const auto percentageCoverage = coverage.getCoverageValue();
-        if (percentageCoverage > thresholdsToLog.front()) {
+        if (percentageCoverage >= thresholdsToLog.front()) {
             LOG << "Threshold " << thresholdsToLog.front() << "% achieved!" << endl;
             log.thresholds[GetSpace().GetSimulationClock()] = percentageCoverage;
             thresholdsToLog.pop_front();

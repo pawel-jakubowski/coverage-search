@@ -15,6 +15,7 @@ public:
     MbfoLoopFunction() : coverage(maxCellConcentration, 0.1f) {}
     virtual ~MbfoLoopFunction() = default;
     virtual void Init(argos::TConfigurationNode& t_tree) override;
+    virtual bool IsExperimentFinished() override;
     virtual void PreStep() override;
     virtual void PostStep() override;
     virtual void Reset() override;
@@ -46,6 +47,7 @@ private:
 
     MbfoLog log;
     std::list<double> thresholdsToLog;
+    unsigned targetsNumber;
     CoverageGrid coverage;
     VoronoiDiagram voronoi;
     bool voronoiAssertion = false;
