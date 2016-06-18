@@ -10,6 +10,7 @@ public:
     TaskManager() = default;
     void addNewCell(argos::CRange<argos::CVector2> limits);
     void registerHandler(TaskHandler& handler);
+    void unregisterHandler(TaskHandler& handler);
     void assignTasks();
 private:
     std::vector<std::reference_wrapper<TaskHandler>> handlers;

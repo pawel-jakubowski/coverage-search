@@ -12,26 +12,6 @@ CellularDecomposition::CellularDecomposition()
 {}
 
 void CellularDecomposition::Init(TConfigurationNode& t_tree) {
-    CRange<CVector2> limits;
-
-    limits.SetMin(
-        CVector2(
-            GetSpace().GetArenaLimits().GetMin().GetX() + ARENA_CLEARANCE,
-            GetSpace().GetArenaLimits().GetMin().GetY() + ARENA_CLEARANCE
-        )
-    );
-
-    limits.SetMax(
-        CVector2(
-            GetSpace().GetArenaLimits().GetMax().GetX() - ARENA_CLEARANCE,
-            GetSpace().GetArenaLimits().GetMax().GetY() - ARENA_CLEARANCE
-        )
-    );
-
-    LOG << "Limits:" << "\n"
-        << limits.GetMin() << "\n"
-        << limits.GetMax() << endl;
-    taskManager.addNewCell(limits);
     Reset();
 }
 
@@ -87,6 +67,27 @@ void CellularDecomposition::updateCoverageCells(const std::vector<CoverageGrid::
 }
 
 void CellularDecomposition::Reset() {
+    CRange<CVector2> limits;
+
+    limits.SetMin(
+        CVector2(
+            GetSpace().GetArenaLimits().GetMin().GetX() + ARENA_CLEARANCE,
+            GetSpace().GetArenaLimits().GetMin().GetY() + ARENA_CLEARANCE
+        )
+    );
+
+    limits.SetMax(
+        CVector2(
+            GetSpace().GetArenaLimits().GetMax().GetX() - ARENA_CLEARANCE,
+            GetSpace().GetArenaLimits().GetMax().GetY() - ARENA_CLEARANCE
+        )
+    );
+
+    LOG << "Limits:" << "\n"
+    << limits.GetMin() << "\n"
+    << limits.GetMax() << endl;
+    taskManager.addNewCell(limits);
+
     coverage.initGrid(GetSpace().GetArenaLimits());
     PreStep();
 }

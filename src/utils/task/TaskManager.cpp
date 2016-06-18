@@ -4,6 +4,7 @@
 #include <list>
 #include <functional>
 #include <mutex>
+#include <algorithm>
 
 #include "assert.h"
 
@@ -54,6 +55,17 @@ void TaskManager::addNewCell(CRange<CVector2> limits)
 void TaskManager::registerHandler(TaskHandler& handler) {
     lock_guard<mutex> guard(handlerAccessMutex);
     handlers.push_back(ref(handler));
+}
+
+void TaskManager::unregisterHandler(TaskHandler& handler) {
+    lock_guard<mutex> guard(handlerAccessMutex);
+    reference_wrapper<TaskHandler> ref(handler);
+    auto it = find_if(handlers.begin(), handlers.end(),
+                      [&handler](reference_wrapper<TaskHandler>& ref){ return &ref.get() == &handler; });
+    if (it != handlers.end())
+        handlers.erase(it);
+    else
+        THROW_ARGOSEXCEPTION("Handler do not exists!");
 }
 
 void TaskManager::assignTasks() {

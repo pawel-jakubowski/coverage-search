@@ -11,11 +11,11 @@ struct Task {
         Sweep,
         FollowLeftBoundary,
         FollowRightBoundary
-    } behavior;
+    } behavior = Behavior::Idle;
 
     enum class Status {
         Wait = 0,
         MoveToBegin,
         MoveToEnd
-    } status;
+    } status = Status::Wait;
 };

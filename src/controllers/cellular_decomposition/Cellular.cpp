@@ -45,7 +45,18 @@ void Cellular::Init(TConfigurationNode& configuration) {
     cameraLeft->Enable();
     cameraRight->Enable();
 
+    LOG << "Register me : " << this << endl;
     loopFnc.registerToTaskManager(*this);
+}
+
+void Cellular::Reset() {
+    currentTask = Task();
+    lastControl = lastRotation = CDegrees();
+}
+
+void Cellular::Destroy() {
+    LOG << "Unregister me : " << this << endl;
+    loopFnc.unregisterFromTaskManager(*this);
 }
 
 CVector2 Cellular::getPostion() {
@@ -87,8 +98,16 @@ void Cellular::ControlStep() {
 //            }
 //            else if (fellowAngle.GetValue() != 0 && fellowAngle >= fellowDesiredAngle)
 //                moveToPoint(currentTask.end);
-            CDegrees rotationAngle = getRotationAngle();
-            move(rotationAngle / 2);
+            CVector2 rotationVector = CVector2(1, ToRadians(getRotationAngle())).Normalize();
+
+            Real inertiaCoef = 1.5;
+            CVector2 inertiaVector = inertiaCoef * CVector2(1, ToRadians(lastControl)).Normalize();
+            LOG << "Inertia angle " << ToDegrees(inertiaVector.Angle()) << "\n";
+
+            CVector2 controlVector = (rotationVector + inertiaVector);
+            LOG << "Control angle " << ToDegrees(controlVector.Angle()) << "\n";
+
+            move(ToDegrees(controlVector.Angle()));
         }
 
     } else if (currentTask.behavior == Task::Behavior::FollowRightBoundary) {
@@ -116,10 +135,16 @@ void Cellular::ControlStep() {
 //            }
 //            else if (fellowAngle.GetValue() != 0 && fellowAngle <= fellowDesiredAngle)
 //                moveToPoint(currentTask.end);
-            CDegrees rotationAngle = getRotationAngle();
-            if (lastRotation.GetValue() * rotationAngle.GetValue() < 0)
-                rotationAngle.SetValue(0);
-            move(rotationAngle);
+            CVector2 rotationVector = CVector2(1, ToRadians(getRotationAngle())).Normalize();
+
+//            Real inertiaCoef = 1.5;
+//            CVector2 inertiaVector = inertiaCoef * CVector2(1, ToRadians(lastControl)).Normalize();
+//            LOG << "Inertia angle " << ToDegrees(inertiaVector.Angle()) << "\n";
+
+            CVector2 controlVector = rotationVector;
+            LOG << "Control angle " << ToDegrees(controlVector.Angle()) << "\n";
+
+            move(ToDegrees(controlVector.Angle()));
         }
     }
 
@@ -183,32 +208,38 @@ CDegrees Cellular::getRotationAngle() const {
 
     TReadings leftReadings(readings.begin() + 4, readings.begin() + 8);
     TReadings backReadings(readings.begin() + 10, readings.begin() + 14);
-    TReadings rightReadings(readings.begin() + 15, readings.begin() + 21);
+    TReadings rightReadings(readings.begin() + 16, readings.begin() + 20);
     TReadings frontReadings(readings.begin() + 22, readings.end());
     frontReadings.insert(frontReadings.end(), readings.begin(), readings.begin() + 2);
 
     CDegrees sideAngle;
     CVector2 accumulator;
-    Real threshold = .7;
+    bool onlyFront = true;
+    Real frontThreshold = 0.13;
+    Real sideThreshold = 0.1;
 
     if (currentTask.behavior == Task::Behavior::FollowLeftBoundary) {
         sideAngle = CDegrees(90);
-        accumulator = getAccumulatedVector(frontReadings, threshold);
+        accumulator = getAccumulatedVector(frontReadings, frontThreshold);
         if (accumulator.SquareLength() == 0) {
+            onlyFront = false;
             LOG << "Only left proximity" << "\n";
-            accumulator = getAccumulatedVector(leftReadings, threshold);
+            accumulator = getAccumulatedVector(leftReadings, sideThreshold);
         }
     }
     else if (currentTask.behavior == Task::Behavior::FollowRightBoundary) {
         sideAngle = CDegrees(-90);
-        accumulator = getAccumulatedVector(frontReadings, threshold);
+        accumulator = getAccumulatedVector(frontReadings, frontThreshold);
         if (accumulator.SquareLength() == 0) {
+            onlyFront = false;
             LOG << "Only right proximity" << "\n";
-            accumulator = getAccumulatedVector(rightReadings, threshold);
+            accumulator = getAccumulatedVector(rightReadings, sideThreshold);
         }
     }
 
-    CDegrees rotationAngle(0);
+    CDegrees rotationAngle;
+    if (!onlyFront)
+        rotationAngle = lastRotation;
     if (accumulator.SquareLength() > 0) {
         rotationAngle = (sideAngle - ToDegrees(accumulator.Angle())).SignedNormalize();
     }
@@ -218,9 +249,14 @@ CDegrees Cellular::getRotationAngle() const {
 
 CVector2 Cellular::getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings, Real threshold) const {
     CVector2 accumulator;
-    for (auto& r : readings)
-        if (r.Value <= threshold)
+    for (auto& r : readings) {
+        LOG << "Reading " << r.Value;
+        if (r.Value >= threshold) {
+            LOG << " [add]";
             accumulator += CVector2(r.Value, r.Angle);
+        }
+        LOG << "\n";
+    }
     return accumulator;
 }
 
@@ -229,7 +265,6 @@ void Cellular::move(const CDegrees& rotationAngle) {
 
     if (angleDiff.GetAbsoluteValue() > angleEpsilon) {
         rotateForAnAngle(angleDiff);
-        lastRotation = angleDiff;
     }
     else {
         wheelsEngine->SetLinearVelocity(velocity, velocity);
@@ -245,6 +280,9 @@ CDegrees Cellular::getControl(const CDegrees& rotationAngle) const {
 }
 
 void Cellular::rotateForAnAngle(const CDegrees& angle) {
+    lastControl = angle;
+    lastRotation = angle;
+
     auto rotationDirection = getRotationDirection(angle);
     rotationSpeed = ToRadians(angle).GetAbsoluteValue()
                     * HALF_INTERWHEEL_DISTANCE_IN_CM
@@ -265,9 +303,9 @@ Cellular::Direction Cellular::getRotationDirection(const CDegrees& obstacleAngle
 
 void Cellular::rotate(Direction rotationDirection) {
     if (rotationDirection == Direction::Right)
-        wheelsEngine->SetLinearVelocity(rotationSpeed, -rotationSpeed);
+        wheelsEngine->SetLinearVelocity(rotationSpeed, -(rotationSpeed * 0.8));
     else if (rotationDirection == Direction::Left)
-        wheelsEngine->SetLinearVelocity(-rotationSpeed, rotationSpeed);
+        wheelsEngine->SetLinearVelocity(-(rotationSpeed * 0.8), rotationSpeed);
 }
 
 REGISTER_CONTROLLER(Cellular, "cellular_decomposition_controller")

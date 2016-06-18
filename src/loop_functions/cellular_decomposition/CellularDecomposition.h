@@ -17,6 +17,7 @@ public:
     virtual void Reset() override;
 
     void registerToTaskManager(TaskHandler& handler) { taskManager.registerHandler(handler); }
+    void unregisterFromTaskManager(TaskHandler& handler) { taskManager.unregisterHandler(handler); }
 
     const CoverageGrid& getCoverageGrid();
     const std::map<std::string, argos::CVector3> getRobotsPositions();

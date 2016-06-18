@@ -23,6 +23,8 @@ public:
     virtual ~Cellular() {}
 
     virtual void Init(TConfigurationNode& configuration) override;
+    virtual void Reset() override;
+    virtual void Destroy() override;
     virtual void ControlStep() override;
 
     virtual CVector2 getPostion() override;
@@ -42,6 +44,7 @@ private:
     Real velocity;
     Real rotationSpeed;
     Real minDistanceFromObstacle;
+    CDegrees lastControl;
     CDegrees lastRotation;
 
     CellularDecomposition& loopFnc;
