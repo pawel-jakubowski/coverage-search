@@ -6,8 +6,8 @@
 
 #include "qtopengl_footbot.h"
 #include "footbot_entity.h"
-#include "footbot_distance_scanner_equipped_entity.h"
-#include "footbot_turret_entity.h"
+#include <argos3/plugins/robots/foot-bot/simulator/footbot_distance_scanner_equipped_entity.h>
+#include <argos3/plugins/robots/foot-bot/simulator/footbot_turret_entity.h>
 #include <argos3/core/simulator/entity/embodied_entity.h>
 #include <argos3/core/utility/math/vector2.h>
 #include <argos3/core/utility/math/vector3.h>
@@ -91,7 +91,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   CQTOpenGLFootBot::CQTOpenGLFootBot() :
+   CQTOpenGLCustomFootBot::CQTOpenGLCustomFootBot() :
       m_unVertices(40),
       m_fLEDAngleSlice(360.0f / 12.0f) {
       /* Reserve the needed display lists */
@@ -181,14 +181,14 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   CQTOpenGLFootBot::~CQTOpenGLFootBot() {
+   CQTOpenGLCustomFootBot::~CQTOpenGLCustomFootBot() {
       glDeleteLists(m_unLists, 13);
    }
 
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::Draw(CFootBotEntity& c_entity) {
+   void CQTOpenGLCustomFootBot::Draw(CCustomFootBotEntity& c_entity) {
       /* Place the wheels */
       glPushMatrix();
       glTranslatef(0.0f, HALF_INTERWHEEL_DISTANCE, 0.0f);
@@ -272,7 +272,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::MakeWheel() {
+   void CQTOpenGLCustomFootBot::MakeWheel() {
       /* Right side */
       CVector2 cVertex(WHEEL_RADIUS, 0.0f);
       CRadians cAngle(CRadians::TWO_PI / m_unVertices);
@@ -317,7 +317,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::SetWhitePlasticMaterial() {
+   void CQTOpenGLCustomFootBot::SetWhitePlasticMaterial() {
       const GLfloat pfColor[]     = {   1.0f, 1.0f, 1.0f, 1.0f };
       const GLfloat pfSpecular[]  = {   0.9f, 0.9f, 0.9f, 1.0f };
       const GLfloat pfShininess[] = { 100.0f                   };
@@ -331,7 +331,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::SetBlackTireMaterial() {
+   void CQTOpenGLCustomFootBot::SetBlackTireMaterial() {
       const GLfloat pfColor[]     = { 0.0f, 0.0f, 0.0f, 1.0f };
       const GLfloat pfSpecular[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
       const GLfloat pfShininess[] = { 0.0f                   };
@@ -345,7 +345,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::SetCircuitBoardMaterial() {
+   void CQTOpenGLCustomFootBot::SetCircuitBoardMaterial() {
       const GLfloat pfColor[]     = { 0.0f, 0.0f, 1.0f, 1.0f };
       const GLfloat pfSpecular[]  = { 0.5f, 0.5f, 1.0f, 1.0f };
       const GLfloat pfShininess[] = { 10.0f                  };
@@ -359,7 +359,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::SetLEDMaterial(GLfloat f_red, GLfloat f_green, GLfloat f_blue) {
+   void CQTOpenGLCustomFootBot::SetLEDMaterial(GLfloat f_red, GLfloat f_green, GLfloat f_blue) {
       const GLfloat fEmissionFactor = 10.0f;
       const GLfloat pfColor[]     = {                    f_red,                   f_green,                   f_blue, 1.0f };
       const GLfloat pfSpecular[]  = {                     0.0f,                      0.0f,                     0.0f, 1.0f };
@@ -374,7 +374,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderWheel() {
+   void CQTOpenGLCustomFootBot::RenderWheel() {
       /* Set material */
       SetWhitePlasticMaterial();
       /* Right side */
@@ -422,7 +422,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderTrack() {
+   void CQTOpenGLCustomFootBot::RenderTrack() {
       /* Set material */
       SetWhitePlasticMaterial();
       /* Place two basic wheels */
@@ -483,7 +483,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderBase() {
+   void CQTOpenGLCustomFootBot::RenderBase() {
       /* Battery socket */
       /* Set material */
       SetWhitePlasticMaterial();
@@ -564,7 +564,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderGrippableSlice() {
+   void CQTOpenGLCustomFootBot::RenderGrippableSlice() {
       glDisable(GL_CULL_FACE); // This way we can see both faces of the grippable slice
       /* Bottom part */
       CVector2 cVertex(BASE_MODULE_RADIUS, 0.0f);
@@ -651,7 +651,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderGripperMechanics() {
+   void CQTOpenGLCustomFootBot::RenderGripperMechanics() {
       /* Set material */
       const GLfloat pfColor[]     = { 0.0f, 0.0f, 0.0f, 1.0f };
       const GLfloat pfSpecular[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -703,7 +703,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderGripperClaw() {
+   void CQTOpenGLCustomFootBot::RenderGripperClaw() {
       /* Set material */
       const GLfloat pfColor[]     = { 0.5f, 0.5f, 0.5f, 1.0f };
       const GLfloat pfSpecular[]  = { 0.5f, 0.5f, 0.5f, 1.0f };
@@ -728,7 +728,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderRAB() {
+   void CQTOpenGLCustomFootBot::RenderRAB() {
       /* Set material */
       SetWhitePlasticMaterial();
       /* Bottom part */
@@ -773,7 +773,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderDistanceScannerSensor() {
+   void CQTOpenGLCustomFootBot::RenderDistanceScannerSensor() {
       /* Set material */
       const GLfloat pfColor[]     = { 0.0f, 0.0f, 0.0f, 1.0f };
       const GLfloat pfSpecular[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -826,7 +826,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderDistanceScanner() {
+   void CQTOpenGLCustomFootBot::RenderDistanceScanner() {
       /* Set material */
       SetWhitePlasticMaterial();
       /* Draw only side surface */
@@ -847,7 +847,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderIMX() {
+   void CQTOpenGLCustomFootBot::RenderIMX() {
       /* Set material */
       SetWhitePlasticMaterial();
       CVector2 cVertex(IMX_MODULE_RADIUS, 0.0f);
@@ -889,7 +889,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderBeacon() {
+   void CQTOpenGLCustomFootBot::RenderBeacon() {
       CVector2 cVertex(BEACON_RADIUS, 0.0f);
       CRadians cAngle(-CRadians::TWO_PI / m_unVertices);
       /* Bottom part */
@@ -927,7 +927,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CQTOpenGLFootBot::RenderCamera() {
+   void CQTOpenGLCustomFootBot::RenderCamera() {
       /* Set material */
       SetWhitePlasticMaterial();
       CVector2 cVertex(CAMERA_RADIUS, 0.0f);
@@ -970,25 +970,25 @@ namespace argos {
    class CQTOpenGLOperationDrawFootBotNormal : public CQTOpenGLOperationDrawNormal {
    public:
       void ApplyTo(CQTOpenGLWidget& c_visualization,
-                   CFootBotEntity& c_entity) {
-         static CQTOpenGLFootBot m_cModel;
+                   CCustomFootBotEntity& c_entity) {
+         static CQTOpenGLCustomFootBot m_cModel;
          c_visualization.DrawRays(c_entity.GetControllableEntity());
          c_visualization.DrawEntity(c_entity.GetEmbodiedEntity());
          m_cModel.Draw(c_entity);
       }
    };
 
-   class CQTOpenGLOperationDrawFootBotSelected : public CQTOpenGLOperationDrawSelected {
+   class CQTOpenGLOperationDrawCustomFootBotSelected : public CQTOpenGLOperationDrawSelected {
    public:
       void ApplyTo(CQTOpenGLWidget& c_visualization,
-                   CFootBotEntity& c_entity) {
+                   CCustomFootBotEntity& c_entity) {
          c_visualization.DrawBoundingBox(c_entity.GetEmbodiedEntity());
       }
    };
 
-   REGISTER_QTOPENGL_ENTITY_OPERATION(CQTOpenGLOperationDrawNormal, CQTOpenGLOperationDrawFootBotNormal, CFootBotEntity);
+   REGISTER_QTOPENGL_ENTITY_OPERATION(CQTOpenGLOperationDrawNormal, CQTOpenGLOperationDrawFootBotNormal, CCustomFootBotEntity);
 
-   REGISTER_QTOPENGL_ENTITY_OPERATION(CQTOpenGLOperationDrawSelected, CQTOpenGLOperationDrawFootBotSelected, CFootBotEntity);
+   REGISTER_QTOPENGL_ENTITY_OPERATION(CQTOpenGLOperationDrawSelected, CQTOpenGLOperationDrawCustomFootBotSelected, CCustomFootBotEntity);
 
    /****************************************/
    /****************************************/

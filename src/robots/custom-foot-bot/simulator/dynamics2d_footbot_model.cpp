@@ -5,7 +5,7 @@
  */
 
 #include "dynamics2d_footbot_model.h"
-#include "footbot_turret_entity.h"
+#include <argos3/plugins/robots/foot-bot/simulator/footbot_turret_entity.h>
 #include <argos3/plugins/simulator/physics_engines/dynamics2d/dynamics2d_gripping.h>
 #include <argos3/plugins/simulator/physics_engines/dynamics2d/dynamics2d_engine.h>
 
@@ -40,8 +40,8 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   CDynamics2DFootBotModel::CDynamics2DFootBotModel(CDynamics2DEngine& c_engine,
-                                                    CFootBotEntity& c_entity) :
+   CDynamics2DCustomFootBotModel::CDynamics2DCustomFootBotModel(CDynamics2DEngine& c_engine,
+                                                    CCustomFootBotEntity& c_entity) :
       CDynamics2DMultiBodyObjectModel(c_engine, c_entity),
       m_cFootBotEntity(c_entity),
       m_cWheeledEntity(m_cFootBotEntity.GetWheeledEntity()),
@@ -55,15 +55,18 @@ namespace argos {
       m_fMass(1.6f),
       m_fCurrentWheelVelocity(m_cWheeledEntity.GetWheelVelocities()),
       m_unLastTurretMode(m_cFootBotEntity.GetTurretEntity().GetMode()) {
-      RegisterAnchorMethod<CDynamics2DFootBotModel>(
+      RegisterAnchorMethod<CDynamics2DCustomFootBotModel>(
          GetEmbodiedEntity().GetOriginAnchor(),
-         &CDynamics2DFootBotModel::UpdateOriginAnchor);
-      RegisterAnchorMethod<CDynamics2DFootBotModel>(
+         &CDynamics2DCustomFootBotModel::UpdateOriginAnchor);
+      RegisterAnchorMethod<CDynamics2DCustomFootBotModel>(
          GetEmbodiedEntity().GetAnchor("turret"),
-         &CDynamics2DFootBotModel::UpdateTurretAnchor);
-      RegisterAnchorMethod<CDynamics2DFootBotModel>(
-         GetEmbodiedEntity().GetAnchor("perspective_camera"),
-         &CDynamics2DFootBotModel::UpdatePerspectiveCameraAnchor);
+         &CDynamics2DCustomFootBotModel::UpdateTurretAnchor);
+      RegisterAnchorMethod<CDynamics2DCustomFootBotModel>(
+         GetEmbodiedEntity().GetAnchor("perspective_camera_left"),
+         &CDynamics2DCustomFootBotModel::UpdatePerspectiveCameraAnchor);
+      RegisterAnchorMethod<CDynamics2DCustomFootBotModel>(
+          GetEmbodiedEntity().GetAnchor("perspective_camera_right"),
+          &CDynamics2DCustomFootBotModel::UpdatePerspectiveCameraAnchor);
       /* Create the actual body with initial position and orientation */
       m_ptActualBaseBody =
          cpSpaceAddBody(GetDynamics2DEngine().GetPhysicsSpace(),
@@ -139,7 +142,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   CDynamics2DFootBotModel::~CDynamics2DFootBotModel() {
+   CDynamics2DCustomFootBotModel::~CDynamics2DCustomFootBotModel() {
       delete m_pcGripper;
       delete m_pcGrippable;
       switch(m_unLastTurretMode) {
@@ -165,7 +168,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::MoveTo(const CVector3& c_position,
+   void CDynamics2DCustomFootBotModel::MoveTo(const CVector3& c_position,
                                         const CQuaternion& c_orientation) {
       /* Release grippers and grippees */
       m_pcGripper->Release();
@@ -178,7 +181,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::Reset() {
+   void CDynamics2DCustomFootBotModel::Reset() {
       /* Zero speed and applied forces of base control body */
       m_cDiffSteering.Reset();
       /* Release grippers and gripees */
@@ -198,7 +201,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::CalculateBoundingBox() {
+   void CDynamics2DCustomFootBotModel::CalculateBoundingBox() {
       GetBoundingBox().MinCorner.SetX(m_ptBaseShape->bb.l);
       GetBoundingBox().MinCorner.SetY(m_ptBaseShape->bb.b);
       GetBoundingBox().MinCorner.SetZ(GetDynamics2DEngine().GetElevation());
@@ -210,7 +213,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::UpdateFromEntityStatus() {
+   void CDynamics2DCustomFootBotModel::UpdateFromEntityStatus() {
       /* Do we want to move? */
       if((m_fCurrentWheelVelocity[FOOTBOT_LEFT_WHEEL] != 0.0f) ||
          (m_fCurrentWheelVelocity[FOOTBOT_RIGHT_WHEEL] != 0.0f)) {
@@ -297,7 +300,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::TurretPassiveToActive() {
+   void CDynamics2DCustomFootBotModel::TurretPassiveToActive() {
       /* Delete constraints to actual base body */
       cpSpaceRemoveConstraint(GetDynamics2DEngine().GetPhysicsSpace(), m_ptBaseGripperAngularMotion);
       cpConstraintFree(m_ptBaseGripperAngularMotion);
@@ -316,7 +319,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::TurretActiveToPassive() {
+   void CDynamics2DCustomFootBotModel::TurretActiveToPassive() {
       /* Delete constraint from actual gripper body to gripper control body */
       cpSpaceRemoveConstraint(GetDynamics2DEngine().GetPhysicsSpace(), m_ptGripperControlAngularMotion);
       cpConstraintFree(m_ptGripperControlAngularMotion);
@@ -335,7 +338,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::UpdateOriginAnchor(SAnchor& s_anchor) {
+   void CDynamics2DCustomFootBotModel::UpdateOriginAnchor(SAnchor& s_anchor) {
       s_anchor.Position.SetX(m_ptActualBaseBody->p.x);
       s_anchor.Position.SetY(m_ptActualBaseBody->p.y);
       s_anchor.Orientation.FromAngleAxis(CRadians(m_ptActualBaseBody->a), CVector3::Z);
@@ -344,7 +347,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::UpdateTurretAnchor(SAnchor& s_anchor) {
+   void CDynamics2DCustomFootBotModel::UpdateTurretAnchor(SAnchor& s_anchor) {
       s_anchor.Position.SetX(m_ptActualGripperBody->p.x);
       s_anchor.Position.SetY(m_ptActualGripperBody->p.y);
       s_anchor.Orientation.FromAngleAxis(CRadians(m_ptActualGripperBody->a), CVector3::Z);
@@ -358,7 +361,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   void CDynamics2DFootBotModel::UpdatePerspectiveCameraAnchor(SAnchor& s_anchor) {
+   void CDynamics2DCustomFootBotModel::UpdatePerspectiveCameraAnchor(SAnchor& s_anchor) {
       s_anchor.Position.SetX(m_ptActualBaseBody->p.x + s_anchor.OffsetPosition.GetX());
       s_anchor.Position.SetY(m_ptActualBaseBody->p.y + s_anchor.OffsetPosition.GetY());
       s_anchor.Orientation =
@@ -369,7 +372,7 @@ namespace argos {
    /****************************************/
    /****************************************/
 
-   REGISTER_STANDARD_DYNAMICS2D_OPERATIONS_ON_ENTITY(CFootBotEntity, CDynamics2DFootBotModel);
+   REGISTER_STANDARD_DYNAMICS2D_OPERATIONS_ON_ENTITY(CCustomFootBotEntity, CDynamics2DCustomFootBotModel);
 
    /****************************************/
    /****************************************/

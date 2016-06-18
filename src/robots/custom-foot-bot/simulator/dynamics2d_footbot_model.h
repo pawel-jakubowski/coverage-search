@@ -15,17 +15,18 @@ namespace argos {
 
 #include <argos3/plugins/simulator/physics_engines/dynamics2d/dynamics2d_multi_body_object_model.h>
 #include <argos3/plugins/simulator/physics_engines/dynamics2d/dynamics2d_differentialsteering_control.h>
-#include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
+#include "footbot_entity.h"
+
 
 namespace argos {
 
-   class CDynamics2DFootBotModel : public CDynamics2DMultiBodyObjectModel {
+   class CDynamics2DCustomFootBotModel : public CDynamics2DMultiBodyObjectModel {
 
    public:
 
-      CDynamics2DFootBotModel(CDynamics2DEngine& c_engine,
-                              CFootBotEntity& c_entity);
-      virtual ~CDynamics2DFootBotModel();
+      CDynamics2DCustomFootBotModel(CDynamics2DEngine& c_engine,
+                              CCustomFootBotEntity& c_entity);
+      virtual ~CDynamics2DCustomFootBotModel();
       
       virtual void MoveTo(const CVector3& c_position,
                           const CQuaternion& c_orientation);
@@ -49,7 +50,7 @@ namespace argos {
 
    private:
 
-      CFootBotEntity&         m_cFootBotEntity;
+       CCustomFootBotEntity&         m_cFootBotEntity;
       CWheeledEntity&         m_cWheeledEntity;
       CGripperEquippedEntity& m_cGripperEntity;
 

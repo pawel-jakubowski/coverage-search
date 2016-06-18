@@ -7,7 +7,7 @@
 #include <plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_light_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_colored_blob_omnidirectional_camera_sensor.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_colored_blob_perspective_camera_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
 
 #include <loop_functions/cellular_decomposition/CellularDecomposition.h>
@@ -17,7 +17,7 @@
 namespace argos {
 
 class Cellular : public CCI_Controller, public TaskHandler {
-    const Real angleEpsilon = 1;
+    const Real angleEpsilon = .1;
 public:
     Cellular();
     virtual ~Cellular() {}
@@ -36,7 +36,8 @@ private:
     CCI_LightSensor* lightSensor = nullptr;
     CCI_RangeAndBearingSensor* rabRx = nullptr;
     CCI_LEDsActuator* leds = nullptr;
-    CCI_ColoredBlobOmnidirectionalCameraSensor* camera = nullptr;
+    CCI_ColoredBlobPerspectiveCameraSensor* cameraLeft = nullptr;
+    CCI_ColoredBlobPerspectiveCameraSensor* cameraRight = nullptr;
 
     Real velocity;
     Real rotationSpeed;
@@ -51,11 +52,15 @@ private:
     CDegrees getRotationAngle() const;
     void rotate(Direction rotationDirection);
     void move(const CDegrees& rotationAngle);
-    CVector2 getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings) const;
+    CVector2 getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings, Real threshold) const;
     CDegrees getAngleBetweenPoints(const CVector2& a, const CVector2& b) const;
     void moveToPoint(const CVector2& point);
 
     void logCurrentTask() const;
+    void stopWheels() const;
+
+    CDegrees myPositionToPointAngle(const CVector2& point);
+    CDegrees getControl(const CDegrees& rotationAngle) const;
 };
 
 }

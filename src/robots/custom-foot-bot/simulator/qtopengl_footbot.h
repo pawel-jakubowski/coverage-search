@@ -8,8 +8,8 @@
 #define QTOPENGL_FOOTBOT_H
 
 namespace argos {
-   class CQTOpenGLFootBot;
-   class CFootBotEntity;
+   class CQTOpenGLCustomFootBot;
+   class CCustomFootBotEntity;
 }
 
 #ifdef __APPLE__
@@ -20,15 +20,15 @@ namespace argos {
 
 namespace argos {
 
-   class CQTOpenGLFootBot {
+   class CQTOpenGLCustomFootBot {
 
    public:
 
-      CQTOpenGLFootBot();
+      CQTOpenGLCustomFootBot();
 
-      virtual ~CQTOpenGLFootBot();
+      virtual ~CQTOpenGLCustomFootBot();
 
-      virtual void Draw(CFootBotEntity& c_entity);
+      virtual void Draw(CCustomFootBotEntity& c_entity);
 
    protected:
 

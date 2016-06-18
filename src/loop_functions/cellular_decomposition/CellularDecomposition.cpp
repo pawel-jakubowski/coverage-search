@@ -1,9 +1,11 @@
 #include "CellularDecomposition.h"
 #include <argos3/plugins/simulator/entities/proximity_sensor_equipped_entity.h>
 
+using namespace std;
 using namespace argos;
 
 static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
+static const Real ARENA_CLEARANCE = FOOTBOT_BODY_RADIUS + 0.05f;
 
 CellularDecomposition::CellularDecomposition()
     : coverage(maxCellConcentration, 0.1f)
@@ -14,18 +16,21 @@ void CellularDecomposition::Init(TConfigurationNode& t_tree) {
 
     limits.SetMin(
         CVector2(
-            GetSpace().GetArenaLimits().GetMin().GetX() + FOOTBOT_BODY_RADIUS,
-            GetSpace().GetArenaLimits().GetMin().GetY() + FOOTBOT_BODY_RADIUS
+            GetSpace().GetArenaLimits().GetMin().GetX() + ARENA_CLEARANCE,
+            GetSpace().GetArenaLimits().GetMin().GetY() + ARENA_CLEARANCE
         )
     );
 
     limits.SetMax(
         CVector2(
-            GetSpace().GetArenaLimits().GetMax().GetX() - FOOTBOT_BODY_RADIUS,
-            GetSpace().GetArenaLimits().GetMax().GetY() - FOOTBOT_BODY_RADIUS
+            GetSpace().GetArenaLimits().GetMax().GetX() - ARENA_CLEARANCE,
+            GetSpace().GetArenaLimits().GetMax().GetY() - ARENA_CLEARANCE
         )
     );
 
+    LOG << "Limits:" << "\n"
+        << limits.GetMin() << "\n"
+        << limits.GetMax() << endl;
     taskManager.addNewCell(limits);
     Reset();
 }
@@ -33,10 +38,10 @@ void CellularDecomposition::Init(TConfigurationNode& t_tree) {
 void CellularDecomposition::PreStep() {
     auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
     updateRobotsPositions(entities);
-    taskManager.assignTasks();
 }
 
 void CellularDecomposition::PostStep() {
+    taskManager.assignTasks();
     std::vector<CoverageGrid::CellIndex> affectedCells = getCellsCoveredByRobots();
     removeDuplicates(affectedCells);
     try {
@@ -89,14 +94,14 @@ void CellularDecomposition::Reset() {
 void CellularDecomposition::updateRobotsPositions(const CSpace::TMapPerType &entities) {
     rays.clear();
     for (const auto& entity : entities) {
-        auto& footbot = *(any_cast<CFootBotEntity*>(entity.second));
+        auto& footbot = *(any_cast<CCustomFootBotEntity*>(entity.second));
         auto position = footbot.GetEmbodiedEntity().GetOriginAnchor().Position;
         addRobotsRays(footbot);
         robotsPositions[footbot.GetId()] = position;
     }
 }
 
-void CellularDecomposition::addRobotsRays(CFootBotEntity& footbot) {
+void CellularDecomposition::addRobotsRays(CCustomFootBotEntity& footbot) {
     auto& proximityEntity = footbot.GetProximitySensorEquippedEntity();
     for(UInt32 i = 0; i < proximityEntity.GetNumSensors(); ++i) {
         CVector3 cRayStart, cRayEnd;

@@ -3,12 +3,39 @@
 #include <argos3/core/utility/logging/argos_log.h>
 #include <list>
 #include <functional>
+#include <mutex>
 
 #include "assert.h"
 
+/*
+ * HOW TO DISJOINT CELLS?
+ *
+ * TaskManager:
+ *  unassigned robots = robots without a cell
+ *  for cell in cells
+ *      from the unassigned robots assign closest to cell begining
+ *      set the cell explorers - two that are the closest to the explorers begining points
+ *      rest assign as a sweepers
+ *
+ *      explorers
+ *          go to the beginning point
+ *          if all explorers are near their beginning points
+ *              start exploring - follow proper wall
+ *          if explorers lose the line of sight
+ *              add two new cells
+ *              assign them as a sweepers
+ *
+ *      sweepers
+ *          disperse evenly in the one line near edge
+ *          move upwards/downwards
+ *
+ *
+ */
 
 using namespace std;
 using namespace argos;
+
+mutex handlerAccessMutex;
 
 void TaskManager::addNewCell(CRange<CVector2> limits)
 {
@@ -25,13 +52,14 @@ void TaskManager::addNewCell(CRange<CVector2> limits)
 }
 
 void TaskManager::registerHandler(TaskHandler& handler) {
+    lock_guard<mutex> guard(handlerAccessMutex);
     handlers.push_back(ref(handler));
 }
 
 void TaskManager::assignTasks() {
     finishWaitingTasks();
     updateMovingHandlers();
-    list<reference_wrapper<TaskHandler>> unassignedHandlers = getIdleHandlers();
+    auto unassignedHandlers = getIdleHandlers();
 
     LOG << __PRETTY_FUNCTION__ << "\n"
         << "|- " << availableTasks.size() << " available tasks" << "\n"
@@ -52,8 +80,8 @@ void TaskManager::updateMovingHandlers() const {
         auto handlerTask = handler.get().getCurrentTask();
         if (handlerTask.status == Task::Status::MoveToBegin)
             setStatusIfNearGoal(handler.get(), Task::Status::MoveToEnd, handlerTask.begin);
-        if (handlerTask.status == Task::Status::MoveToEnd)
-            setStatusIfNearGoal(handler.get(), Task::Status::Wait, handlerTask.end);
+//        if (handlerTask.status == Task::Status::MoveToEnd)
+//            setStatusIfNearGoal(handler.get(), Task::Status::Wait, handlerTask.end);
     }
 }
 
@@ -61,21 +89,24 @@ list<reference_wrapper<TaskHandler>> TaskManager::getIdleHandlers() const {
     list<reference_wrapper<TaskHandler>> unassignedHandlers;
     for(auto handler : handlers)
         if (handler.get().getCurrentTask().behavior == Task::Behavior::Idle)
-            unassignedHandlers.push_back(handler);
+            unassignedHandlers.emplace_back(handler);
     return unassignedHandlers;
 }
 
 void TaskManager::setStatusIfNearGoal(TaskHandler& handler, const Task::Status& status, const CVector2& goal) const {
-    Real minDistance = 0.01f;
-    if ((handler.getPostion() - goal).SquareLength() < minDistance)
-        handler.getCurrentTask().status = status;
+    Real minDistance = 0.001f;
+    if ((handler.getPostion() - goal).SquareLength() < minDistance) {
+        auto task = handler.getCurrentTask();
+        task.status = status;
+        handler.update(task);
+    }
 }
 
 void TaskManager::finishWaitingTasks() const {
     Task idleTask = {CVector2(), CVector2(), Task::Behavior::Idle, Task::Status::Wait};
     for(auto handler : handlers) {
-        auto& handlerTask = handler.get().getCurrentTask();
+        auto handlerTask = handler.get().getCurrentTask();
         if (handlerTask.status == Task::Status::Wait)
-            handlerTask = idleTask;
+            handler.get().update(idleTask);
     }
 }

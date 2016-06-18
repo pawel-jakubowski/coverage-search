@@ -26,7 +26,8 @@ void Cellular::Init(TConfigurationNode& configuration) {
     lightSensor = GetSensor<CCI_LightSensor>("light");
     rabRx = GetSensor<CCI_RangeAndBearingSensor>("range_and_bearing");
     leds = GetActuator<CCI_LEDsActuator>("leds");
-    camera = GetSensor<CCI_ColoredBlobOmnidirectionalCameraSensor>("colored_blob_omnidirectional_camera");
+    cameraLeft = GetSensor<CCI_ColoredBlobPerspectiveCameraSensor>("perspective_camera_left");
+    cameraRight = GetSensor<CCI_ColoredBlobPerspectiveCameraSensor>("perspective_camera_right");
 
     GetNodeAttributeOrDefault(configuration, "velocity", velocity, velocity);
     GetNodeAttributeOrDefault(configuration, "min_distance", minDistanceFromObstacle,
@@ -38,10 +39,13 @@ void Cellular::Init(TConfigurationNode& configuration) {
     assert(lightSensor != nullptr);
     assert(rabRx != nullptr);
     assert(leds != nullptr);
-    assert(camera != nullptr);
+    assert(cameraLeft != nullptr);
+    assert(cameraRight != nullptr);
+
+    cameraLeft->Enable();
+    cameraRight->Enable();
 
     loopFnc.registerToTaskManager(*this);
-    camera->Enable();
 }
 
 CVector2 Cellular::getPostion() {
@@ -57,22 +61,72 @@ void Cellular::ControlStep() {
     LOG << "[" << GetId() << "]: ";
     logCurrentTask();
 
-    if (currentTask.behavior == Task::Behavior::FollowLeftBoundary)
+    if (currentTask.behavior == Task::Behavior::FollowLeftBoundary) {
         leds->SetAllColors(CColor::GREEN);
-    else if (currentTask.behavior == Task::Behavior::FollowRightBoundary)
+        CDegrees fellowAngle;
+        CDegrees fellowDesiredAngle(-90);
+        CDegrees cameraOffset(-45);
+        size_t addedAnglesCounter = 0;
+        for (auto& blob : cameraRight->GetReadings().BlobList)
+            if (blob->Color == CColor::RED) {
+                fellowAngle += cameraOffset - CDegrees((blob->X / 10));
+                addedAnglesCounter++;
+            }
+        fellowAngle /= addedAnglesCounter;
+        LOG << "Fellow at angle " << fellowAngle << "\n";
+
+        stopWheels();
+        if (currentTask.status == Task::Status::MoveToBegin)
+            moveToPoint(currentTask.begin);
+        else if (currentTask.status == Task::Status::MoveToEnd) {
+//            auto angleToPoint = myPositionToPointAngle(currentTask.end);
+//            auto angleDiff = getControl(angleToPoint);
+//            if (angleDiff.GetAbsoluteValue() > angleEpsilon) {
+//                rotateForAnAngle(angleDiff);
+//                lastRotation = angleDiff;
+//            }
+//            else if (fellowAngle.GetValue() != 0 && fellowAngle >= fellowDesiredAngle)
+//                moveToPoint(currentTask.end);
+            CDegrees rotationAngle = getRotationAngle();
+            move(rotationAngle / 2);
+        }
+
+    } else if (currentTask.behavior == Task::Behavior::FollowRightBoundary) {
         leds->SetAllColors(CColor::RED);
-
-    if (currentTask.status == Task::Status::MoveToBegin)
-        moveToPoint(currentTask.begin);
-    else if (currentTask.status == Task::Status::MoveToEnd)
-        moveToPoint(currentTask.end);
-
-    auto& blobs = camera->GetReadings();
-    for (auto& blob : blobs.BlobList) {
-        LOG << blob->Distance << ", " << ToDegrees(blob->Angle) << "\n";
+        CDegrees fellowAngle;
+        CDegrees fellowDesiredAngle(90);
+        CDegrees cameraOffset(135);
+        size_t addedAnglesCounter = 0;
+        for (auto& blob : cameraLeft->GetReadings().BlobList)
+            if (blob->Color == CColor::GREEN) {
+                fellowAngle += cameraOffset - CDegrees((blob->X / 10));
+                addedAnglesCounter++;
+            }
+        fellowAngle /= addedAnglesCounter;
+        LOG << "Fellow at angle " << fellowAngle << "\n";
+        stopWheels();
+        if (currentTask.status == Task::Status::MoveToBegin)
+            moveToPoint(currentTask.begin);
+        else if (currentTask.status == Task::Status::MoveToEnd) {
+//            auto angleToPoint = myPositionToPointAngle(currentTask.end);
+//            auto angleDiff = getControl(angleToPoint);
+//            if (angleDiff.GetAbsoluteValue() > angleEpsilon) {
+//                rotateForAnAngle(angleDiff);
+//                lastRotation = angleDiff;
+//            }
+//            else if (fellowAngle.GetValue() != 0 && fellowAngle <= fellowDesiredAngle)
+//                moveToPoint(currentTask.end);
+            CDegrees rotationAngle = getRotationAngle();
+            if (lastRotation.GetValue() * rotationAngle.GetValue() < 0)
+                rotationAngle.SetValue(0);
+            move(rotationAngle);
+        }
     }
+
     LOG.Flush();
 }
+
+void Cellular::stopWheels() const { wheelsEngine->SetLinearVelocity(0, 0); }
 
 void Cellular::logCurrentTask() const {
     switch(currentTask.behavior) {
@@ -105,12 +159,17 @@ void Cellular::logCurrentTask() const {
 }
 
 void Cellular::moveToPoint(const CVector2& point) {
+    CDegrees rotationAngle = myPositionToPointAngle(point);
+    move(rotationAngle);
+}
+
+CDegrees Cellular::myPositionToPointAngle(const CVector2& point) {
     CVector2 currentPoint;
     positioningSensor->GetReading().Position.ProjectOntoXY(currentPoint);
     CDegrees angle = getAngleBetweenPoints(currentPoint, point);
     CDegrees robotsOrientation = getOrientationOnXY();
     auto rotationAngle = (robotsOrientation - angle).SignedNormalize();
-    move(rotationAngle);
+    return rotationAngle;
 }
 
 CDegrees Cellular::getAngleBetweenPoints(const CVector2& a, const CVector2& b) const {
@@ -122,44 +181,51 @@ CDegrees Cellular::getRotationAngle() const {
     using TReadings = CCI_FootBotProximitySensor::TReadings;
     const auto& readings = proximitySensor->GetReadings();
 
-    TReadings leftReadings(readings.begin() + 3, readings.begin() + 9);
-    TReadings backReadings(readings.begin() + 9, readings.begin() + 15);
+    TReadings leftReadings(readings.begin() + 4, readings.begin() + 8);
+    TReadings backReadings(readings.begin() + 10, readings.begin() + 14);
     TReadings rightReadings(readings.begin() + 15, readings.begin() + 21);
-    TReadings frontReadings(readings.begin() + 21, readings.end());
-    frontReadings.insert(frontReadings.end(), readings.begin(), readings.begin() + 3);
+    TReadings frontReadings(readings.begin() + 22, readings.end());
+    frontReadings.insert(frontReadings.end(), readings.begin(), readings.begin() + 2);
 
     CDegrees sideAngle;
     CVector2 accumulator;
+    Real threshold = .7;
 
     if (currentTask.behavior == Task::Behavior::FollowLeftBoundary) {
         sideAngle = CDegrees(90);
-        accumulator = getAccumulatedVector(frontReadings)
-            + getAccumulatedVector(leftReadings);
+        accumulator = getAccumulatedVector(frontReadings, threshold);
+        if (accumulator.SquareLength() == 0) {
+            LOG << "Only left proximity" << "\n";
+            accumulator = getAccumulatedVector(leftReadings, threshold);
+        }
     }
     else if (currentTask.behavior == Task::Behavior::FollowRightBoundary) {
         sideAngle = CDegrees(-90);
-        accumulator = getAccumulatedVector(frontReadings)
-            + getAccumulatedVector(rightReadings);
+        accumulator = getAccumulatedVector(frontReadings, threshold);
+        if (accumulator.SquareLength() == 0) {
+            LOG << "Only right proximity" << "\n";
+            accumulator = getAccumulatedVector(rightReadings, threshold);
+        }
     }
 
     CDegrees rotationAngle(0);
     if (accumulator.SquareLength() > 0) {
         rotationAngle = (sideAngle - ToDegrees(accumulator.Angle())).SignedNormalize();
     }
+    LOG << "Rotation angle " << rotationAngle << "\n";
     return rotationAngle;
 }
 
-CVector2 Cellular::getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings) const {
+CVector2 Cellular::getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings, Real threshold) const {
     CVector2 accumulator;
     for (auto& r : readings)
-        accumulator += CVector2(r.Value, r.Angle);
+        if (r.Value <= threshold)
+            accumulator += CVector2(r.Value, r.Angle);
     return accumulator;
 }
 
 void Cellular::move(const CDegrees& rotationAngle) {
-    Real KP = 0.05;
-    Real KD = 0.05;
-    auto angleDiff = KP * rotationAngle + KD * (rotationAngle - lastRotation);
+    auto angleDiff = getControl(rotationAngle);
 
     if (angleDiff.GetAbsoluteValue() > angleEpsilon) {
         rotateForAnAngle(angleDiff);
@@ -169,6 +235,13 @@ void Cellular::move(const CDegrees& rotationAngle) {
         wheelsEngine->SetLinearVelocity(velocity, velocity);
         lastRotation.SetValue(0);
     }
+}
+
+CDegrees Cellular::getControl(const CDegrees& rotationAngle) const {
+    Real KP = 0.5;
+    Real KD = 0.25;
+    auto angleDiff = KP * rotationAngle + KD * (rotationAngle - lastRotation);
+    return angleDiff;
 }
 
 void Cellular::rotateForAnAngle(const CDegrees& angle) {

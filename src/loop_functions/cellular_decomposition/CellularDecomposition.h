@@ -1,7 +1,7 @@
 #pragma once
 
 #include <argos3/core/simulator/loop_functions.h>
-#include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
+#include <robots/custom-foot-bot/simulator/footbot_entity.h>
 #include <utils/coverage/CoverageGrid.h>
 #include <utils/task/TaskManager.h>
 
@@ -29,7 +29,7 @@ private:
     std::vector<argos::CRay3> rays;
 
     void updateRobotsPositions(const argos::CSpace::TMapPerType& entities);
-    void addRobotsRays(argos::CFootBotEntity& footbot);
+    void addRobotsRays(argos::CCustomFootBotEntity& footbot);
     void wrapPointToArenaLimits(argos::CVector3 &point);
     std::vector<CoverageGrid::CellIndex> getCellsCoveredByRobots() const;
     void removeDuplicates(std::vector<CoverageGrid::CellIndex>& cells) const;

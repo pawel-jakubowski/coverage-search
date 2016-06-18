@@ -1,66 +1,22 @@
 #
 # Foot-bot headers
 #
-# argos3/plugins/robots/foot-bot/control_interface
-set(ARGOS3_HEADERS_PLUGINS_ROBOTS_FOOTBOT_CONTROLINTERFACE
-  control_interface/ci_footbot_base_ground_sensor.h
-  control_interface/ci_footbot_distance_scanner_actuator.h
-  control_interface/ci_footbot_distance_scanner_sensor.h
-  control_interface/ci_footbot_encoder_sensor.h
-  control_interface/ci_footbot_gripper_actuator.h
-  control_interface/ci_footbot_light_sensor.h
-  control_interface/ci_footbot_motor_ground_sensor.h
-  control_interface/ci_footbot_proximity_sensor.h
-  control_interface/ci_footbot_turret_actuator.h
-  control_interface/ci_footbot_turret_encoder_sensor.h)
 
 set(ARGOS3_HEADERS_PLUGINS_ROBOTS_FOOTBOT_SIMULATOR
+  simulator/colored_blob_perspective_camera_default_sensor.h
   simulator/dynamics2d_footbot_model.h
-  simulator/footbot_base_ground_rotzonly_sensor.h
-  simulator/footbot_distance_scanner_default_actuator.h
-  simulator/footbot_distance_scanner_equipped_entity.h
-  simulator/footbot_distance_scanner_rotzonly_sensor.h
-  simulator/footbot_entity.h
-  simulator/footbot_gripper_default_actuator.h
-  simulator/footbot_light_rotzonly_sensor.h
-  simulator/footbot_motor_ground_rotzonly_sensor.h
-  simulator/footbot_proximity_default_sensor.h
-  simulator/footbot_turret_default_actuator.h
-  simulator/footbot_turret_encoder_default_sensor.h
-  simulator/footbot_turret_entity.h)
+  simulator/footbot_entity.h)
 
 #
-# Foot-bot sources
+# Custom Foot-bot sources
 #
-set(ARGOS3_SOURCES_PLUGINS_ROBOTS_FOOTBOT
-  ${ARGOS3_HEADERS_PLUGINS_ROBOTS_FOOTBOT_CONTROLINTERFACE}
-  control_interface/ci_footbot_base_ground_sensor.cpp
-  control_interface/ci_footbot_distance_scanner_actuator.cpp
-  control_interface/ci_footbot_distance_scanner_sensor.cpp
-  control_interface/ci_footbot_encoder_sensor.cpp
-  control_interface/ci_footbot_gripper_actuator.cpp
-  control_interface/ci_footbot_light_sensor.cpp
-  control_interface/ci_footbot_motor_ground_sensor.cpp
-  control_interface/ci_footbot_proximity_sensor.cpp
-  control_interface/ci_footbot_turret_actuator.cpp
-  control_interface/ci_footbot_turret_encoder_sensor.cpp)
 
 set(ARGOS3_SOURCES_PLUGINS_ROBOTS_FOOTBOT
   ${ARGOS3_SOURCES_PLUGINS_ROBOTS_FOOTBOT}
   ${ARGOS3_HEADERS_PLUGINS_ROBOTS_FOOTBOT_SIMULATOR}
+  simulator/colored_blob_perspective_camera_default_sensor.cpp
   simulator/dynamics2d_footbot_model.cpp
-  simulator/footbot_base_ground_rotzonly_sensor.cpp
-  simulator/footbot_distance_scanner_default_actuator.cpp
-  simulator/footbot_distance_scanner_equipped_entity.cpp
-  simulator/footbot_distance_scanner_rotzonly_sensor.cpp
-  simulator/footbot_entity.cpp
-  simulator/footbot_gripper_default_actuator.cpp
-  simulator/footbot_light_rotzonly_sensor.cpp
-  simulator/footbot_motor_ground_rotzonly_sensor.cpp
-  simulator/footbot_proximity_default_sensor.cpp
-  simulator/footbot_turret_default_actuator.cpp
-  simulator/footbot_turret_encoder_default_sensor.cpp
-  simulator/footbot_turret_entity.cpp)
+  simulator/footbot_entity.cpp)
 
 # Compile the graphical visualization only if the necessary libraries have been found
 include(ARGoSCheckQTOpenGL)
@@ -79,6 +35,7 @@ endif(ARGOS_COMPILE_QTOPENGL)
 #
 add_library(argos3plugin_simulator_custom_footbot SHARED ${ARGOS3_SOURCES_PLUGINS_ROBOTS_FOOTBOT})
 target_link_libraries(argos3plugin_simulator_custom_footbot
+  argos3plugin_simulator_footbot
   argos3plugin_simulator_genericrobot
   argos3plugin_simulator_dynamics2d)
 
