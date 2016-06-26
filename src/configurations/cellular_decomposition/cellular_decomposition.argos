@@ -30,20 +30,22 @@
                 <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
                 <perspective_camera_left implementation="default" medium="leds" show_rays="true" />
                 <perspective_camera_right implementation="default" medium="leds" show_rays="true" />
+                <perspective_camera_front implementation="default" medium="leds" show_rays="true" />
+                <perspective_camera_back implementation="default" medium="leds" show_rays="true" />
             </sensors>
             <params velocity="5" delta="0.05" />
         </cellular_decomposition_controller>
 
-        <!--<target_controller id="target" library="controllers/libtarget_controller.so">-->
-            <!--<actuators>-->
-                <!--<range_and_bearing implementation="default" />-->
-            <!--</actuators>-->
-            <!--<sensors>-->
-                <!--<positioning implementation="default" />-->
-                <!--<range_and_bearing implementation="medium" medium="rab" show_rays="true" />-->
-            <!--</sensors>-->
-            <!--<params />-->
-        <!--</target_controller>-->
+        <target_controller id="target" library="controllers/libtarget_controller.so">
+            <actuators>
+                <range_and_bearing implementation="default" />
+            </actuators>
+            <sensors>
+                <positioning implementation="default" />
+                <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
+            </sensors>
+            <params />
+        </target_controller>
 
     </controllers>
 
@@ -114,13 +116,13 @@
         <!-- ************* -->
         <!-- * Obstacles * -->
         <!-- ************* -->
-        <box id="cellular_obstacle" size="0.3,1,0.3" movable="false">
-            <body position="0,0,0" orientation="0,0,0" />
-        </box>
+        <!--<box id="cellular_obstacle" size="0.3,1,0.3" movable="false">-->
+            <!--<body position="0,0,0" orientation="0,0,0" />-->
+        <!--</box>-->
 
-        <cylinder id="c" height="0.3" radius="0.15" movable="false">
-            <body position="0,-0.5,0" orientation="0,0,0" />
-        </cylinder>
+        <!--<cylinder id="c" height="0.3" radius="0.15" movable="false">-->
+            <!--<body position="0,-0.5,0" orientation="0,0,0" />-->
+        <!--</cylinder>-->
 
         <!--<distribute>-->
             <!--<position method="uniform" min="-2,-2,0" max="2,2,0" />-->
@@ -133,6 +135,16 @@
         <!-- ********** -->
         <!-- * Target * -->
         <!-- ********** -->
+
+        <!--<target id="t0" rab_range="0.25" rab_data_size="40">-->
+            <!--<body position="0,-0.5,0" orientation="0,0,0" />-->
+            <!--<controller config="target" />-->
+        <!--</target>-->
+
+        <!--<target id="t1" rab_range="0.25" rab_data_size="40">-->
+            <!--<body position="0,0.5,0" orientation="0,0,0" />-->
+            <!--<controller config="target" />-->
+        <!--</target>-->
 
         <!--<distribute>-->
             <!--<position method="uniform"-->
@@ -178,7 +190,7 @@
                 library="loop_functions/libcellular_loop_function_qt"
                 label="cellular_loop_function_qt" />
             <camera>
-                <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" up="1,0,1" lens_focal_length="50"/>
                 <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>
                 <placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>
                 <placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>

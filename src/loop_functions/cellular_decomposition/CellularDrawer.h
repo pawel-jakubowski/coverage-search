@@ -14,6 +14,10 @@ private:
     const argos::UInt8 gridFloorDiff = 255 - gridColor;
     CellularDecomposition& loopFnc;
 
-    void drawGrid();
-    void drawCell(const CoverageGrid::Cell &cell);
+    void drawCoverageGrid();
+    void drawCoverageCell(const CoverageGrid::Cell& cell);
+
+    void drawTaskCells();
+
+    void drawCell(argos::CRange<argos::CVector2> limits, argos::Real liftOnZ);
 };

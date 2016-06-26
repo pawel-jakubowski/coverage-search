@@ -16,6 +16,10 @@ struct Task {
     enum class Status {
         Wait = 0,
         MoveToBegin,
-        MoveToEnd
+        Proceed
     } status = Status::Wait;
 };
+
+std::string to_string(Task t);
+std::string to_string(Task::Behavior b);
+std::string to_string(Task::Status s);

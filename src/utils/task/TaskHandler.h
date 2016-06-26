@@ -17,7 +17,8 @@ public:
         std::lock_guard<std::mutex> guard(taskUpdateMutex);
         return currentTask;
     }
-    virtual argos::CVector2 getPostion() = 0;
+    virtual argos::CVector2 getPosition() = 0;
+    virtual bool isCriticalPoint() = 0;
 
 protected:
     std::mutex taskUpdateMutex;

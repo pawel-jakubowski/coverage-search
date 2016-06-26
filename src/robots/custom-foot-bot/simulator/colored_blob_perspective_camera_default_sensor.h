@@ -20,4 +20,20 @@ public:
     virtual void SetRobot(CComposableEntity& c_entity);
 };
 
+class CustomPerspectiveCameraFront : public CColoredBlobPerspectiveCameraDefaultSensor {
+public:
+    CustomPerspectiveCameraFront() = default;
+    virtual ~CustomPerspectiveCameraFront() = default;
+
+    virtual void SetRobot(CComposableEntity& c_entity);
+};
+
+class CustomPerspectiveCameraBack : public CColoredBlobPerspectiveCameraDefaultSensor {
+public:
+    CustomPerspectiveCameraBack() = default;
+    virtual ~CustomPerspectiveCameraBack() = default;
+
+    virtual void SetRobot(CComposableEntity& c_entity);
+};
+
 }

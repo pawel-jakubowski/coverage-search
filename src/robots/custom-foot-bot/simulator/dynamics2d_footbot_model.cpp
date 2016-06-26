@@ -67,6 +67,12 @@ namespace argos {
       RegisterAnchorMethod<CDynamics2DCustomFootBotModel>(
           GetEmbodiedEntity().GetAnchor("perspective_camera_right"),
           &CDynamics2DCustomFootBotModel::UpdatePerspectiveCameraAnchor);
+      RegisterAnchorMethod<CDynamics2DCustomFootBotModel>(
+          GetEmbodiedEntity().GetAnchor("perspective_camera_front"),
+          &CDynamics2DCustomFootBotModel::UpdatePerspectiveCameraAnchor);
+      RegisterAnchorMethod<CDynamics2DCustomFootBotModel>(
+          GetEmbodiedEntity().GetAnchor("perspective_camera_back"),
+          &CDynamics2DCustomFootBotModel::UpdatePerspectiveCameraAnchor);
       /* Create the actual body with initial position and orientation */
       m_ptActualBaseBody =
          cpSpaceAddBody(GetDynamics2DEngine().GetPhysicsSpace(),

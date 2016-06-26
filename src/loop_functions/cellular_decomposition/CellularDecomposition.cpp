@@ -4,9 +4,6 @@
 using namespace std;
 using namespace argos;
 
-static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
-static const Real ARENA_CLEARANCE = FOOTBOT_BODY_RADIUS + 0.05f;
-
 CellularDecomposition::CellularDecomposition()
     : coverage(maxCellConcentration, 0.1f)
 {}
@@ -67,26 +64,11 @@ void CellularDecomposition::updateCoverageCells(const std::vector<CoverageGrid::
 }
 
 void CellularDecomposition::Reset() {
-    CRange<CVector2> limits;
-
-    limits.SetMin(
-        CVector2(
-            GetSpace().GetArenaLimits().GetMin().GetX() + ARENA_CLEARANCE,
-            GetSpace().GetArenaLimits().GetMin().GetY() + ARENA_CLEARANCE
-        )
-    );
-
-    limits.SetMax(
-        CVector2(
-            GetSpace().GetArenaLimits().GetMax().GetX() - ARENA_CLEARANCE,
-            GetSpace().GetArenaLimits().GetMax().GetY() - ARENA_CLEARANCE
-        )
-    );
-
-    LOG << "Limits:" << "\n"
-    << limits.GetMin() << "\n"
-    << limits.GetMax() << endl;
-    taskManager.addNewCell(limits);
+    CVector2 limitsMin;
+    CVector2 limitsMax;
+    GetSpace().GetArenaLimits().GetMin().ProjectOntoXY(limitsMin);
+    GetSpace().GetArenaLimits().GetMax().ProjectOntoXY(limitsMax);
+    taskManager.addNewCell(CRange<CVector2>(limitsMin, limitsMax));
 
     coverage.initGrid(GetSpace().GetArenaLimits());
     PreStep();

@@ -8,17 +8,41 @@ CellularDrawer::CellularDrawer()
 {}
 
 void CellularDrawer::DrawInWorld() {
-    drawGrid();
+    drawCoverageGrid();
+    drawTaskCells();
 }
 
-void CellularDrawer::drawGrid() {
+void CellularDrawer::drawTaskCells() {
+    auto cells = loopFnc.getTaskCells();
+    Real liftOnZ = 0.011f;
+    for (auto& cell : cells)
+        drawCell(cell.getLimits(), liftOnZ);
+}
+
+void CellularDrawer::drawCell(CRange<CVector2> limits, Real liftOnZ) {
+    vector<CVector2> points = {
+            {limits.GetMin().GetX(), limits.GetMin().GetY()},
+            {limits.GetMin().GetX(), limits.GetMax().GetY()},
+            {limits.GetMax().GetX(), limits.GetMax().GetY()},
+            {limits.GetMax().GetX(), limits.GetMin().GetY()},
+        };
+    DrawPolygon(
+            CVector3(0, 0, liftOnZ),
+            CQuaternion(CRadians::ZERO, CVector3(1, 0, 0)),
+            points,
+            CColor::RED,
+            false,
+            4);
+}
+
+void CellularDrawer::drawCoverageGrid() {
     auto grid = loopFnc.getCoverageGrid();
     for (int i = 0; i < grid.getGrid().size(); i++)
         for (int j = 0; j < grid.getGrid().size(); j++)
-            drawCell(grid.getGrid().at(i).at(j));
+            drawCoverageCell(grid.getGrid().at(i).at(j));
 }
 
-void CellularDrawer::drawCell(const CoverageGrid::Cell &cell) {
+void CellularDrawer::drawCoverageCell(const CoverageGrid::Cell& cell) {
     std::vector<CVector2> points;
     const auto& start = cell.edges.front().GetStart();
     points.emplace_back(start.GetX(), start.GetY());

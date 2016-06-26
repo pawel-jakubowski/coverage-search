@@ -131,6 +131,8 @@ private:
     COmnidirectionalCameraEquippedEntity*  m_pcOmnidirectionalCameraEquippedEntity;
     CPerspectiveCameraEquippedEntity*      m_pcLeftPerspectiveCameraEquippedEntity;
     CPerspectiveCameraEquippedEntity*      m_pcRightPerspectiveCameraEquippedEntity;
+    CPerspectiveCameraEquippedEntity*      m_pcFrontPerspectiveCameraEquippedEntity;
+    CPerspectiveCameraEquippedEntity*      m_pcBackPerspectiveCameraEquippedEntity;
     CProximitySensorEquippedEntity*        m_pcProximitySensorEquippedEntity;
     CRABEquippedEntity*                    m_pcRABEquippedEntity;
     CWheeledEntity*                        m_pcWheeledEntity;

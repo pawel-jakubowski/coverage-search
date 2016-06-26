@@ -40,6 +40,22 @@ public:
     }
 };
 
+class PerspectiveCameraFront : public CPerspectiveCameraEquippedEntity {
+public:
+    using CPerspectiveCameraEquippedEntity::CPerspectiveCameraEquippedEntity;
+    virtual std::string GetTypeDescription() const override {
+        return "perspective_camera_front";
+    }
+};
+
+class PerspectiveCameraBack : public CPerspectiveCameraEquippedEntity {
+public:
+    using CPerspectiveCameraEquippedEntity::CPerspectiveCameraEquippedEntity;
+    virtual std::string GetTypeDescription() const override {
+        return "perspective_camera_back";
+    }
+};
+
 /****************************************/
 /****************************************/
 
@@ -87,6 +103,8 @@ CCustomFootBotEntity::CCustomFootBotEntity() :
     m_pcOmnidirectionalCameraEquippedEntity(NULL),
     m_pcLeftPerspectiveCameraEquippedEntity(NULL),
     m_pcRightPerspectiveCameraEquippedEntity(NULL),
+    m_pcFrontPerspectiveCameraEquippedEntity(NULL),
+    m_pcBackPerspectiveCameraEquippedEntity(NULL),
     m_pcProximitySensorEquippedEntity(NULL),
     m_pcRABEquippedEntity(NULL),
     m_pcWheeledEntity(NULL),
@@ -118,6 +136,8 @@ CCustomFootBotEntity::CCustomFootBotEntity(const std::string& str_id,
     m_pcOmnidirectionalCameraEquippedEntity(NULL),
     m_pcLeftPerspectiveCameraEquippedEntity(NULL),
     m_pcRightPerspectiveCameraEquippedEntity(NULL),
+    m_pcFrontPerspectiveCameraEquippedEntity(NULL),
+    m_pcBackPerspectiveCameraEquippedEntity(NULL),
     m_pcProximitySensorEquippedEntity(NULL),
     m_pcRABEquippedEntity(NULL),
     m_pcWheeledEntity(NULL),
@@ -139,6 +159,12 @@ CCustomFootBotEntity::CCustomFootBotEntity(const std::string& str_id,
         SAnchor& cPerspRightCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_right",
                                                                       CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
                                                                       CQuaternion(-CRadians::PI_OVER_TWO, CVector3::Z));
+        SAnchor& cPerspFrontCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_front",
+                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CQuaternion(CRadians::ZERO, CVector3::Z));
+        SAnchor& cPerspBackCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_back",
+                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CQuaternion(CRadians::PI, CVector3::Z));
         /* Wheeled entity and wheel positions (left, right) */
         m_pcWheeledEntity = new CWheeledEntity(this, "wheels_0", 2);
         AddComponent(*m_pcWheeledEntity);
@@ -267,8 +293,28 @@ CCustomFootBotEntity::CCustomFootBotEntity(const std::string& str_id,
                                        PERSPECTIVE_CAMERA_WIDHT,
                                        PERSPECTIVE_CAMERA_HEIGHT,
                                        cPerspRightCamAnchor);
+        m_pcFrontPerspectiveCameraEquippedEntity =
+            new PerspectiveCameraFront(this,
+                                       "perspective_camera_front_0",
+                                       c_perspcam_aperture,
+                                       f_perspcam_focal_length,
+                                       f_perspcam_range,
+                                       PERSPECTIVE_CAMERA_WIDHT,
+                                       PERSPECTIVE_CAMERA_HEIGHT,
+                                       cPerspFrontCamAnchor);
+        m_pcBackPerspectiveCameraEquippedEntity =
+            new PerspectiveCameraBack(this,
+                                       "perspective_camera_back_0",
+                                       c_perspcam_aperture,
+                                       f_perspcam_focal_length,
+                                       f_perspcam_range,
+                                       PERSPECTIVE_CAMERA_WIDHT,
+                                       PERSPECTIVE_CAMERA_HEIGHT,
+                                       cPerspBackCamAnchor);
         AddComponent(*m_pcLeftPerspectiveCameraEquippedEntity);
         AddComponent(*m_pcRightPerspectiveCameraEquippedEntity);
+        AddComponent(*m_pcFrontPerspectiveCameraEquippedEntity);
+        AddComponent(*m_pcBackPerspectiveCameraEquippedEntity);
         /* Turret equipped entity */
         m_pcTurretEntity = new CFootBotTurretEntity(this, "turret_0", cTurretAnchor);
         AddComponent(*m_pcTurretEntity);
@@ -436,6 +482,12 @@ void CCustomFootBotEntity::Init(TConfigurationNode& t_tree) {
         SAnchor& cPerspRightCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_right",
                                                                       CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
                                                                       CQuaternion(-CRadians::PI_OVER_TWO, CVector3::Z));
+        SAnchor& cPerspFrontCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_front",
+                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CQuaternion(CRadians::ZERO, CVector3::Z));
+        SAnchor& cPerspBackCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_back",
+                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CQuaternion(CRadians::PI, CVector3::Z));
 
         m_pcLeftPerspectiveCameraEquippedEntity =
             new PerspectiveCameraLeft(this,
@@ -455,8 +507,28 @@ void CCustomFootBotEntity::Init(TConfigurationNode& t_tree) {
                                        PERSPECTIVE_CAMERA_WIDHT,
                                        PERSPECTIVE_CAMERA_HEIGHT,
                                        cPerspRightCamAnchor);
+        m_pcFrontPerspectiveCameraEquippedEntity =
+            new PerspectiveCameraFront(this,
+                                       "perspective_camera_front_0",
+                                       ToRadians(cAperture),
+                                       fPerspCamFocalLength,
+                                       fPerspCamRange,
+                                       PERSPECTIVE_CAMERA_WIDHT,
+                                       PERSPECTIVE_CAMERA_HEIGHT,
+                                       cPerspFrontCamAnchor);
+        m_pcBackPerspectiveCameraEquippedEntity =
+            new PerspectiveCameraBack(this,
+                                       "perspective_camera_back_0",
+                                       ToRadians(cAperture),
+                                       fPerspCamFocalLength,
+                                       fPerspCamRange,
+                                       PERSPECTIVE_CAMERA_WIDHT,
+                                       PERSPECTIVE_CAMERA_HEIGHT,
+                                       cPerspBackCamAnchor);
         AddComponent(*m_pcLeftPerspectiveCameraEquippedEntity);
         AddComponent(*m_pcRightPerspectiveCameraEquippedEntity);
+        AddComponent(*m_pcFrontPerspectiveCameraEquippedEntity);
+        AddComponent(*m_pcBackPerspectiveCameraEquippedEntity);
         /* Turret equipped entity */
         m_pcTurretEntity = new CFootBotTurretEntity(this, "turret_0", cTurretAnchor);
         AddComponent(*m_pcTurretEntity);
