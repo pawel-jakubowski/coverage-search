@@ -5,8 +5,23 @@
 using namespace std;
 using namespace argos;
 
+static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
+static const Real ARENA_CLEARANCE = FOOTBOT_BODY_RADIUS + 0.05f;
+static const Real ROBOT_CLEARANCE_RADIUS = FOOTBOT_BODY_RADIUS + 0.08f;
+static const Real ROBOT_CLEARANCE = 2 * ROBOT_CLEARANCE_RADIUS;
+
+
 TaskCell::TaskCell(argos::CVector2 beginning) : beginning(beginning), end(beginning), explorers{nullptr, nullptr}
 {}
+
+list<Task> TaskCell::getExplorersTasks() const {
+    CVector2 left(beginning.GetX() + ROBOT_CLEARANCE_RADIUS, beginning.GetY());
+    CVector2 right(beginning.GetX() - ROBOT_CLEARANCE_RADIUS, beginning.GetY());
+    return {
+        {left, left, Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin},
+        {right, right, Task::Behavior::FollowRightBoundary,  Task::Status::MoveToBegin}
+    };
+}
 
 void TaskCell::update() {
     if (finished) {

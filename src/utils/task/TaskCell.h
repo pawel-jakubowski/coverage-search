@@ -1,6 +1,7 @@
 #pragma once
 
 #include <argos3/core/utility/math/range.h>
+#include <list>
 #include "TaskHandler.h"
 
 class TaskCell {
@@ -11,6 +12,7 @@ public:
     void addRightExplorer(TaskHandler& e);
     bool isReady() const;
 
+    std::list<Task> getExplorersTasks() const;
     const argos::CVector2& getBeginning() const { return beginning; }
     const argos::CVector2& getEnd() const { return end; }
 private:

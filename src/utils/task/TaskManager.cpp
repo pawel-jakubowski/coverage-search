@@ -62,19 +62,11 @@ void TaskManager::init(CRange<CVector2> limits) {
 
 void TaskManager::addNewCell(CVector2 beginning)
 {
-    CVector2 leftBottomCorner(ROBOT_CLEARANCE_RADIUS, beginning.GetY());
-    CVector2 rightBottomCorner(-ROBOT_CLEARANCE_RADIUS, beginning.GetY());
-
-//    CVector2 sweepRightBottomCorner(limits.GetMin().GetX() + ARENA_CLEARANCE,
-//                                    limits.GetMax().GetY() - ARENA_CLEARANCE + ROBOT_CLEARANCE_RADIUS);
-
-    cells.emplace_back(CVector2(0, beginning.GetY()));
-
-    availableTasks.push_back(
-        {leftBottomCorner, leftBottomCorner, Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin});
-    availableTasks.push_back(
-        {rightBottomCorner, rightBottomCorner, Task::Behavior::FollowRightBoundary, Task::Status::MoveToBegin});
-//        {leftBottomCorner, sweepRightBottomCorner, Task::Behavior::Sweep,  Task::Status::MoveToBegin}
+    TaskCell cell(CVector2(0, beginning.GetY()));
+    auto explorersTasks = cell.getExplorersTasks();
+    for (auto task : explorersTasks)
+        availableTasks.push_back(task);
+    cells.push_back(cell);
 }
 
 void TaskManager::registerHandler(TaskHandler& handler) {
