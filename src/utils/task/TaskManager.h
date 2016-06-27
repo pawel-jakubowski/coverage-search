@@ -27,7 +27,7 @@ private:
 
 
     void initialize();
-    void addNewCell(argos::CRange<argos::CVector2> limits);
+    void addNewCell(argos::CVector2 beginning);
 
     void finishWaitingTasks();
     void setStatusIfNearGoal(TaskHandler& handler, const Task::Status& status, const argos::CVector2& goal);

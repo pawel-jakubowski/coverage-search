@@ -60,15 +60,15 @@ void TaskManager::init(CRange<CVector2> limits) {
     );
 }
 
-void TaskManager::addNewCell(CRange<CVector2> limits)
+void TaskManager::addNewCell(CVector2 beginning)
 {
-    CVector2 leftBottomCorner(ROBOT_CLEARANCE_RADIUS, limits.GetMax().GetY());
-    CVector2 rightBottomCorner(-ROBOT_CLEARANCE_RADIUS, limits.GetMax().GetY());
+    CVector2 leftBottomCorner(ROBOT_CLEARANCE_RADIUS, beginning.GetY());
+    CVector2 rightBottomCorner(-ROBOT_CLEARANCE_RADIUS, beginning.GetY());
 
 //    CVector2 sweepRightBottomCorner(limits.GetMin().GetX() + ARENA_CLEARANCE,
 //                                    limits.GetMax().GetY() - ARENA_CLEARANCE + ROBOT_CLEARANCE_RADIUS);
 
-    cells.emplace_back(CVector2(0, limits.GetMax().GetY()));
+    cells.emplace_back(CVector2(0, beginning.GetY()));
 
     availableTasks.push_back(
         {leftBottomCorner, leftBottomCorner, Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin});
@@ -180,10 +180,7 @@ void TaskManager::initialize() {
 
     if (handlers.size() == handlersAtStart) {
         finishWaitingTasks();
-        addNewCell(CRange<CVector2>(
-            CVector2(limits.GetMin().GetX() - ARENA_CLEARANCE, limits.GetMax().GetY() - initialLineWidth - ROBOT_CLEARANCE),
-            CVector2(limits.GetMax().GetX() - ARENA_CLEARANCE, limits.GetMax().GetY() - initialLineWidth - ROBOT_CLEARANCE)
-        ));
+        addNewCell(CVector2(limits.GetMax().GetX(), limits.GetMax().GetY() - initialLineWidth - ROBOT_CLEARANCE));
         ready = true;
     }
 }
