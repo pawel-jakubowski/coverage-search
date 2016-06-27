@@ -19,6 +19,7 @@ public:
     }
     virtual argos::CVector2 getPosition() = 0;
     virtual bool isCriticalPoint() = 0;
+    virtual bool isReadyToProceed() = 0;
 
 protected:
     std::mutex taskUpdateMutex;

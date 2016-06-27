@@ -16,23 +16,20 @@ void CellularDrawer::drawTaskCells() {
     auto cells = loopFnc.getTaskCells();
     Real liftOnZ = 0.011f;
     for (auto& cell : cells)
-        drawCell(cell.getLimits(), liftOnZ);
+        drawCell(cell, liftOnZ);
 }
 
-void CellularDrawer::drawCell(CRange<CVector2> limits, Real liftOnZ) {
-    vector<CVector2> points = {
-            {limits.GetMin().GetX(), limits.GetMin().GetY()},
-            {limits.GetMin().GetX(), limits.GetMax().GetY()},
-            {limits.GetMax().GetX(), limits.GetMax().GetY()},
-            {limits.GetMax().GetX(), limits.GetMin().GetY()},
-        };
-    DrawPolygon(
-            CVector3(0, 0, liftOnZ),
-            CQuaternion(CRadians::ZERO, CVector3(1, 0, 0)),
-            points,
-            CColor::RED,
-            false,
-            4);
+void CellularDrawer::drawCell(const TaskCell& cell, Real liftOnZ) {
+    DrawPoint(
+        CVector3(cell.getBeginning().GetX(), cell.getBeginning().GetY(), liftOnZ),
+        CColor::CYAN,
+        10
+    );
+    DrawPoint(
+        CVector3(cell.getEnd().GetX(), cell.getEnd().GetY(), liftOnZ),
+        CColor::CYAN,
+        10
+    );
 }
 
 void CellularDrawer::drawCoverageGrid() {

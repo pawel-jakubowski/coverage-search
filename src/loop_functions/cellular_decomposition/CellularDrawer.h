@@ -18,6 +18,5 @@ private:
     void drawCoverageCell(const CoverageGrid::Cell& cell);
 
     void drawTaskCells();
-
-    void drawCell(argos::CRange<argos::CVector2> limits, argos::Real liftOnZ);
+    void drawCell(const TaskCell& cell, argos::Real liftOnZ);
 };

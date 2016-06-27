@@ -136,10 +136,10 @@
         <!-- * Target * -->
         <!-- ********** -->
 
-        <!--<target id="t0" rab_range="0.25" rab_data_size="40">-->
-            <!--<body position="0,-0.5,0" orientation="0,0,0" />-->
-            <!--<controller config="target" />-->
-        <!--</target>-->
+        <target id="t0" rab_range="0.25" rab_data_size="40">
+            <body position="0,-0.5,0" orientation="0,0,0" />
+            <controller config="target" />
+        </target>
 
         <!--<target id="t1" rab_range="0.25" rab_data_size="40">-->
             <!--<body position="0,0.5,0" orientation="0,0,0" />-->

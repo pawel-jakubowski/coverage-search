@@ -1,5 +1,6 @@
 #include "RightExplorerBehavior.h"
 
+using namespace std;
 using namespace argos;
 
 RightExplorerBehavior::RightExplorerBehavior(Sensors s, Actuators a)
@@ -7,10 +8,30 @@ RightExplorerBehavior::RightExplorerBehavior(Sensors s, Actuators a)
                        [](const CDegrees& a) { return a.GetValue() <= 90; })
 {}
 
-CDegrees RightExplorerBehavior::getRotationAngle() const {
-    Real frontThreshold = 0.13;
-    Real sideThreshold = 0.1;
+void RightExplorerBehavior::prepare() {
+    CDegrees desiredOrientation(180);
+    if (hitWall)
+        desiredOrientation.SetValue(-90);
 
+    auto orientation = getOrientationOnXY();
+    auto angleDiff = (orientation - desiredOrientation).SignedNormalize();
+    auto controlAngle = getControl(angleDiff);
+
+    if (controlAngle.GetAbsoluteValue() > angleEpsilon)
+        rotateForAnAngle(controlAngle);
+    else if (!hitWall) {
+        hitWall = getAccumulatedVector(getFrontProximityReadings(), frontThreshold).SquareLength() > 0;
+        move(CDegrees(0));
+    }
+}
+
+bool RightExplorerBehavior::isReadyToProceed() const {
+    if(!hitWall)
+        return false;
+    return getAccumulatedVector(getRightProximityReadings(), sideThreshold).SquareLength() > 0;
+}
+
+CDegrees RightExplorerBehavior::getRotationAngle() const {
     auto accumulator = getAccumulatedVector(getFrontProximityReadings(), frontThreshold);
     if (accumulator.SquareLength() == 0)
         accumulator = getAccumulatedVector(getRightProximityReadings(), sideThreshold);

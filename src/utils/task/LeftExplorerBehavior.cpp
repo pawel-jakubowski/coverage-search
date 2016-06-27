@@ -1,5 +1,6 @@
 #include "LeftExplorerBehavior.h"
 
+using namespace std;
 using namespace argos;
 
 LeftExplorerBehavior::LeftExplorerBehavior(Sensors s, Actuators a)
@@ -7,16 +8,36 @@ LeftExplorerBehavior::LeftExplorerBehavior(Sensors s, Actuators a)
                        [](const CDegrees& a) { return a.GetValue() >= -90; })
 {}
 
-CDegrees LeftExplorerBehavior::getRotationAngle() const {
-    Real frontThreshold = 0.13;
-    Real sideThreshold = 0.1;
+void LeftExplorerBehavior::prepare() {
+    CDegrees desiredOrientation(0);
+    if (hitWall)
+        desiredOrientation.SetValue(-90);
 
+    auto orientation = getOrientationOnXY();
+    auto angleDiff = (orientation - desiredOrientation).SignedNormalize();
+    auto controlAngle = getControl(angleDiff);
+
+    if (controlAngle.GetAbsoluteValue() > angleEpsilon)
+        rotateForAnAngle(controlAngle);
+    else if (!hitWall) {
+        hitWall = getAccumulatedVector(getFrontProximityReadings(), frontThreshold).SquareLength() > 0;
+        move(CDegrees(0));
+    }
+}
+
+bool LeftExplorerBehavior::isReadyToProceed() const {
+    if(!hitWall)
+        return false;
+    return getAccumulatedVector(getLeftProximityReadings(), sideThreshold).SquareLength() > 0;
+}
+
+CDegrees LeftExplorerBehavior::getRotationAngle() const {
     auto accumulator = getAccumulatedVector(getFrontProximityReadings(), frontThreshold);
     if (accumulator.SquareLength() == 0)
         accumulator = getAccumulatedVector(getLeftProximityReadings(), sideThreshold);
 
     CDegrees rotationAngle = lastRotation;
-    if (accumulator.SquareLength() > 0){
+    if (accumulator.SquareLength() > 0) {
         auto sideAngle = CDegrees(90);
         rotationAngle = (sideAngle - ToDegrees(accumulator.Angle())).SignedNormalize();
     }

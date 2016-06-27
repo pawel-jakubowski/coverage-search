@@ -68,7 +68,7 @@ void CellularDecomposition::Reset() {
     CVector2 limitsMax;
     GetSpace().GetArenaLimits().GetMin().ProjectOntoXY(limitsMin);
     GetSpace().GetArenaLimits().GetMax().ProjectOntoXY(limitsMax);
-    taskManager.addNewCell(CRange<CVector2>(limitsMin, limitsMax));
+    taskManager.init(CRange<CVector2>(limitsMin, limitsMax));
 
     coverage.initGrid(GetSpace().GetArenaLimits());
     PreStep();

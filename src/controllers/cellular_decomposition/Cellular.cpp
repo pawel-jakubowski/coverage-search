@@ -53,11 +53,6 @@ void Cellular::Init(TConfigurationNode& configuration) {
     assert(cameraFront != nullptr);
     assert(cameraBack != nullptr);
 
-    cameraLeft->Enable();
-    cameraRight->Enable();
-    cameraFront->Enable();
-    cameraBack->Enable();
-
     LOG << "Register me : " << this << endl;
     loopFnc.registerToTaskManager(*this);
 
@@ -65,16 +60,22 @@ void Cellular::Init(TConfigurationNode& configuration) {
         { *positioningSensor, *proximitySensor, {*cameraLeft, *cameraRight, *cameraFront, *cameraBack} },
         { *wheelsEngine, *leds }
     ));
+    behavior = factory->create(currentTask);
 }
 
 void Cellular::Reset() {
     currentTask = Task();
-//    lastControl = lastRotation = CDegrees();
 }
 
 void Cellular::Destroy() {
     LOG << "Unregister me : " << this << endl;
     loopFnc.unregisterFromTaskManager(*this);
+}
+
+void Cellular::update(Task newTask) {
+    TaskHandler::update(newTask);
+    LOG << "update task" << endl;
+    behavior = factory->create(currentTask);
 }
 
 CVector2 Cellular::getPosition() {
@@ -87,20 +88,28 @@ bool Cellular::isCriticalPoint() {
     return criticalPointDetected;
 }
 
+bool Cellular::isReadyToProceed() {
+    return readyToProceed;
+}
+
 void Cellular::ControlStep() {
     LOG << "[" << GetId() << "]: " << to_string(currentTask) << "\n";
-    auto behavior = factory->create(currentTask);
+    criticalPointDetected = false;
     switch (currentTask.status) {
         case Task::Status::MoveToBegin:
             behavior->moveToBegin(currentTask.begin);
             break;
+        case Task::Status::Prepare:
+            behavior->prepare();
+            break;
         case Task::Status::Proceed:
             behavior->proceed();
+            criticalPointDetected = behavior->isCriticalPoint();
             break;
         case Task::Status::Wait:
             behavior->stop();
     }
-    criticalPointDetected = behavior->isCriticalPoint();
+    readyToProceed = behavior->isReadyToProceed();
     LOG.Flush();
 }
 

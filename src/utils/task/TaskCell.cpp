@@ -2,47 +2,46 @@
 #include <argos3/core/utility/logging/argos_log.h>
 
 
-void checkIfReady();
-
 using namespace std;
 using namespace argos;
 
-TaskCell::TaskCell(array<CVector2, 2> corners) : explorers{nullptr, nullptr}  {
-    if (corners.at(0) < corners.at(1))
-        limits = CRange<CVector2>(corners.at(0), corners.at(1));
-    else
-        limits = CRange<CVector2>(corners.at(1), corners.at(0));
-}
+TaskCell::TaskCell(argos::CVector2 beginning) : beginning(beginning), end(beginning), explorers{nullptr, nullptr}
+{}
 
 void TaskCell::update() {
-    if (!isReady()) {
-        LOG << "Cell is not ready!" << endl;
-        return;
-    }
-
     if (finished) {
         LOG << "Cell is finished!" << endl;
         return;
     }
 
-    if (!areExplorersAtBeginning()) {
+    if (!isReady()) {
+        LOG << "Cell is not ready!" << endl;
+        return;
+    }
+
+    if (!started && !areExplorersAtBeginning()) {
         LOG << "Move explorers to begin!" << endl;
-        moveExplorersToBegin();
+        updateExplorers(Task::Status::MoveToBegin);
+    }
+    else if (!prepared && !areExplorersReadyToProceed()) {
+        LOG << "Prepare explorers!" << endl;
+        updateExplorers(Task::Status::Prepare);
+        started = true;
     }
     else {
         LOG << "Proceed explorers!" << endl;
-        proceedExplorers();
+        updateExplorers(Task::Status::Proceed);
+        prepared = true;
     }
 
     unsigned index = 0;
     for (auto explorer : explorers) {
         if (explorer->getCurrentTask().status == Task::Status::MoveToBegin &&
             isExplorerNearBeginning(static_cast<Explorer>(index)))
-            stopExplorer(static_cast<Explorer>(index));
+            updateExplorerStatus(static_cast<Explorer>(index), Task::Status::Wait);
         else if (explorer->getCurrentTask().status == Task::Status::Proceed) {
             if (explorer->isCriticalPoint()) {
-                LOG << "Explorer report CP!" << endl;
-                finished = true;
+                finishCell();
                 return;
             }
             updateCellLimits(explorer);
@@ -50,57 +49,45 @@ void TaskCell::update() {
         index++;
     }
 
-    LOG << "Cell : " << limits << "\n"
-        << "=====================================" << endl;
+    LOG << "=====================================" << endl;
 }
 
-void TaskCell::stopExplorer(Explorer index) {
-    auto task = explorers.at(index)->getCurrentTask();
-    task.status = Task::Status::Wait;
-    explorers.at(index)->update(task);
+bool TaskCell::areExplorersReadyToProceed() const {
+    return explorers.at(0)->isReadyToProceed() && explorers.at(1)->isReadyToProceed();
+}
+
+void TaskCell::finishCell() {
+    LOG << "Explorer report CP!" << endl;
+    Task idleTask{CVector2(), CVector2(), Task::Behavior::Idle, Task::Status::Wait};
+    explorers.at(0)->update(idleTask);
+    explorers.at(1)->update(idleTask);
+    explorers = {nullptr, nullptr};
+    finished = true;
 }
 
 void TaskCell::updateCellLimits(TaskHandler* explorer) {
-    auto position = explorer->getPosition();
-    if (!limits.WithinMinBoundIncludedMaxBoundIncluded(position)) {
-            auto limitsMin = limits.GetMin();
-            auto limitsMax = limits.GetMax();
-
-            if (position.GetX() < limitsMin.GetX())
-                limitsMin.SetX(position.GetX());
-            else if (position.GetX() > limitsMax.GetX())
-                limitsMax.SetX(position.GetX());
-
-            if (position.GetY() < limitsMin.GetY())
-                limitsMin.SetY(position.GetY());
-            else if (position.GetY() > limitsMax.GetY())
-                limitsMax.SetY(position.GetY());
-
-            limits.SetMin(limitsMin);
-            limits.SetMax(limitsMax);
-        }
+    auto x = (
+                 explorers.at(0)->getPosition().GetX() +
+                 explorers.at(1)->getPosition().GetX()
+             ) / 2;
+    auto y = (
+                 explorers.at(0)->getPosition().GetY() +
+                 explorers.at(1)->getPosition().GetY()
+             ) / 2;
+    end = CVector2(x,y);
 }
 
-void TaskCell::moveExplorersToBegin() {
-    moveExplorerToBegin(Left);
-    moveExplorerToBegin(Right);
+void TaskCell::updateExplorers(Task::Status status) {
+    updateExplorerStatus(Left, status);
+    updateExplorerStatus(Right, status);
 }
 
-void TaskCell::moveExplorerToBegin(Explorer index) {
+void TaskCell::updateExplorerStatus(Explorer index, Task::Status status) {
     auto task = explorers.at(index)->getCurrentTask();
-    task.status = Task::Status::MoveToBegin;
-    explorers.at(index)->update(task);
-}
-
-void TaskCell::proceedExplorers() {
-    proceedExplorer(Left);
-    proceedExplorer(Right);
-}
-
-void TaskCell::proceedExplorer(Explorer index) {
-    auto task = explorers.at(index)->getCurrentTask();
-    task.status = Task::Status::Proceed;
-    explorers.at(index)->update(task);
+    if (task.status != status) {
+        task.status = status;
+        explorers.at(index)->update(task);
+    }
 }
 
 bool TaskCell::areExplorersAtBeginning() const {

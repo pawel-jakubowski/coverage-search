@@ -16,6 +16,7 @@ struct Task {
     enum class Status {
         Wait = 0,
         MoveToBegin,
+        Prepare,
         Proceed
     } status = Status::Wait;
 };

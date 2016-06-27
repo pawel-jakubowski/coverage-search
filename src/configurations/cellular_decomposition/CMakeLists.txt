@@ -37,4 +37,6 @@ add_custom_target(experiment_${PROJECT_NAME}
             cellular_decomposition_controller
             cellular_loop_function
             cellular_loop_function_qt
+            target_controller
+            target_robot
             argos3)

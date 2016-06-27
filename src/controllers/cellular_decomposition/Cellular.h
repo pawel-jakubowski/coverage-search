@@ -28,8 +28,10 @@ public:
     virtual void Destroy() override;
     virtual void ControlStep() override;
 
+    virtual void update(Task newTask) override;
     virtual CVector2 getPosition() override;
     virtual bool isCriticalPoint() override;
+    virtual bool isReadyToProceed() override;
 
 private:
     CCI_DifferentialSteeringActuator* wheelsEngine = nullptr;
@@ -45,8 +47,10 @@ private:
 
     CellularDecomposition& loopFnc;
     std::unique_ptr<BehaviorFactory> factory;
+    std::shared_ptr<ControllerBehavior> behavior;
 
     bool criticalPointDetected = false;
+    bool readyToProceed = false;
 
     void logCurrentTask() const;
 

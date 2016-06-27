@@ -3,9 +3,6 @@
 using namespace std;
 using namespace argos;
 
-/* Algorithm parameters */
-static const Real ANGLE_EPSILON = .1;
-
 ExplorerBehavior::ExplorerBehavior(Sensors s, Actuators a,
                                    argos::CColor myColor,
                                    argos::CColor fellowColor,
@@ -19,6 +16,10 @@ ExplorerBehavior::ExplorerBehavior(Sensors s, Actuators a,
     , frontThreshold(frontThreshold)
     , frontAngleEpsilon(frontAngleEpsilon)
 {
+    sensors.cameras.left.Enable();
+    sensors.cameras.right.Enable();
+    sensors.cameras.front.Enable();
+    sensors.cameras.back.Enable();
     actuators.leds.SetAllColors(myColor);
 }
 
@@ -26,11 +27,11 @@ void ExplorerBehavior::proceed() {
     auto fellowAngle = getfellowAngle();
     LOG << "Fellow angle: " << fellowAngle << endl;
     auto rotationAngle = getRotationAngle();
-    if (rotationAngle.GetAbsoluteValue() > ANGLE_EPSILON) {
+    if (rotationAngle.GetAbsoluteValue() > angleEpsilon) {
         auto angleDiff = getControl(rotationAngle);
         rotateForAnAngle(angleDiff);
     }
-    else if (!isCriticalPoint())
+    else if (!isCriticalPoint() && isDesiredAngle(getfellowAngle()))
         move(rotationAngle);
     else
         stop();

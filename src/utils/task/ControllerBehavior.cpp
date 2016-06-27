@@ -16,6 +16,13 @@ static const Real TICKS_PER_SEC = 10;
 static const Real MAX_VECLOCITY = 5;
 static const Real ANGLE_EPSILON = .1;
 
+
+ControllerBehavior::ControllerBehavior(Sensors s, Actuators a)
+    : sensors(s)
+    , actuators(a) {
+    actuators.leds.Reset();
+}
+
 void ControllerBehavior::moveToBegin(const CVector2& beginning) {
     auto rotationAngle = myPositionToPointAngle(beginning);
     move(rotationAngle);
@@ -36,9 +43,7 @@ void ControllerBehavior::move(const CDegrees& rotationAngle) {
     }
 }
 
-CDegrees ControllerBehavior::getControl(const CDegrees& rotationAngle) const {
-    static const Real KP = 0.5;
-    static const Real KD = 0.25;
+CDegrees ControllerBehavior::getControl(const CDegrees& rotationAngle, Real KP, Real KD) const {
     return KP * rotationAngle + KD * (rotationAngle - lastRotation);
 }
 
@@ -76,6 +81,6 @@ CDegrees ControllerBehavior::getAngleBetweenPoints(const CVector2& a, const CVec
 
 CDegrees ControllerBehavior::getOrientationOnXY() const {
     CRadians angleX, angleY, angleZ;
-    sensors.position.GetReading().Orientation.ToEulerAngles(angleX, angleY, angleZ);
-    return ToDegrees(angleX);
+    sensors.position.GetReading().Orientation.ToEulerAngles(angleZ, angleY, angleX);
+    return ToDegrees(angleZ);
 }

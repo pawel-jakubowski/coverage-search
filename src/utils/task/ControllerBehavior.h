@@ -27,15 +27,17 @@ struct Actuators {
 
 class ControllerBehavior {
 public:
-    ControllerBehavior(Sensors s, Actuators a) : sensors(s), actuators(a) {}
+    ControllerBehavior(Sensors s, Actuators a);
     virtual ~ControllerBehavior() = default;
     virtual void proceed() = 0;
+    virtual void prepare() = 0;
     virtual void moveToBegin(const argos::CVector2& beginning);
     virtual void stop();
 
+    virtual bool isReadyToProceed() const { return true; }
+    virtual bool isConcaveCP() const { return false; }
     virtual bool isCriticalPoint() const { return false; }
     virtual bool isConvexCP() const { return false; }
-    virtual bool isConcaveCP() const { return false; }
 protected:
     enum class Direction { Left, Right };
 
@@ -46,7 +48,7 @@ protected:
     void move(const argos::CDegrees& rotationAngle);
     void rotateForAnAngle(const argos::CDegrees& angle);
     void rotate(Direction rotationDirection);
-    argos::CDegrees getControl(const argos::CDegrees& rotationAngle) const;
+    argos::CDegrees getControl(const argos::CDegrees& rotationAngle, argos::Real KP = 0.5, argos::Real KD = 0.25) const;
     Direction getRotationDirection(const argos::CDegrees& obstacleAngle) const;
 
     argos::CDegrees myPositionToPointAngle(const argos::CVector2& point) const;

@@ -39,6 +39,8 @@ string to_string(Task::Status s) {
             return "WAIT";
         case Task::Status::MoveToBegin:
             return "TO BEGIN";
+        case Task::Status::Prepare:
+            return "PREPARE";
         case Task::Status::Proceed:
             return "PROCEED";
     }
