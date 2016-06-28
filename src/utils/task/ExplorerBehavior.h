@@ -8,7 +8,6 @@ public:
     ExplorerBehavior(Sensors s, Actuators a,
                      argos::CColor myColor,
                      argos::CColor fellowColor,
-                     std::function<bool(const argos::CDegrees&)> isDesiredAngle,
                      argos::Real frontThreshold  = 0.05f,
                      argos::Real frontAngleEpsilon = 2);
     virtual ~ExplorerBehavior() = default;
@@ -24,7 +23,6 @@ protected:
 
     argos::CColor myColor;
     argos::CColor fellowColor;
-    std::function<bool(const argos::CDegrees&)> isDesiredAngle;
     argos::Real frontThreshold;
     argos::Real frontAngleEpsilon;
 

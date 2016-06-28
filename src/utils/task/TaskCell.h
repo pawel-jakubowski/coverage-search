@@ -11,10 +11,13 @@ public:
     void addLeftExplorer(TaskHandler& e);
     void addRightExplorer(TaskHandler& e);
     bool isReady() const;
+    bool isFinished() const;
 
     std::list<Task> getExplorersTasks() const;
     const argos::CVector2& getBeginning() const { return beginning; }
     const argos::CVector2& getEnd() const { return end; }
+    const argos::CRange<argos::CVector2>& getLimits() const { return limits; }
+
 private:
     enum Explorer { Left = 0, Right = 1 };
 
@@ -34,6 +37,10 @@ private:
     void updateExplorers(Task::Status status);
     void updateExplorerStatus(Explorer index, Task::Status status);
 
-    void updateCellLimits(TaskHandler* explorer);
+    void updateCellLimits();
     void finishCell();
+
+    void moveExplorersToBeginning();
+    void prepareExplorers();
+    void proceedExplorers();
 };

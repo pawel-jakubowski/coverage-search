@@ -6,13 +6,11 @@ using namespace argos;
 ExplorerBehavior::ExplorerBehavior(Sensors s, Actuators a,
                                    argos::CColor myColor,
                                    argos::CColor fellowColor,
-                                   std::function<bool(const argos::CDegrees&)> isDesiredAngle,
                                    argos::Real frontThreshold,
                                    argos::Real frontAngleEpsilon)
     : ControllerBehavior(s, a)
     , myColor(myColor)
     , fellowColor(fellowColor)
-    , isDesiredAngle(isDesiredAngle)
     , frontThreshold(frontThreshold)
     , frontAngleEpsilon(frontAngleEpsilon)
 {
@@ -31,10 +29,8 @@ void ExplorerBehavior::proceed() {
         auto angleDiff = getControl(rotationAngle);
         rotateForAnAngle(angleDiff);
     }
-    else if (!isCriticalPoint() && isDesiredAngle(getfellowAngle()))
-        move(rotationAngle);
     else
-        stop();
+        move(rotationAngle);
 }
 
 bool ExplorerBehavior::isCriticalPoint() const {

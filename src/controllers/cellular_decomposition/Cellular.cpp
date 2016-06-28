@@ -94,7 +94,6 @@ bool Cellular::isReadyToProceed() {
 
 void Cellular::ControlStep() {
     LOG << "[" << GetId() << "]: " << to_string(currentTask) << "\n";
-    criticalPointDetected = false;
     switch (currentTask.status) {
         case Task::Status::MoveToBegin:
             behavior->moveToBegin(currentTask.begin);
@@ -104,11 +103,11 @@ void Cellular::ControlStep() {
             break;
         case Task::Status::Proceed:
             behavior->proceed();
-            criticalPointDetected = behavior->isCriticalPoint();
             break;
         case Task::Status::Wait:
             behavior->stop();
     }
+    criticalPointDetected = behavior->isCriticalPoint();
     readyToProceed = behavior->isReadyToProceed();
     LOG.Flush();
 }

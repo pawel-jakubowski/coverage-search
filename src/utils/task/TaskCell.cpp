@@ -11,7 +11,11 @@ static const Real ROBOT_CLEARANCE_RADIUS = FOOTBOT_BODY_RADIUS + 0.08f;
 static const Real ROBOT_CLEARANCE = 2 * ROBOT_CLEARANCE_RADIUS;
 
 
-TaskCell::TaskCell(argos::CVector2 beginning) : beginning(beginning), end(beginning), explorers{nullptr, nullptr}
+TaskCell::TaskCell(argos::CVector2 beginning)
+    : beginning(beginning)
+    , end(beginning)
+    , limits(beginning, end)
+    , explorers{nullptr, nullptr}
 {}
 
 list<Task> TaskCell::getExplorersTasks() const {
@@ -34,35 +38,12 @@ void TaskCell::update() {
         return;
     }
 
-    if (!started && !areExplorersAtBeginning()) {
-        LOG << "Move explorers to begin!" << endl;
-        updateExplorers(Task::Status::MoveToBegin);
-    }
-    else if (!prepared && !areExplorersReadyToProceed()) {
-        LOG << "Prepare explorers!" << endl;
-        updateExplorers(Task::Status::Prepare);
-        started = true;
-    }
-    else {
-        LOG << "Proceed explorers!" << endl;
-        updateExplorers(Task::Status::Proceed);
-        prepared = true;
-    }
-
-    unsigned index = 0;
-    for (auto explorer : explorers) {
-        if (explorer->getCurrentTask().status == Task::Status::MoveToBegin &&
-            isExplorerNearBeginning(static_cast<Explorer>(index)))
-            updateExplorerStatus(static_cast<Explorer>(index), Task::Status::Wait);
-        else if (explorer->getCurrentTask().status == Task::Status::Proceed) {
-            if (explorer->isCriticalPoint()) {
-                finishCell();
-                return;
-            }
-            updateCellLimits(explorer);
-        }
-        index++;
-    }
+    if (!started && !areExplorersAtBeginning())
+        moveExplorersToBeginning();
+    else if (!prepared && !areExplorersReadyToProceed())
+        prepareExplorers();
+    else
+        proceedExplorers();
 
     LOG << "=====================================" << endl;
 }
@@ -80,7 +61,7 @@ void TaskCell::finishCell() {
     finished = true;
 }
 
-void TaskCell::updateCellLimits(TaskHandler* explorer) {
+void TaskCell::updateCellLimits() {
     auto x = (
                  explorers.at(0)->getPosition().GetX() +
                  explorers.at(1)->getPosition().GetX()
@@ -90,6 +71,20 @@ void TaskCell::updateCellLimits(TaskHandler* explorer) {
                  explorers.at(1)->getPosition().GetY()
              ) / 2;
     end = CVector2(x,y);
+
+    for (auto e : explorers) {
+        auto x = e->getPosition().GetX();
+        auto y = e->getPosition().GetY();
+        if (x < limits.GetMin().GetX())
+            limits.SetMin(CVector2(x, limits.GetMin().GetY()));
+        else if (x > limits.GetMax().GetX())
+            limits.SetMax(CVector2(x, limits.GetMax().GetY()));
+
+        if (y < limits.GetMin().GetY())
+            limits.SetMin(CVector2(limits.GetMin().GetX(), y));
+        else if (y > limits.GetMax().GetY())
+            limits.SetMax(CVector2(limits.GetMax().GetX(), y));
+    }
 }
 
 void TaskCell::updateExplorers(Task::Status status) {
@@ -129,7 +124,47 @@ bool TaskCell::isReady() const {
     return explorers[Left] != nullptr && explorers[Right] != nullptr;
 }
 
+bool TaskCell::isFinished() const {
+    return finished;
+}
+
 bool TaskCell::isNear(TaskHandler& handler, const CVector2& point) const {
     Real minDistance = 0.001f;
     return (handler.getPosition() - point).SquareLength() < minDistance;
+}
+
+void TaskCell::moveExplorersToBeginning() {
+    LOG << "Move explorers to begin!" << endl;
+    updateExplorers(Task::Status::MoveToBegin);
+    Explorer index = Left;
+    if (isExplorerNearBeginning(static_cast<Explorer>(index)))
+        updateExplorerStatus(static_cast<Explorer>(index), Task::Status::Wait);
+    index = Right;
+    if (isExplorerNearBeginning(static_cast<Explorer>(index)))
+        updateExplorerStatus(static_cast<Explorer>(index), Task::Status::Wait);
+}
+
+void TaskCell::prepareExplorers() {
+    LOG << "Prepare explorers!" << endl;
+    updateExplorers(Task::Status::Prepare);
+    started = true;
+}
+
+void TaskCell::proceedExplorers() {
+    LOG << "Proceed explorers!" << endl;
+    updateExplorers(Task::Status::Proceed);
+    prepared = true;
+
+    if (explorers.at(Left)->isCriticalPoint() && explorers.at(Right)->isCriticalPoint()) {
+        updateExplorers(Task::Status::Wait);
+        finishCell();
+        return;
+    }
+
+    if (explorers.at(Left)->getPosition().GetY() < explorers.at(Right)->getPosition().GetY())
+        updateExplorerStatus(Left, Task::Status::Wait);
+    else if (explorers.at(Right)->getPosition().GetY() < explorers.at(Left)->getPosition().GetY())
+        updateExplorerStatus(Right, Task::Status::Wait);
+
+    updateCellLimits();
 }

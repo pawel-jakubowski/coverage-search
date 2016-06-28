@@ -154,17 +154,17 @@ CCustomFootBotEntity::CCustomFootBotEntity(const std::string& str_id,
         AddComponent(*m_pcEmbodiedEntity);
         SAnchor& cTurretAnchor = m_pcEmbodiedEntity->AddAnchor("turret");
         SAnchor& cPerspLeftCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_left",
-                                                                     CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                     CVector3(0.0, 0.0, BEACON_ELEVATION),
                                                                      CQuaternion(CRadians::PI_OVER_TWO, CVector3::Z));
         SAnchor& cPerspRightCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_right",
-                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CVector3(0.0, 0.0, BEACON_ELEVATION),
                                                                       CQuaternion(-CRadians::PI_OVER_TWO, CVector3::Z));
         SAnchor& cPerspFrontCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_front",
-                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CVector3(0.0, 0.0, BEACON_ELEVATION),
                                                                       CQuaternion(CRadians::ZERO, CVector3::Z));
         SAnchor& cPerspBackCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_back",
-                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
-                                                                      CQuaternion(CRadians::PI, CVector3::Z));
+                                                                      CVector3(0.0, 0.0, BEACON_ELEVATION),
+                                                                      CQuaternion(-CRadians::PI, CVector3::Z));
         /* Wheeled entity and wheel positions (left, right) */
         m_pcWheeledEntity = new CWheeledEntity(this, "wheels_0", 2);
         AddComponent(*m_pcWheeledEntity);
@@ -477,17 +477,17 @@ void CCustomFootBotEntity::Init(TConfigurationNode& t_tree) {
         cAperture.SetValue(30.0f);
         GetNodeAttributeOrDefault(t_tree, "perspective_camera_aperture", cAperture, cAperture);
         SAnchor& cPerspLeftCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_left",
-                                                                     CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                     CVector3(0.0, 0.0, BEACON_ELEVATION),
                                                                      CQuaternion(CRadians::PI_OVER_TWO, CVector3::Z));
         SAnchor& cPerspRightCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_right",
-                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CVector3(0.0, 0.0, BEACON_ELEVATION),
                                                                       CQuaternion(-CRadians::PI_OVER_TWO, CVector3::Z));
         SAnchor& cPerspFrontCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_front",
-                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
+                                                                      CVector3(0.0, 0.0, BEACON_ELEVATION),
                                                                       CQuaternion(CRadians::ZERO, CVector3::Z));
         SAnchor& cPerspBackCamAnchor = m_pcEmbodiedEntity->AddAnchor("perspective_camera_back",
-                                                                      CVector3(BODY_RADIUS, 0.0, BEACON_ELEVATION),
-                                                                      CQuaternion(CRadians::PI, CVector3::Z));
+                                                                      CVector3(0.0, 0.0, BEACON_ELEVATION),
+                                                                      CQuaternion(-CRadians::PI, CVector3::Z));
 
         m_pcLeftPerspectiveCameraEquippedEntity =
             new PerspectiveCameraLeft(this,

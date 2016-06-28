@@ -4,11 +4,12 @@ using namespace std;
 using namespace argos;
 
 LeftExplorerBehavior::LeftExplorerBehavior(Sensors s, Actuators a)
-    : ExplorerBehavior(s, a, CColor::GREEN, CColor::RED,
-                       [](const CDegrees& a) { return a.GetValue() >= -90; })
+    : ExplorerBehavior(s, a, CColor::GREEN, CColor::RED)
 {}
 
 void LeftExplorerBehavior::prepare() {
+    auto a = getfellowAngle();
+
     CDegrees desiredOrientation(0);
     if (hitWall)
         desiredOrientation.SetValue(-90);

@@ -62,11 +62,15 @@ void TaskManager::init(CRange<CVector2> limits) {
 
 void TaskManager::addNewCell(CVector2 beginning)
 {
-    TaskCell cell(CVector2(0, beginning.GetY()));
+    TaskCell cell(beginning);
+    auto cellId = cells.size();
     auto explorersTasks = cell.getExplorersTasks();
-    for (auto task : explorersTasks)
-        availableTasks.push_back(task);
+    for (auto task : explorersTasks) {
+        LOG << "Add task " << to_string(task) << endl;
+        availableTasks.push_back({task, cellId});
+    }
     cells.push_back(cell);
+    LOG << "Cell " << cellId << " added! (" << beginning << ")" << endl;
 }
 
 void TaskManager::registerHandler(TaskHandler& handler) {
@@ -99,21 +103,45 @@ void TaskManager::assignTasks() {
         << "|- " << unassignedHandlers.size() << " unassigned handlers" << endl;
 
     for (auto taskIt = availableTasks.begin(); taskIt != availableTasks.end(); taskIt++) {
+        auto& task = taskIt->first;
+        LOG << "Try to assign task " << to_string(task) << endl;
         if (unassignedHandlers.size() != 0) {
-            auto closestHandler = getClosestHandler(unassignedHandlers, *taskIt);
-            closestHandler->get().update(*taskIt);
+            auto closestHandler = getClosestHandler(unassignedHandlers, task);
+            closestHandler->get().update(task);
             unassignedHandlers.erase(closestHandler);
-            taskIt = availableTasks.erase(taskIt);
 
+            auto cellId = taskIt->second;
+            LOG << "Assign explorer to cell " << cellId << endl;
             if (closestHandler->get().getCurrentTask().behavior == Task::Behavior::FollowLeftBoundary)
-                cells.at(0).addLeftExplorer(*closestHandler);
+                cells.at(cellId).addLeftExplorer(*closestHandler);
             else if (closestHandler->get().getCurrentTask().behavior == Task::Behavior::FollowRightBoundary)
-                cells.at(0).addRightExplorer(*closestHandler);
+                cells.at(cellId).addRightExplorer(*closestHandler);
+
+            taskIt = availableTasks.erase(taskIt);
         }
     }
 
-    for (auto& cell : cells)
-        cell.update();
+    for (auto& cell : cells) {
+        if (!cell.isFinished())
+            cell.update();
+        else {
+            auto& l = cell.getLimits();
+            CVector2 beginningLeft(l.GetMax().GetX() - ROBOT_CLEARANCE_RADIUS, l.GetMin().GetY());
+            CVector2 beginningRight(l.GetMin().GetX() + ROBOT_CLEARANCE_RADIUS, l.GetMin().GetY());
+            bool existLeft = false;
+            bool existRight = false;
+            for (auto& cell : cells) {
+                if (cell.getBeginning() == beginningLeft)
+                    existLeft = true;
+                if (cell.getBeginning() == beginningRight)
+                    existRight = true;
+            }
+            if (!existLeft)
+                addNewCell(beginningLeft);
+            if (!existRight)
+                addNewCell(beginningRight);
+        }
+    }
 }
 
 TaskManager::HandlersList::const_iterator TaskManager::getClosestHandler(const HandlersList& handlers, const Task&
@@ -172,7 +200,7 @@ void TaskManager::initialize() {
 
     if (handlers.size() == handlersAtStart) {
         finishWaitingTasks();
-        addNewCell(CVector2(limits.GetMax().GetX(), limits.GetMax().GetY() - initialLineWidth - ROBOT_CLEARANCE));
+        addNewCell(CVector2(0, limits.GetMax().GetY() - initialLineWidth - ROBOT_CLEARANCE));
         ready = true;
     }
 }

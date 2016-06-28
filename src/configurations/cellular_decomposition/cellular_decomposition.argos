@@ -141,6 +141,16 @@
             <controller config="target" />
         </target>
 
+        <!--<target id="t00" rab_range="0.25" rab_data_size="40">-->
+            <!--<body position=".9,0,0" orientation="0,0,0" />-->
+            <!--<controller config="target" />-->
+        <!--</target>-->
+
+        <!--<target id="t000" rab_range="0.25" rab_data_size="40">-->
+            <!--<body position=".8,0,0" orientation="0,0,0" />-->
+            <!--<controller config="target" />-->
+        <!--</target>-->
+
         <!--<target id="t1" rab_range="0.25" rab_data_size="40">-->
             <!--<body position="0,0.5,0" orientation="0,0,0" />-->
             <!--<controller config="target" />-->

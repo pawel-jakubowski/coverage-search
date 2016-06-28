@@ -20,7 +20,7 @@ private:
 
     HandlersVector handlers;
     std::vector<TaskCell> cells;
-    std::list<Task> availableTasks;
+    std::list<std::pair<Task, std::size_t>> availableTasks;
     argos::CRange<argos::CVector2> limits;
     argos::Real initialLineWidth = 0;
     bool ready = false;

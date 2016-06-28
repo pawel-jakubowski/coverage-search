@@ -4,8 +4,7 @@ using namespace std;
 using namespace argos;
 
 RightExplorerBehavior::RightExplorerBehavior(Sensors s, Actuators a)
-    : ExplorerBehavior(s, a, CColor::RED, CColor::GREEN,
-                       [](const CDegrees& a) { return a.GetValue() <= 90; })
+    : ExplorerBehavior(s, a, CColor::RED, CColor::GREEN)
 {}
 
 void RightExplorerBehavior::prepare() {
