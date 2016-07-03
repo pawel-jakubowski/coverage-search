@@ -8,10 +8,13 @@ class TaskCell {
 public:
     TaskCell(argos::CVector2 beginning);
     void update();
+    void finish(argos::CVector2 end, bool forwardConvexCP = true);
     void addLeftExplorer(TaskHandler& e);
     void addRightExplorer(TaskHandler& e);
     bool isReady() const;
     bool isFinished() const;
+    bool isForwardConvex() const;
+    bool isReverseConvex() const;
 
     std::list<Task> getExplorersTasks() const;
     const argos::CVector2& getBeginning() const { return beginning; }
@@ -29,6 +32,8 @@ private:
     bool started = false;
     bool prepared = false;
     bool finished = false;
+    bool forwardConvexCP = false;
+    bool reverseConvexCP = false;
 
     bool isNear(TaskHandler& handler, const argos::CVector2& point) const;
     bool isExplorerNearBeginning(Explorer index) const;

@@ -7,7 +7,7 @@ class RightExplorerBehavior : public ExplorerBehavior {
     const argos::Real sideThreshold = 0.1;
 public:
     RightExplorerBehavior(Sensors s, Actuators a);
-    void prepare();
+    void prepare() override;
     bool isReadyToProceed() const override;
 
 protected:

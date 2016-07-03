@@ -1,4 +1,7 @@
 #include "ExplorerBehavior.h"
+#include <list>
+#include <algorithm>
+
 
 using namespace std;
 using namespace argos;
@@ -18,35 +21,53 @@ ExplorerBehavior::ExplorerBehavior(Sensors s, Actuators a,
     sensors.cameras.right.Enable();
     sensors.cameras.front.Enable();
     sensors.cameras.back.Enable();
+}
+
+void ExplorerBehavior::prepare() {
     actuators.leds.SetAllColors(myColor);
 }
 
 void ExplorerBehavior::proceed() {
-    auto fellowAngle = getfellowAngle();
+    auto fellowAngle = getFellowAngle();
     LOG << "Fellow angle: " << fellowAngle << endl;
     auto rotationAngle = getRotationAngle();
-    if (rotationAngle.GetAbsoluteValue() > angleEpsilon) {
-        auto angleDiff = getControl(rotationAngle);
-        rotateForAnAngle(angleDiff);
-    }
-    else
-        move(rotationAngle);
+    auto angleDiff = getControl(rotationAngle);
+    move(angleDiff);
 }
 
 bool ExplorerBehavior::isCriticalPoint() const {
-    LOG << "Convex CP: " << boolalpha << isConvexCP() << "\n"
+    LOG << "Convex CP: " << boolalpha << isConvexCP() << ", "
         << "Concave CP: " << boolalpha << isConcaveCP() << endl;
     return isConvexCP() || isConcaveCP();
 }
 
 bool ExplorerBehavior::isConvexCP() const {
-    return !isFellowVisible();
+    if (!isFellowVisible())
+        return true;
+    else if (isForwardConvexCP())
+        return true;
+    return false;
+}
+
+bool ExplorerBehavior::isForwardConvexCP() const {
+    auto angles = getFellowAngles();
+    CDegrees maxAngleDiff(0);
+    if (angles.size() > 0)
+        for (auto& a : angles)
+            for (auto& o : angles)
+                if (a > o) {
+                    auto angleDiff = (a - o).UnsignedNormalize();
+                    if (angleDiff > maxAngleDiff)
+                        maxAngleDiff = angleDiff;
+                }
+    LOG << "Max diff = " << maxAngleDiff << endl;
+    return maxAngleDiff >= CDegrees(180);
 }
 
 bool ExplorerBehavior::isConcaveCP() const {
     return !isConvexCP() &&
            getAccumulatedVector(getFrontProximityReadings(), frontThreshold).SquareLength() > 0 &&
-           getfellowAngle().GetAbsoluteValue() <= frontAngleEpsilon;
+           getFellowAngle().GetAbsoluteValue() <= frontAngleEpsilon;
 }
 
 bool ExplorerBehavior::isFellowVisible() const {
@@ -66,36 +87,29 @@ bool ExplorerBehavior::isFellowVisible() const {
     return false;
 }
 
-CDegrees ExplorerBehavior::getfellowAngle() const {
+CDegrees ExplorerBehavior::getFellowAngle() const {
     CDegrees fellowAngle;
-    size_t addedAnglesCounter = 0;
-    for (auto& blob : sensors.cameras.left.GetReadings().BlobList)
-        if (blob->Color == fellowColor) {
-            LOG << "Left : " << leftCameraOffset - CDegrees((blob->X / 10)) << endl;
-            fellowAngle += leftCameraOffset - CDegrees((blob->X / 10));
-            addedAnglesCounter++;
-        }
-    for (auto& blob : sensors.cameras.front.GetReadings().BlobList)
-        if (blob->Color == fellowColor) {
-            LOG << "Front : " << frontCameraOffset - CDegrees((blob->X / 10)) << endl;
-            fellowAngle += frontCameraOffset - CDegrees((blob->X / 10));
-            addedAnglesCounter++;
-        }
-    for (auto& blob : sensors.cameras.right.GetReadings().BlobList)
-        if (blob->Color == fellowColor) {
-            LOG << "Right : " << rightCameraOffset - CDegrees((blob->X / 10)) << endl;
-            fellowAngle += rightCameraOffset - CDegrees((blob->X / 10));
-            addedAnglesCounter++;
-        }
-    for (auto& blob : sensors.cameras.back.GetReadings().BlobList)
-        if (blob->Color == fellowColor) {
-            LOG << "Back : " << backCameraOffset - CDegrees((blob->X / 10)) << endl;
-            fellowAngle += backCameraOffset - CDegrees((blob->X / 10));
-            fellowAngle.SignedNormalize();
-            addedAnglesCounter++;
-        }
-    fellowAngle /= addedAnglesCounter;
+    list <CDegrees> detectedFellowAngles = getFellowAngles();
+    for_each(detectedFellowAngles.begin(), detectedFellowAngles.end(), [&] (CDegrees& a) { fellowAngle += a; });
+    fellowAngle /= detectedFellowAngles.size();
     return fellowAngle;
+}
+
+list <CDegrees> ExplorerBehavior::getFellowAngles() const {
+    list<CDegrees> detectedFellowAngles;
+    for (auto& blob : sensors.cameras.left.GetReadings().BlobList)
+        if (blob->Color == fellowColor)
+            detectedFellowAngles.push_back(leftCameraOffset - CDegrees((blob->X / 10)));
+    for (auto& blob : sensors.cameras.front.GetReadings().BlobList)
+        if (blob->Color == fellowColor)
+            detectedFellowAngles.push_back(frontCameraOffset - CDegrees((blob->X / 10)));
+    for (auto& blob : sensors.cameras.right.GetReadings().BlobList)
+        if (blob->Color == fellowColor)
+            detectedFellowAngles.push_back(rightCameraOffset - CDegrees((blob->X / 10)));
+    for (auto& blob : sensors.cameras.back.GetReadings().BlobList)
+        if (blob->Color == fellowColor)
+            detectedFellowAngles.push_back((backCameraOffset - CDegrees((blob->X / 10))).SignedNormalize());
+    return detectedFellowAngles;
 }
 
 CCI_FootBotProximitySensor::TReadings ExplorerBehavior::getFrontProximityReadings() const {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Task.h"
-#include "ControllerBehavior.h"
+#include "utils/task/behaviors/ControllerBehavior.h"
 
 class BehaviorFactory {
 public:

@@ -1,16 +1,16 @@
-#include "LeftExplorerBehavior.h"
+#include "RightExplorerBehavior.h"
 
 using namespace std;
 using namespace argos;
 
-LeftExplorerBehavior::LeftExplorerBehavior(Sensors s, Actuators a)
-    : ExplorerBehavior(s, a, CColor::GREEN, CColor::RED)
+RightExplorerBehavior::RightExplorerBehavior(Sensors s, Actuators a)
+    : ExplorerBehavior(s, a, CColor::RED, CColor::GREEN)
 {}
 
-void LeftExplorerBehavior::prepare() {
-    auto a = getfellowAngle();
+void RightExplorerBehavior::prepare() {
+    ExplorerBehavior::prepare();
 
-    CDegrees desiredOrientation(0);
+    CDegrees desiredOrientation(180);
     if (hitWall)
         desiredOrientation.SetValue(-90);
 
@@ -26,26 +26,26 @@ void LeftExplorerBehavior::prepare() {
     }
 }
 
-bool LeftExplorerBehavior::isReadyToProceed() const {
+bool RightExplorerBehavior::isReadyToProceed() const {
     if(!hitWall)
         return false;
-    return getAccumulatedVector(getLeftProximityReadings(), sideThreshold).SquareLength() > 0;
+    return getAccumulatedVector(getRightProximityReadings(), sideThreshold).SquareLength() > 0;
 }
 
-CDegrees LeftExplorerBehavior::getRotationAngle() const {
+CDegrees RightExplorerBehavior::getRotationAngle() const {
     auto accumulator = getAccumulatedVector(getFrontProximityReadings(), frontThreshold);
     if (accumulator.SquareLength() == 0)
-        accumulator = getAccumulatedVector(getLeftProximityReadings(), sideThreshold);
+        accumulator = getAccumulatedVector(getRightProximityReadings(), sideThreshold);
 
     CDegrees rotationAngle = lastRotation;
-    if (accumulator.SquareLength() > 0) {
-        auto sideAngle = CDegrees(90);
+    if (accumulator.SquareLength() > 0){
+        auto sideAngle = CDegrees(-90);
         rotationAngle = (sideAngle - ToDegrees(accumulator.Angle())).SignedNormalize();
     }
     return rotationAngle;
 }
 
-CCI_FootBotProximitySensor::TReadings LeftExplorerBehavior::getLeftProximityReadings() const {
+CCI_FootBotProximitySensor::TReadings RightExplorerBehavior::getRightProximityReadings() const {
     const auto& readings = sensors.proximity.GetReadings();
-    return CCI_FootBotProximitySensor::TReadings(readings.begin() + 4, readings.begin() + 8);
+    return CCI_FootBotProximitySensor::TReadings(readings.begin() + 16, readings.begin() + 20);
 }

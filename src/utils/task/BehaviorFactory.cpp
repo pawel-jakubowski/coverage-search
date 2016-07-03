@@ -1,9 +1,9 @@
 #include "BehaviorFactory.h"
 
-#include "IdleBehavior.h"
-#include "LeftExplorerBehavior.h"
-#include "RightExplorerBehavior.h"
-#include "SweeperBehavior.h"
+#include "utils/task/behaviors/IdleBehavior.h"
+#include "utils/task/behaviors/LeftExplorerBehavior.h"
+#include "utils/task/behaviors/RightExplorerBehavior.h"
+#include "utils/task/behaviors/SweeperBehavior.h"
 
 using namespace std;
 using namespace argos;

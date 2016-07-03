@@ -1,9 +1,9 @@
 #pragma once
 
+#include "ReebGraph.h"
 #include <argos3/core/utility/math/vector3.h>
 #include <argos3/core/utility/math/range.h>
-#include <list>
-#include "TaskCell.h"
+#include <queue>
 
 class TaskManager {
 public:
@@ -13,21 +13,22 @@ public:
     void unregisterHandler(TaskHandler& handler);
     void assignTasks();
 
-    const auto getCells() const { return cells; }
+    const auto getCells() const { return graph.getCells(); }
 private:
     using HandlersVector = std::vector<std::reference_wrapper<TaskHandler>>;
     using HandlersList = std::list<std::reference_wrapper<TaskHandler>>;
 
     HandlersVector handlers;
-    std::vector<TaskCell> cells;
-    std::list<std::pair<Task, std::size_t>> availableTasks;
+//    std::vector<TaskCell> cells;
+    ReebGraph graph;
+    std::queue<std::pair<Task, std::size_t>> availableTasks;
     argos::CRange<argos::CVector2> limits;
     argos::Real initialLineWidth = 0;
     bool ready = false;
 
 
     void initialize();
-    void addNewCell(argos::CVector2 beginning);
+    void addNewCell(argos::CVector2 beginning, int startNode);
 
     void finishWaitingTasks();
     void setStatusIfNearGoal(TaskHandler& handler, const Task::Status& status, const argos::CVector2& goal);

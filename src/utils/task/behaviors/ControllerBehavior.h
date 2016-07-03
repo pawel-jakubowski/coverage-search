@@ -38,11 +38,14 @@ public:
     virtual bool isConcaveCP() const { return false; }
     virtual bool isCriticalPoint() const { return false; }
     virtual bool isConvexCP() const { return false; }
+    virtual bool isForwardConvexCP() const { return false; }
 protected:
     enum class Direction { Left, Right };
 
     Sensors sensors;
     Actuators actuators;
+    argos::Real rotationSpeed;
+    argos::CDegrees lastControl;
     argos::CDegrees lastRotation;
 
     void move(const argos::CDegrees& rotationAngle);
@@ -54,10 +57,6 @@ protected:
     argos::CDegrees myPositionToPointAngle(const argos::CVector2& point) const;
     argos::CDegrees getAngleBetweenPoints(const argos::CVector2& a, const argos::CVector2& b) const;
     argos::CDegrees getOrientationOnXY() const;
-
-private:
-    argos::Real rotationSpeed;
-    argos::CDegrees lastControl;
 };
 
 

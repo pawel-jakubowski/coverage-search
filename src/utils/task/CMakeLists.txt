@@ -4,9 +4,13 @@ project(task_utils)
 add_library(${PROJECT_NAME}
         TaskManager.cpp
         TaskCell.cpp
-        ControllerBehavior.cpp
-        ExplorerBehavior.cpp
-        LeftExplorerBehavior.cpp
-        RightExplorerBehavior.cpp
+        behaviors/ControllerBehavior.cpp
+        behaviors/ExplorerBehavior.cpp
+        behaviors/LeftExplorerBehavior.cpp
+        behaviors/RightExplorerBehavior.cpp
         BehaviorFactory.cpp
-        SweeperBehavior.cpp Task.cpp)
+        behaviors/SweeperBehavior.cpp
+        Task.cpp
+        behaviors/AvoidObstacleBehavior.cpp
+        ReebGraph.cpp
+        ReebEdge.cpp)

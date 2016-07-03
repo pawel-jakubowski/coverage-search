@@ -13,6 +13,7 @@
 #include <loop_functions/cellular_decomposition/CellularDecomposition.h>
 #include <utils/task/TaskHandler.h>
 #include <utils/task/BehaviorFactory.h>
+#include <utils/task/behaviors/AvoidObstacleBehavior.h>
 
 
 namespace argos {
@@ -29,9 +30,10 @@ public:
     virtual void ControlStep() override;
 
     virtual void update(Task newTask) override;
-    virtual CVector2 getPosition() override;
-    virtual bool isCriticalPoint() override;
-    virtual bool isReadyToProceed() override;
+    virtual CVector2 getPosition() const override;
+    virtual bool isCriticalPoint() const override;
+    virtual bool isForwardConvexCP() const override;
+    virtual bool isReadyToProceed() const override;
 
 private:
     CCI_DifferentialSteeringActuator* wheelsEngine = nullptr;
@@ -48,44 +50,14 @@ private:
     CellularDecomposition& loopFnc;
     std::unique_ptr<BehaviorFactory> factory;
     std::shared_ptr<ControllerBehavior> behavior;
+    std::shared_ptr<AvoidObstacleBehavior> avoidBehavior;
 
     bool criticalPointDetected = false;
+    bool forwardConvexCPDetected = false;
     bool readyToProceed = false;
 
     void logCurrentTask() const;
-
-//    enum class Direction { Left, Right };
-//    CDegrees lastRotation;
-//    Real velocity;
-//    Real rotationSpeed;
-//    Real minDistanceFromObstacle;
-//    CDegrees lastControl;
-//    void rotateForAnAngle(const CDegrees &angle);
-//    CDegrees getOrientationOnXY();
-//    Direction getRotationDirection(const CDegrees& obstacleAngle);
-//    CDegrees getRotationAngle() const;
-//    void rotate(Direction rotationDirection);
-//    void move(const CDegrees& rotationAngle);
-//    CVector2 getAccumulatedVector(const CCI_FootBotProximitySensor::TReadings& readings, Real threshold) const;
-//    CDegrees getAngleBetweenPoints(const CVector2& a, const CVector2& b) const;
-//    void moveToPoint(const CVector2& point);
-//
-//    void stopWheels() const;
-//
-//    CDegrees myPositionToPointAngle(const CVector2& point);
-//    CDegrees getControl(const CDegrees& rotationAngle) const;
-//
-//    CDegrees getfellowAngle(const CColor& color) const;
-//    bool isFellowVisible(const CColor& color) const;
-//
-//    CCI_FootBotProximitySensor::TReadings getLeftProximityReadings() const;
-//    CCI_FootBotProximitySensor::TReadings getBackProximityReadings() const;
-//    CCI_FootBotProximitySensor::TReadings getRightProximityReadings() const;
-//    CCI_FootBotProximitySensor::TReadings getFrontProximityReadings() const;
-//
-//    void explorerMove(const CColor& explorerColor, const CColor& fellowColor, bool (* isDesiredAngle)(const CDegrees&));
-//    CColor getMyColor() const;
-//    CColor getFellowColor() const;
+    void runBehavior();
 };
 
 }

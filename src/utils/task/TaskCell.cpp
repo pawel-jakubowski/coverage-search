@@ -22,8 +22,8 @@ list<Task> TaskCell::getExplorersTasks() const {
     CVector2 left(beginning.GetX() + ROBOT_CLEARANCE_RADIUS, beginning.GetY());
     CVector2 right(beginning.GetX() - ROBOT_CLEARANCE_RADIUS, beginning.GetY());
     return {
-        {left, left, Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin},
-        {right, right, Task::Behavior::FollowRightBoundary,  Task::Status::MoveToBegin}
+        {right, right, Task::Behavior::FollowRightBoundary,  Task::Status::MoveToBegin},
+        {left, left, Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin}
     };
 }
 
@@ -48,30 +48,36 @@ void TaskCell::update() {
     LOG << "=====================================" << endl;
 }
 
+void TaskCell::finish(CVector2 end, bool forwardConvexCP) {
+    finishCell();
+    this->end = end;
+    this->forwardConvexCP = forwardConvexCP;
+}
+
 bool TaskCell::areExplorersReadyToProceed() const {
-    return explorers.at(0)->isReadyToProceed() && explorers.at(1)->isReadyToProceed();
+    return explorers.at(Left)->isReadyToProceed() && explorers.at(Right)->isReadyToProceed();
 }
 
 void TaskCell::finishCell() {
     LOG << "Explorer report CP!" << endl;
+    auto explorersDistance = (explorers.at(Left)->getPosition() - explorers.at(Right)->getPosition()).SquareLength();
+    auto explorersDistanceOnY = explorers.at(Left)->getPosition().GetY() - explorers.at(Right)->getPosition().GetY();
+    auto explorersDistanceThreshold = 0.2;
+    LOG << "Explorers dist: " << explorersDistance << "\n"
+        << "Explorers dist on Y: " << explorersDistanceOnY << endl;
+    forwardConvexCP = explorers.at(Left)->isForwardConvexCP() ||
+        explorers.at(Right)->isForwardConvexCP() ||
+        fabs(explorersDistanceOnY) > explorersDistanceThreshold;
+    reverseConvexCP = !forwardConvexCP && explorersDistance >= ROBOT_CLEARANCE;
     Task idleTask{CVector2(), CVector2(), Task::Behavior::Idle, Task::Status::Wait};
-    explorers.at(0)->update(idleTask);
-    explorers.at(1)->update(idleTask);
+    explorers.at(Left)->update(idleTask);
+    explorers.at(Right)->update(idleTask);
     explorers = {nullptr, nullptr};
     finished = true;
 }
 
 void TaskCell::updateCellLimits() {
-    auto x = (
-                 explorers.at(0)->getPosition().GetX() +
-                 explorers.at(1)->getPosition().GetX()
-             ) / 2;
-    auto y = (
-                 explorers.at(0)->getPosition().GetY() +
-                 explorers.at(1)->getPosition().GetY()
-             ) / 2;
-    end = CVector2(x,y);
-
+    end = (explorers.at(Left)->getPosition() + explorers.at(Right)->getPosition()) / 2;
     for (auto e : explorers) {
         auto x = e->getPosition().GetX();
         auto y = e->getPosition().GetY();
@@ -128,6 +134,14 @@ bool TaskCell::isFinished() const {
     return finished;
 }
 
+bool TaskCell::isReverseConvex() const {
+    return reverseConvexCP;
+}
+
+bool TaskCell::isForwardConvex() const {
+    return forwardConvexCP;
+}
+
 bool TaskCell::isNear(TaskHandler& handler, const CVector2& point) const {
     Real minDistance = 0.001f;
     return (handler.getPosition() - point).SquareLength() < minDistance;
@@ -147,23 +161,30 @@ void TaskCell::moveExplorersToBeginning() {
 void TaskCell::prepareExplorers() {
     LOG << "Prepare explorers!" << endl;
     updateExplorers(Task::Status::Prepare);
+    updateCellLimits();
     started = true;
 }
 
 void TaskCell::proceedExplorers() {
     LOG << "Proceed explorers!" << endl;
     updateExplorers(Task::Status::Proceed);
-    prepared = true;
 
-    if (explorers.at(Left)->isCriticalPoint() && explorers.at(Right)->isCriticalPoint()) {
+    if (!prepared)
+        prepared = true;
+    else if (
+            explorers.at(Left)->isForwardConvexCP() || explorers.at(Right)->isForwardConvexCP() ||
+            (explorers.at(Left)->isCriticalPoint() && explorers.at(Right)->isCriticalPoint())
+        ) {
         updateExplorers(Task::Status::Wait);
         finishCell();
         return;
     }
 
-    if (explorers.at(Left)->getPosition().GetY() < explorers.at(Right)->getPosition().GetY())
+    auto leftRightDistOnY = explorers.at(Left)->getPosition().GetY() - explorers.at(Right)->getPosition().GetY();
+    auto distEpsilon = 0.01f;
+    if (leftRightDistOnY < -distEpsilon)
         updateExplorerStatus(Left, Task::Status::Wait);
-    else if (explorers.at(Right)->getPosition().GetY() < explorers.at(Left)->getPosition().GetY())
+    else if (leftRightDistOnY > distEpsilon)
         updateExplorerStatus(Right, Task::Status::Wait);
 
     updateCellLimits();

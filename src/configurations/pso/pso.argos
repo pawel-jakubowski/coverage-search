@@ -169,15 +169,15 @@
     <!-- * Visualization * -->
     <!-- ****************** -->
     <visualization>
-        <!--<qt-opengl>-->
-            <!--<camera>-->
-                <!--<placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>-->
-                <!--<placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>-->
-            <!--</camera>-->
-        <!--</qt-opengl>-->
+        <qt-opengl>
+            <camera>
+                <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>
+                <placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>
+                <placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>
+            </camera>
+        </qt-opengl>
     </visualization>
 
 </argos-configuration>

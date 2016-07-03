@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ControllerBehavior.h"
+#include "utils/task/behaviors/ControllerBehavior.h"
 
 class IdleBehavior : public ControllerBehavior {
 public:
