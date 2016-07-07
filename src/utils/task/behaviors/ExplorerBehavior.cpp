@@ -23,16 +23,15 @@ ExplorerBehavior::ExplorerBehavior(Sensors s, Actuators a,
     sensors.cameras.back.Enable();
 }
 
-void ExplorerBehavior::prepare() {
+void ExplorerBehavior::turnOnLeds() {
     actuators.leds.SetAllColors(myColor);
 }
 
-void ExplorerBehavior::proceed() {
+CVector2 ExplorerBehavior::proceed() {
     auto fellowAngle = getFellowAngle();
     LOG << "Fellow angle: " << fellowAngle << endl;
     auto rotationAngle = getRotationAngle();
-    auto angleDiff = getControl(rotationAngle);
-    move(angleDiff);
+    return move(rotationAngle);
 }
 
 bool ExplorerBehavior::isCriticalPoint() const {

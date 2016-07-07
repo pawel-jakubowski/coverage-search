@@ -7,7 +7,7 @@ class LeftExplorerBehavior : public ExplorerBehavior {
     const argos::Real sideThreshold = 0.1;
 public:
     LeftExplorerBehavior(Sensors s, Actuators a);
-    void prepare() override;
+    argos::CVector2 prepare() override;
     bool isReadyToProceed() const override;
 
 protected:

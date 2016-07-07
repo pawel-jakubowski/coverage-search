@@ -5,8 +5,8 @@
 class SweeperBehavior : public ControllerBehavior {
 public:
     using ControllerBehavior::ControllerBehavior;
-    void prepare() override {}
-    void proceed() override {}
+    argos::CVector2 prepare() override { return argos::CVector2(); }
+    argos::CVector2 proceed() override { return argos::CVector2(); }
 };
 
 

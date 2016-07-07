@@ -7,22 +7,24 @@ LeftExplorerBehavior::LeftExplorerBehavior(Sensors s, Actuators a)
     : ExplorerBehavior(s, a, CColor::GREEN, CColor::RED)
 {}
 
-void LeftExplorerBehavior::prepare() {
-    ExplorerBehavior::prepare();
+CVector2 LeftExplorerBehavior::prepare() {
+    ExplorerBehavior::turnOnLeds();
     
     CDegrees desiredOrientation(0);
     if (hitWall)
         desiredOrientation.SetValue(-90);
 
     auto orientation = getOrientationOnXY();
-    auto angleDiff = (orientation - desiredOrientation).SignedNormalize();
+    auto angleDiff = (desiredOrientation - orientation).SignedNormalize();
     auto controlAngle = getControl(angleDiff);
 
-    if (controlAngle.GetAbsoluteValue() > angleEpsilon)
+    if (controlAngle.GetAbsoluteValue() > angleEpsilon) {
         rotateForAnAngle(controlAngle);
+        return getDefaultVelocity().Rotate(ToRadians(controlAngle));
+    }
     else if (!hitWall) {
         hitWall = getAccumulatedVector(getFrontProximityReadings(), frontThreshold).SquareLength() > 0;
-        move(CDegrees(0));
+        return move(CDegrees(0));
     }
 }
 
@@ -40,7 +42,7 @@ CDegrees LeftExplorerBehavior::getRotationAngle() const {
     CDegrees rotationAngle = lastRotation;
     if (accumulator.SquareLength() > 0) {
         auto sideAngle = CDegrees(90);
-        rotationAngle = (sideAngle - ToDegrees(accumulator.Angle())).SignedNormalize();
+        rotationAngle = (ToDegrees(accumulator.Angle()) - sideAngle).SignedNormalize();
     }
     return rotationAngle;
 }

@@ -23,9 +23,9 @@ ControllerBehavior::ControllerBehavior(Sensors s, Actuators a)
     actuators.leds.Reset();
 }
 
-void ControllerBehavior::moveToBegin(const CVector2& beginning) {
+CVector2 ControllerBehavior::moveToBegin(const CVector2& beginning) {
     auto rotationAngle = myPositionToPointAngle(beginning);
-    move(rotationAngle);
+    return move(rotationAngle);
 }
 
 void ControllerBehavior::stop() {
@@ -33,13 +33,20 @@ void ControllerBehavior::stop() {
     actuators.wheels.SetLinearVelocity(0,0);
 }
 
-void ControllerBehavior::move(const CDegrees& rotationAngle) {
+CVector2 ControllerBehavior::getDefaultVelocity() const {
+    return CVector2(MAX_VECLOCITY, CRadians(0));
+}
+
+CVector2 ControllerBehavior::move(const CDegrees& rotationAngle) {
     auto controlAngle = getControl(rotationAngle);
-    if (controlAngle.GetAbsoluteValue() > ANGLE_EPSILON)
-        rotateForAnAngle(controlAngle);
+    if (rotationAngle.GetAbsoluteValue() > ANGLE_EPSILON) {
+        rotateForAnAngle(rotationAngle);
+        return getDefaultVelocity().Rotate(ToRadians(rotationAngle));
+    }
     else {
         actuators.wheels.SetLinearVelocity(MAX_VECLOCITY, MAX_VECLOCITY);
         lastRotation.SetValue(0);
+        return getDefaultVelocity();
     }
 }
 
@@ -57,14 +64,14 @@ void ControllerBehavior::rotateForAnAngle(const CDegrees& angle) {
 }
 
 ControllerBehavior::Direction ControllerBehavior::getRotationDirection(const CDegrees& obstacleAngle) const {
-    return obstacleAngle.GetValue() > 0.0f ? Direction::Right : Direction::Left;
+    return obstacleAngle.GetValue() > 0.0f ? Direction::Left : Direction::Right;
 }
 
 void ControllerBehavior::rotate(Direction rotationDirection) {
     if (rotationDirection == Direction::Right)
-        actuators.wheels.SetLinearVelocity(rotationSpeed, -(rotationSpeed * 0.8));
+        actuators.wheels.SetLinearVelocity(rotationSpeed, -rotationSpeed);
     else if (rotationDirection == Direction::Left)
-        actuators.wheels.SetLinearVelocity(-(rotationSpeed * 0.8), rotationSpeed);
+        actuators.wheels.SetLinearVelocity(-rotationSpeed, rotationSpeed);
 }
 
 CDegrees ControllerBehavior::myPositionToPointAngle(const CVector2& point) const {
@@ -72,7 +79,7 @@ CDegrees ControllerBehavior::myPositionToPointAngle(const CVector2& point) const
     sensors.position.GetReading().Position.ProjectOntoXY(currentPoint);
     CDegrees angle = getAngleBetweenPoints(currentPoint, point);
     CDegrees robotsOrientation = getOrientationOnXY();
-    return (robotsOrientation - angle).SignedNormalize();
+    return (angle - robotsOrientation).SignedNormalize();
 }
 
 CDegrees ControllerBehavior::getAngleBetweenPoints(const CVector2& a, const CVector2& b) const {

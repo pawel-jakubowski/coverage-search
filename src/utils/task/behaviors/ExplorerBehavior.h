@@ -14,8 +14,7 @@ public:
                      argos::Real frontAngleEpsilon = 2);
     virtual ~ExplorerBehavior() = default;
 
-    virtual void prepare() override;
-    virtual void proceed() override;
+    virtual argos::CVector2 proceed() override;
 
     virtual bool isCriticalPoint() const override;
     virtual bool isConvexCP() const override;
@@ -32,6 +31,7 @@ protected:
 
     virtual argos::CDegrees getRotationAngle() const = 0;
 
+    void turnOnLeds();
     bool isFellowVisible() const;
     argos::CDegrees getFellowAngle() const;
     argos::CVector2 getAccumulatedVector(const argos::CCI_FootBotProximitySensor::TReadings& readings,

@@ -4,6 +4,7 @@
 #include <core/utility/math/vector2.h>
 #include <plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
 #include <plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
+#include <plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 
 #include <random>
 
@@ -21,6 +22,7 @@ public:
 private:
     CCI_DifferentialSteeringActuator* wheelsEngine;
     CCI_FootBotProximitySensor* proximitySensor;
+    CCI_PositioningSensor* positioningSensor;
     Real velocity;
     Real minDistanceFromObstacle;
     CRange<CDegrees> minAngleFromObstacle;

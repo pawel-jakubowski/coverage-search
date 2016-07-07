@@ -57,7 +57,7 @@ private:
     bool readyToProceed = false;
 
     void logCurrentTask() const;
-    void runBehavior();
+    CVector2 runBehavior();
 };
 
 }

@@ -29,9 +29,9 @@ class ControllerBehavior {
 public:
     ControllerBehavior(Sensors s, Actuators a);
     virtual ~ControllerBehavior() = default;
-    virtual void proceed() = 0;
-    virtual void prepare() = 0;
-    virtual void moveToBegin(const argos::CVector2& beginning);
+    virtual argos::CVector2 proceed() = 0;
+    virtual argos::CVector2 prepare() = 0;
+    virtual argos::CVector2 moveToBegin(const argos::CVector2& beginning);
     virtual void stop();
 
     virtual bool isReadyToProceed() const { return true; }
@@ -48,7 +48,8 @@ protected:
     argos::CDegrees lastControl;
     argos::CDegrees lastRotation;
 
-    void move(const argos::CDegrees& rotationAngle);
+    argos::CVector2 getDefaultVelocity() const;
+    argos::CVector2 move(const argos::CDegrees& rotationAngle);
     void rotateForAnAngle(const argos::CDegrees& angle);
     void rotate(Direction rotationDirection);
     argos::CDegrees getControl(const argos::CDegrees& rotationAngle, argos::Real KP = 0.5, argos::Real KD = 0.25) const;
