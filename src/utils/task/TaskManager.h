@@ -19,7 +19,6 @@ private:
     using HandlersList = std::list<std::reference_wrapper<TaskHandler>>;
 
     HandlersVector handlers;
-//    std::vector<TaskCell> cells;
     ReebGraph graph;
     std::queue<std::pair<Task, std::size_t>> availableTasks;
     argos::CRange<argos::CVector2> limits;

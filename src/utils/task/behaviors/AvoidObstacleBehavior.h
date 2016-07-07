@@ -5,15 +5,19 @@
 class AvoidObstacleBehavior : public ControllerBehavior {
 public:
     AvoidObstacleBehavior(Sensors s, Actuators a);
-    void proceed() override;
-    void prepare() override {};
-    bool isRoadClear() const;
+    argos::CVector2 proceed() override;
+    argos::CVector2 prepare() override { return getDefaultVelocity(); };
+    bool isRoadClear(argos::CVector2 desiredVelocity);
 
 private:
-    const argos::Real minDistanceFromObstacle;
-    const argos::CRange<argos::CDegrees> minAngleFromObstacle;
+    const argos::CDegrees histogramAlpha;
+    std::vector<bool> obstacleHistogram;
+    const argos::CRange<argos::Real> histogramThresholdHysteresis;
 
-    argos::CVector2 getWeightedProximityReading() const;
+    double getObstacleDistanceFromFootbotProximityReading(argos::Real reading) const;
+    std::function<bool(const argos::CRadians&)> generateIsInBoundaryCheck(const argos::CRadians& lowerBoundary,
+                                                                          const argos::CRadians& upperBoundary) const;
+    void updateObstacleHistogram();
 };
 
 

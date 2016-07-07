@@ -59,6 +59,11 @@ void TaskManager::init(CRange<CVector2> limits) {
         CVector2(limits.GetMin().GetX() + ARENA_CLEARANCE, limits.GetMin().GetY() + ARENA_CLEARANCE),
         CVector2(limits.GetMax().GetX() - ARENA_CLEARANCE, limits.GetMax().GetY() - ARENA_CLEARANCE)
     );
+
+    ready = false;
+    initialLineWidth = 0;
+    graph = ReebGraph();
+    availableTasks.empty();
 }
 
 void TaskManager::addNewCell(CVector2 beginning, int startNode)

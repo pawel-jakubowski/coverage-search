@@ -101,10 +101,11 @@ void Cellular::ControlStep() {
     LOG << "[" << GetId() << "]: " << to_string(currentTask) << "\n";
     if (currentTask.status == Task::Status::Wait)
         behavior->stop();
-    else if (avoidBehavior->isRoadClear())
-        runBehavior();
-    else
-        avoidBehavior->proceed();
+    else {
+        auto velocity = runBehavior();
+        if (!avoidBehavior->isRoadClear(velocity))
+            velocity = avoidBehavior->proceed();
+    }
 
     criticalPointDetected = behavior->isCriticalPoint();
     forwardConvexCPDetected = behavior->isForwardConvexCP();
@@ -113,18 +114,16 @@ void Cellular::ControlStep() {
     LOG.Flush();
 }
 
-void Cellular::runBehavior() {
+CVector2 Cellular::runBehavior() {
     switch (currentTask.status) {
         case Task::Status::MoveToBegin:
-            behavior->moveToBegin(currentTask.begin);
-            break;
+            return behavior->moveToBegin(currentTask.begin);
         case Task::Status::Prepare:
-            behavior->prepare();
-            break;
+            return behavior->prepare();
         case Task::Status::Proceed:
-            behavior->proceed();
-            break;
+            return behavior->proceed();
     }
+    return CVector2();
 }
 
 REGISTER_CONTROLLER(Cellular, "cellular_decomposition_controller")
