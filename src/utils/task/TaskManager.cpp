@@ -68,7 +68,6 @@ void TaskManager::init(CRange<CVector2> limits) {
 
 void TaskManager::addNewCell(CVector2 beginning, int startNode)
 {
-//    lock_guard<mutex> guard(addNewCellMutex);
     auto cellId = graph.addEdge(beginning, startNode);
     auto explorersTasks = graph.getCell(cellId).getExplorersTasks();
     for (auto task : explorersTasks)
@@ -100,22 +99,22 @@ void TaskManager::assignTasks() {
     updateMovingHandlers();
     auto unassignedHandlers = getIdleHandlers();
 
-    LOG << __PRETTY_FUNCTION__ << "\n"
-        << "|- " << availableTasks.size() << " available tasks" << "\n"
-        << "|- " << handlers.size() << " handlers" << "\n"
-        << "|- " << unassignedHandlers.size() << " unassigned handlers" << endl;
+    LOG << "TaskManager: ["
+        << availableTasks.size() << " available tasks], ["
+        << handlers.size() << " handlers], ["
+        << unassignedHandlers.size() << " unassigned handlers]" << endl;
 
     while(availableTasks.size() > 0 && unassignedHandlers.size() > 0) {
         auto& task = availableTasks.front().first;
         auto cellId = availableTasks.front().second;
 
         if (!graph.getCell(cellId).isFinished()) {
-            LOG << "Try to assign task " << to_string(task) << endl;
+            LOG << "Task " << to_string(task);
             auto closestHandler = getClosestHandler(unassignedHandlers, task);
             closestHandler->get().update(task);
             unassignedHandlers.erase(closestHandler);
 
-            LOG << "Assign explorer to cell " << cellId << endl;
+            LOG << " assigned to cell " << cellId << endl;
             if (closestHandler->get().getCurrentTask().behavior == Task::Behavior::FollowLeftBoundary)
                 graph.getCell(cellId).addLeftExplorer(*closestHandler);
             else if (closestHandler->get().getCurrentTask().behavior == Task::Behavior::FollowRightBoundary)
@@ -157,7 +156,7 @@ void TaskManager::assignTasks() {
         }
     }
 
-    LOG << "GRAPH:\n" << graph << endl;
+    LOG << "GRAPH: " << graph << endl;
 }
 
 TaskManager::HandlersList::const_iterator TaskManager::getClosestHandler(const HandlersList& handlers, const Task&
@@ -183,7 +182,7 @@ void TaskManager::initialize() {
     CVector2 start = limits.GetMax();
     Real minX = limits.GetMin().GetX();
 
-    LOG << __PRETTY_FUNCTION__ << ": start " << start << endl;
+    LOG << "Initialize TaskManager: [start " << start << "]";
     Task task = {
         CVector2(start.GetX() + ROBOT_CLEARANCE, start.GetY()), start,
         Task::Behavior::Sweep, Task::Status::MoveToBegin
@@ -195,7 +194,7 @@ void TaskManager::initialize() {
             task.begin.SetY( task.begin.GetY() - ROBOT_CLEARANCE );
             initialLineWidth += ROBOT_CLEARANCE;
         }
-        LOG << __PRETTY_FUNCTION__ << ": Assign " << to_string(task) << endl;
+        LOG << ", [assign " << to_string(task) << "]";
         auto handler = getClosestHandler(unassignedHandlers, task);
         handler->get().update(task);
         unassignedHandlers.erase(handler);
@@ -212,7 +211,7 @@ void TaskManager::initialize() {
             handler.get().update(handlerTask);
             handlersAtStart++;
         }
-    LOG << __PRETTY_FUNCTION__ << ": " << handlersAtStart << " handlers initizalized!" << endl;
+    LOG << ", [" << handlersAtStart << " handlers initizalized]" << endl;
 
     if (handlers.size() == handlersAtStart) {
         finishWaitingTasks();

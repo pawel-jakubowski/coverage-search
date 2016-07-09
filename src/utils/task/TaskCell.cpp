@@ -44,8 +44,6 @@ void TaskCell::update() {
         prepareExplorers();
     else
         proceedExplorers();
-
-    LOG << "=====================================" << endl;
 }
 
 void TaskCell::finish(CVector2 end, bool forwardConvexCP) {
@@ -63,7 +61,7 @@ void TaskCell::finishCell() {
     auto explorersDistance = (explorers.at(Left)->getPosition() - explorers.at(Right)->getPosition()).SquareLength();
     auto explorersDistanceOnY = explorers.at(Left)->getPosition().GetY() - explorers.at(Right)->getPosition().GetY();
     auto explorersDistanceThreshold = 0.2;
-    LOG << "Explorers dist: " << explorersDistance << "\n"
+    LOG << "Explorers dist: " << explorersDistance << ", "
         << "Explorers dist on Y: " << explorersDistanceOnY << endl;
     forwardConvexCP = explorers.at(Left)->isForwardConvexCP() ||
         explorers.at(Right)->isForwardConvexCP() ||
@@ -148,7 +146,7 @@ bool TaskCell::isNear(TaskHandler& handler, const CVector2& point) const {
 }
 
 void TaskCell::moveExplorersToBeginning() {
-    LOG << "Move explorers to begin!" << endl;
+    LOG << "Move explorers to begin!";
     updateExplorers(Task::Status::MoveToBegin);
     Explorer index = Left;
     if (isExplorerNearBeginning(static_cast<Explorer>(index)))
@@ -156,17 +154,19 @@ void TaskCell::moveExplorersToBeginning() {
     index = Right;
     if (isExplorerNearBeginning(static_cast<Explorer>(index)))
         updateExplorerStatus(static_cast<Explorer>(index), Task::Status::Wait);
+    LOG << endl;
 }
 
 void TaskCell::prepareExplorers() {
-    LOG << "Prepare explorers!" << endl;
+    LOG << "Prepare explorers!";
     updateExplorers(Task::Status::Prepare);
     updateCellLimits();
     started = true;
+    LOG << endl;
 }
 
 void TaskCell::proceedExplorers() {
-    LOG << "Proceed explorers!" << endl;
+    LOG << "Proceed explorers!";
     updateExplorers(Task::Status::Proceed);
 
     if (!prepared)
@@ -188,4 +188,5 @@ void TaskCell::proceedExplorers() {
         updateExplorerStatus(Right, Task::Status::Wait);
 
     updateCellLimits();
+    LOG << endl;
 }

@@ -73,7 +73,7 @@ void Cellular::Destroy() {
 }
 
 void Cellular::update(Task newTask) {
-    LOG << "update task" << endl;
+    LOG << "[update task]";
     if (currentTask.behavior != newTask.behavior)
         behavior = factory->create(newTask);
     TaskHandler::update(newTask);

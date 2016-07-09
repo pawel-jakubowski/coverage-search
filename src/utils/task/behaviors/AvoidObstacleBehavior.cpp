@@ -12,7 +12,7 @@ AvoidObstacleBehavior::AvoidObstacleBehavior(Sensors s, Actuators a)
     : ControllerBehavior(s, a)
     , histogramAlpha(5)
     , obstacleHistogram(static_cast<size_t>(CDegrees(360)/histogramAlpha), false)
-    , histogramThresholdHysteresis(0.2f, 0.35f)
+    , histogramThresholdHysteresis(0.2f, 0.33f)
 {}
 
 CVector2 AvoidObstacleBehavior::proceed() {

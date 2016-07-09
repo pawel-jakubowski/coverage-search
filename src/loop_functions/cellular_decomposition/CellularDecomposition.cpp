@@ -13,6 +13,7 @@ void CellularDecomposition::Init(TConfigurationNode& t_tree) {
 }
 
 void CellularDecomposition::PreStep() {
+    LOG << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << endl;
     auto& entities = this->GetSpace().GetEntitiesByType("foot-bot");
     updateRobotsPositions(entities);
 }
@@ -27,6 +28,7 @@ void CellularDecomposition::PostStep() {
     catch(std::exception& e) {
         THROW_ARGOSEXCEPTION_NESTED("Error during concentration update!", e)
     }
+    LOG << "=====================================" << endl;
 }
 
 std::vector<CoverageGrid::CellIndex> CellularDecomposition::getCellsCoveredByRobots() const {
