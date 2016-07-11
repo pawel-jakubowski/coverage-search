@@ -6,6 +6,8 @@ import errno
 import subprocess
 import shlex
 import json
+import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
@@ -202,7 +204,7 @@ def getTargetsData(buildDir, experiment, robots, targets, repetitions):
 def plotFoundTargets(buildDir, config, figNumber = 1):
     for experiment in config["experiments"]:
         fig = plt.figure(figNumber)
-        fig.suptitle(experiment)
+        fig.canvas.set_window_title(experiment + "_targets")
         ax = fig.gca()
         subplotNumber = len(config["targets"])*100 + 11
         for targets in config["targets"]:
@@ -214,6 +216,26 @@ def plotFoundTargets(buildDir, config, figNumber = 1):
             plt.tight_layout()
             subplotNumber += 1
         figNumber += 1
+    return figNumber
+
+def plotBoxTargets(buildDir, config, figNumber = 1):
+    for experiment in config["experiments"]:
+        for targets in config["targets"]:
+            # table per robots group
+            # 10 robots: [...] x targets
+            # 25 robots: [...] x targets
+            # ...
+            # then combine it like:
+            # [ [10_robots_arr], [25_robots_arr], ... ]
+            df = pd.DataFrame()
+            for robots in config["robots"]:
+                for i in range(0, config["repetitions"]):
+                    df[i] = pd.Series(np.full(targets, np.nan))
+                    configuration = generateConfig(buildDir, experiment, robots, targets, i)
+                    data = getLogData(configuration["log"])
+                    for j, target in enumerate(data["targets"]):
+                        df[i][j] = target["step"]
+            df.transpose().plot.box()
     return figNumber
 
 
@@ -248,7 +270,7 @@ def plotCoverage(buildDir, config, figNumber = 1):
         if experiment == "pso":
             continue
         fig = plt.figure(figNumber)
-        fig.suptitle(experiment)
+        fig.canvas.set_window_title(experiment + "_coverage")
         ax = fig.gca()
         for robots in config["robots"]:
             timeArray, coverageArray = getCoverageData(buildDir, experiment, robots, config["targets"], config["repetitions"])
@@ -262,6 +284,7 @@ def plotCoverage(buildDir, config, figNumber = 1):
 def plotCompareCoverage(buildDir, config, figNumber = 1):
     fig = plt.figure(figNumber)
     ax = fig.gca()
+    fig.canvas.set_window_title("coverage_compare")
     subplotNumber = len(config["robots"])*100 + 11
     for robots in config["robots"]:
         plt.subplot(subplotNumber)
@@ -279,6 +302,7 @@ def plotCompareCoverage(buildDir, config, figNumber = 1):
 def plotCompareTargets(buildDir, config, figNumber = 1):
     fig = plt.figure(figNumber)
     ax = fig.gca()
+    fig.canvas.set_window_title("targets_compare")
     subplotNumber = len(config["robots"])*100 + 11
     for robots in config["robots"]:
         plt.subplot(subplotNumber)
@@ -298,7 +322,7 @@ def plotCompareTargets(buildDir, config, figNumber = 1):
 #======#
 def main():
     parser = argparse.ArgumentParser(description="Execute ARGoS experiments")
-    plotTypes = ["light", "targets", "coverage", "coverage-compare", "targets-compare"]
+    plotTypes = ["light", "targets", "coverage", "coverage-compare", "targets-compare", "targets-box"]
     parser.add_argument("--no-exe", action="store_true", help="do not execute experiments")
     parser.add_argument("--verbose", action="store_true", help="print verbose log")
     parser.add_argument("--plot", nargs="+", choices=plotTypes, default=[], type=str, help="plot given plot-type")
@@ -349,6 +373,8 @@ def main():
         figNumber = plotCompareCoverage(buildDir, configuration, figNumber)
     if "targets-compare" in args.plot:
         figNumber = plotCompareTargets(buildDir, configuration, figNumber)
+    if "targets-box" in args.plot:
+        figNumber = plotBoxTargets(buildDir, configuration, figNumber)
     plt.show()
 
 if __name__ == "__main__":
