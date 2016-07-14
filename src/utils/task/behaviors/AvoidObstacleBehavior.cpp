@@ -1,6 +1,8 @@
+#include "AvoidObstacleBehavior.h"
 #include <limits>
 #include <numeric>
-#include "AvoidObstacleBehavior.h"
+#include <list>
+#include <algorithm>
 
 using namespace std;
 using namespace argos;
@@ -12,7 +14,7 @@ AvoidObstacleBehavior::AvoidObstacleBehavior(Sensors s, Actuators a)
     : ControllerBehavior(s, a)
     , histogramAlpha(5)
     , obstacleHistogram(static_cast<size_t>(CDegrees(360)/histogramAlpha), false)
-    , histogramThresholdHysteresis(0.2f, 0.33f)
+    , histogramThresholdHysteresis(0.1f, 0.2f)
 {}
 
 CVector2 AvoidObstacleBehavior::proceed() {
@@ -61,14 +63,17 @@ bool AvoidObstacleBehavior::isRoadClear(CVector2 desiredVelocity) {
 }
 
 void AvoidObstacleBehavior::updateObstacleHistogram() {
-    vector<Real> magnitudeHistogram(obstacleHistogram.size(), 0);
+    vector<list<Real>> magnitudeHistogramVariables(obstacleHistogram.size());
 
     for (auto r : sensors.proximity.GetReadings()) {
         auto distance = getObstacleDistanceFromFootbotProximityReading(r.Value);
         if (isinf(distance))
             continue;
 
-        auto enlargementAngle = ASin(BODY_RADIUS / distance);
+        LOG << distance << ", ";
+
+        const auto clearance = 0.01f;
+        auto enlargementAngle = ASin((BODY_RADIUS + clearance) / distance);
         auto lowerAngleBoundary = (r.Angle - enlargementAngle).UnsignedNormalize();
         auto upperAngleBoundary = (r.Angle + enlargementAngle).UnsignedNormalize();
         auto isInBoundary = generateIsInBoundaryCheck(lowerAngleBoundary, upperAngleBoundary);
@@ -76,14 +81,22 @@ void AvoidObstacleBehavior::updateObstacleHistogram() {
         for (size_t i = 0; i < obstacleHistogram.size(); i++) {
             auto angle = i * ToRadians(histogramAlpha);
             if (isInBoundary(angle))
-                magnitudeHistogram.at(i) += r.Value * r.Value;
+                magnitudeHistogramVariables.at(i).push_back(r.Value * r.Value);
         }
     }
-
-    for (auto m : magnitudeHistogram)
-        LOG << m << ", ";
     LOG << "\n";
 
+    vector<Real> magnitudeHistogram(magnitudeHistogramVariables.size());
+    for (size_t i = 0; i < magnitudeHistogramVariables.size(); i++) {
+        auto& l = magnitudeHistogramVariables.at(i);
+        auto maxEl = max_element(l.begin(), l.end());
+        if (maxEl != l.end())
+            magnitudeHistogram.at(i) = *maxEl;
+        LOG << magnitudeHistogram.at(i) << ", ";
+    }
+    LOG << "\n";
+
+    fill(obstacleHistogram.begin(), obstacleHistogram.end(), false);
     for (size_t i = 0; i < obstacleHistogram.size(); i++) {
         if (magnitudeHistogram.at(i) > histogramThresholdHysteresis.GetMax())
             obstacleHistogram.at(i) = true;
@@ -100,10 +113,4 @@ function<bool(const CRadians&)> AvoidObstacleBehavior::generateIsInBoundaryCheck
         return [lowerBoundary, upperBoundary](const CRadians& a) { return a >= lowerBoundary && a <= upperBoundary; };
     else
         return [lowerBoundary, upperBoundary](const CRadians& a) { return a >= lowerBoundary || a <= upperBoundary; };
-}
-
-double AvoidObstacleBehavior::getObstacleDistanceFromFootbotProximityReading(Real reading) const {
-    if (reading == 0)
-        return numeric_limits<Real>::infinity();
-    return (0.0100527 / reading) - 0.000163144 + BODY_RADIUS;
 }

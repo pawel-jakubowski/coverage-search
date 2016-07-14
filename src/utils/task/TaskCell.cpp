@@ -1,5 +1,6 @@
 #include "TaskCell.h"
 #include <argos3/core/utility/logging/argos_log.h>
+#include <assert.h>
 
 
 using namespace std;
@@ -7,7 +8,7 @@ using namespace argos;
 
 static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
 static const Real ARENA_CLEARANCE = FOOTBOT_BODY_RADIUS + 0.05f;
-static const Real ROBOT_CLEARANCE_RADIUS = FOOTBOT_BODY_RADIUS + 0.08f;
+static const Real ROBOT_CLEARANCE_RADIUS = FOOTBOT_BODY_RADIUS + 0.06f;
 static const Real ROBOT_CLEARANCE = 2 * ROBOT_CLEARANCE_RADIUS;
 
 
@@ -29,12 +30,13 @@ list<Task> TaskCell::getExplorersTasks() const {
 
 void TaskCell::update() {
     if (finished) {
-        LOG << "Cell is finished!" << endl;
+        LOG << (void*)(this) << " Cell is finished!" << endl;
+        freeExplorers();
         return;
     }
 
     if (!isReady()) {
-        LOG << "Cell is not ready!" << endl;
+        LOG << (void*)(this) << " Cell is not ready!" << endl;
         return;
     }
 
@@ -46,10 +48,31 @@ void TaskCell::update() {
         proceedExplorers();
 }
 
-void TaskCell::finish(CVector2 end, bool forwardConvexCP) {
-    finishCell();
+void TaskCell::freeExplorer(Explorer index) {
+    if (explorers.at(index) == nullptr)
+        return;
+
+    if (!forwardConvexCP || isExplorerNearBeginning(index)){
+        explorers.at(index)->update(Task());
+        explorers.at(index) = nullptr;
+    }
+}
+
+void TaskCell::finish(CVector2 end) {
+    if (!finished) {
+        finishCell();
+
+        if (forwardConvexCP)
+            setRevertTaskForExplorers();
+        else
+            freeExplorers();
+    }
     this->end = end;
-    this->forwardConvexCP = forwardConvexCP;
+}
+
+void TaskCell::freeExplorers() {
+    freeExplorer(Left);
+    freeExplorer(Right);
 }
 
 bool TaskCell::areExplorersReadyToProceed() const {
@@ -60,18 +83,32 @@ void TaskCell::finishCell() {
     LOG << "Explorer report CP!" << endl;
     auto explorersDistance = (explorers.at(Left)->getPosition() - explorers.at(Right)->getPosition()).SquareLength();
     auto explorersDistanceOnY = explorers.at(Left)->getPosition().GetY() - explorers.at(Right)->getPosition().GetY();
-    auto explorersDistanceThreshold = 0.2;
+    auto explorersDistanceThreshold = 0.15;
     LOG << "Explorers dist: " << explorersDistance << ", "
-        << "Explorers dist on Y: " << explorersDistanceOnY << endl;
+        << "Explorers dist on Y: " << explorersDistanceOnY << ", "
+        << "Explorers forward cp: [" << boolalpha << explorers.at(Left)->isForwardConvexCP() << ", "
+        << explorers.at(Right)->isForwardConvexCP() << "]\n";
     forwardConvexCP = explorers.at(Left)->isForwardConvexCP() ||
         explorers.at(Right)->isForwardConvexCP() ||
         fabs(explorersDistanceOnY) > explorersDistanceThreshold;
     reverseConvexCP = !forwardConvexCP && explorersDistance >= ROBOT_CLEARANCE;
-    Task idleTask{CVector2(), CVector2(), Task::Behavior::Idle, Task::Status::Wait};
-    explorers.at(Left)->update(idleTask);
-    explorers.at(Right)->update(idleTask);
-    explorers = {nullptr, nullptr};
     finished = true;
+}
+
+void TaskCell::setRevertTaskForExplorers() {
+    setRevertTaskForExplorer(Left);
+    setRevertTaskForExplorer(Right);
+}
+
+void TaskCell::setRevertTaskForExplorer(Explorer index) {
+    Task revertTask = explorers.at(index)->getCurrentTask();
+    revertTask.status = Task::Status::MoveToBegin;
+    revertTask.begin = explorers.at(index)->getPosition();
+    auto newY = end.GetY() + ROBOT_CLEARANCE_RADIUS;
+    if (newY > limits.GetMax().GetY())
+        newY = limits.GetMax().GetY();
+    revertTask.begin.SetY(newY);
+    explorers.at(index)->update(revertTask);
 }
 
 void TaskCell::updateCellLimits() {
@@ -109,16 +146,23 @@ bool TaskCell::areExplorersAtBeginning() const {
 }
 
 bool TaskCell::isExplorerNearBeginning(Explorer index) const {
+    assert(explorers.at(index) != nullptr);
     return isNear(*explorers.at(index), explorers.at(index)->getCurrentTask().begin);
 }
 
 void TaskCell::addLeftExplorer(TaskHandler& e) {
+    LOG << (void*)(this) << " add left explorer!\n";
+    if (explorers.at(Left) != nullptr)
+        THROW_ARGOSEXCEPTION("Left explorer is already assigned!");
     if (e.getCurrentTask().behavior != Task::Behavior::FollowLeftBoundary)
         THROW_ARGOSEXCEPTION("Left explorer do not have FLEFT task!");
     explorers[Explorer::Left] = &e;
 }
 
 void TaskCell::addRightExplorer(TaskHandler& e) {
+    LOG << (void*)(this) << " add right explorer!\n";
+    if (explorers.at(Right) != nullptr)
+        THROW_ARGOSEXCEPTION("Right explorer is already assigned!");
     if (e.getCurrentTask().behavior != Task::Behavior::FollowRightBoundary)
         THROW_ARGOSEXCEPTION("Right explorer do not have FRIGHT task!");
     explorers[Explorer::Right] = &e;
@@ -129,7 +173,7 @@ bool TaskCell::isReady() const {
 }
 
 bool TaskCell::isFinished() const {
-    return finished;
+    return finished && explorers.at(Left) == nullptr && explorers.at(Right) == nullptr;
 }
 
 bool TaskCell::isReverseConvex() const {
@@ -177,6 +221,10 @@ void TaskCell::proceedExplorers() {
         ) {
         updateExplorers(Task::Status::Wait);
         finishCell();
+        if (forwardConvexCP)
+            setRevertTaskForExplorers();
+        else
+            freeExplorers();
         return;
     }
 

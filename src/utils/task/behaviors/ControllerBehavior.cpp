@@ -1,9 +1,12 @@
 #include "ControllerBehavior.h"
+#include <limits>
 
+using namespace std;
 using namespace argos;
 
 
 /* Footbot dimensions */
+static const Real BODY_RADIUS = 0.085036758f;
 static const Real INTERWHEEL_DISTANCE        = 0.14f;
 static const Real HALF_INTERWHEEL_DISTANCE   = INTERWHEEL_DISTANCE * 0.5f;
 static const Real HALF_INTERWHEEL_DISTANCE_IN_CM = HALF_INTERWHEEL_DISTANCE * 100;
@@ -69,9 +72,9 @@ ControllerBehavior::Direction ControllerBehavior::getRotationDirection(const CDe
 
 void ControllerBehavior::rotate(Direction rotationDirection) {
     if (rotationDirection == Direction::Right)
-        actuators.wheels.SetLinearVelocity(rotationSpeed, -rotationSpeed);
+        actuators.wheels.SetLinearVelocity(rotationSpeed, -rotationSpeed * .8);
     else if (rotationDirection == Direction::Left)
-        actuators.wheels.SetLinearVelocity(-rotationSpeed, rotationSpeed);
+        actuators.wheels.SetLinearVelocity(-rotationSpeed * .8, rotationSpeed);
 }
 
 CDegrees ControllerBehavior::myPositionToPointAngle(const CVector2& point) const {
@@ -90,4 +93,10 @@ CDegrees ControllerBehavior::getOrientationOnXY() const {
     CRadians angleX, angleY, angleZ;
     sensors.position.GetReading().Orientation.ToEulerAngles(angleZ, angleY, angleX);
     return ToDegrees(angleZ);
+}
+
+Real ControllerBehavior::getObstacleDistanceFromFootbotProximityReading(Real reading) const {
+    if (reading == 0)
+        return numeric_limits<Real>::infinity();
+    return (0.0100527 / reading) - 0.000163144 + BODY_RADIUS;
 }

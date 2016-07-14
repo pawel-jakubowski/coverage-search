@@ -41,12 +41,18 @@ CDegrees LeftExplorerBehavior::getRotationAngle() const {
     if (accumulator.SquareLength() == 0)
         accumulator = getAccumulatedVector(getLeftProximityReadings(), sideThreshold);
 
-    CDegrees rotationAngle = lastRotation;
-    if (accumulator.SquareLength() > 0) {
+    size_t howManyRaysDetectObstacle = 0;
+    for (auto& r : getLeftProximityReadings())
+        if (r.Value > 0)
+            howManyRaysDetectObstacle++;
+
+    if (howManyRaysDetectObstacle > 1 && accumulator.SquareLength() > 0) {
         auto sideAngle = CDegrees(90);
-        rotationAngle = (ToDegrees(accumulator.Angle()) - sideAngle).SignedNormalize();
+        return (ToDegrees(accumulator.Angle()) - sideAngle).SignedNormalize();
     }
-    return rotationAngle;
+    else {
+        return CDegrees(15);
+    }
 }
 
 CCI_FootBotProximitySensor::TReadings LeftExplorerBehavior::getLeftProximityReadings() const {

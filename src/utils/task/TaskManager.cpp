@@ -48,7 +48,7 @@ using namespace argos;
 
 static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
 static const Real ARENA_CLEARANCE = FOOTBOT_BODY_RADIUS + 0.05f;
-static const Real ROBOT_CLEARANCE_RADIUS = FOOTBOT_BODY_RADIUS + 0.08f;
+static const Real ROBOT_CLEARANCE_RADIUS = FOOTBOT_BODY_RADIUS + 0.06f;
 static const Real ROBOT_CLEARANCE = 2 * ROBOT_CLEARANCE_RADIUS;
 
 mutex handlerAccessMutex;
@@ -95,9 +95,11 @@ void TaskManager::assignTasks() {
     if (!ready)
         initialize();
 
+    updateCells();
+
 //    finishWaitingTasks();
     updateMovingHandlers();
-    auto unassignedHandlers = getIdleHandlers();
+    auto unassignedHandlers = getIdleWaitingHandlers();
 
     LOG << "TaskManager: ["
         << availableTasks.size() << " available tasks], ["
@@ -124,39 +126,101 @@ void TaskManager::assignTasks() {
         availableTasks.pop();
     }
 
+    LOG << "GRAPH: " << graph << endl;
+}
+
+void TaskManager::updateCells() {
     for (auto& edge : graph.getEdges()) {
         auto& cell = edge.getCell();
         if (!cell.isFinished())
             cell.update();
         else if (edge.getEnd() == -1) {
-            auto newNode = graph.addNode();
-            edge.setEnd(newNode);
             auto& limits = cell.getLimits();
             if (cell.isForwardConvex()) {
-                Real x = 0;
-                auto y = limits.GetMin().GetY();
-                if (fabs(limits.GetMin().GetX()) < fabs(limits.GetMax().GetX()))
-                    x = limits.GetMin().GetX();
-                else
-                    x = limits.GetMax().GetX();
-                addNewCell(CVector2(x,y), newNode);
-                auto otherEdgesIds = graph.getEdgesIdsFromNode(edge.getBeginning());
-                for (auto& id : otherEdgesIds) {
-                    graph.getEdge(id).setEnd(newNode);
-                    if (!graph.getEdge(id).getCell().isFinished())
-                        graph.getEdge(id).getCell().finish(CVector2(x,y));
+                LOG << "End cell with ForwardConvex CP!\n";
+
+                LOG << "Search for already finished edges!\n";
+                auto cellLimits = cell.getLimits();
+                for (auto& otherEdge : graph.getEdges()) {
+                    if (&otherEdge == &edge) // Compare adresses to check if same edge
+                        continue;
+
+                    LOG << "Cell " << (void*)(&otherEdge.getCell())
+                        << " [" << boolalpha << otherEdge.getCell().isFinished() << ", "
+                        << boolalpha << otherEdge.getCell().isForwardConvex() << "]\n";
+
+                    auto otherCellLimits = otherEdge.getCell().getLimits();
+
+                    if (otherEdge.getCell().isFinished()) {
+                        if (otherEdge.getCell().isForwardConvex()) {
+                            LOG << "I found cell " << (void*)(&otherEdge.getCell()) << " which has reverse CP!\n";
+                            LOG << "Test limits: [" << cellLimits << "], [" << otherCellLimits << "]\n";
+                            if (isXBoundaryOverlapping(cellLimits, otherCellLimits) ||
+                                isXBoundaryOverlapping(otherCellLimits, cellLimits)) {
+                                LOG << "Wow, it is overlapping with current cell! 0_o \n";
+                                auto yDist = otherEdge.getCell().getEnd().GetY() - otherEdge.getCell().getEnd().GetY();
+                                LOG << "Check yDist = " << yDist << "\n";
+                                if (fabs(yDist) < ROBOT_CLEARANCE_RADIUS) {
+                                    LOG << "Great! That's the same shit!\n";
+                                    edge.setEnd(otherEdge.getEnd());
+                                    edge.getCell().finish(otherEdge.getCell().getEnd());
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        CVector2 higherCorner;
+                        CVector2 lowerCorner;
+                        if (otherCellLimits.GetMax().GetX() > cellLimits.GetMax().GetX()) {
+                            higherCorner.Set(otherCellLimits.GetMin().GetX(), otherCellLimits.GetMin().GetY());
+                            lowerCorner.Set(cellLimits.GetMax().GetX(), cellLimits.GetMin().GetY());
+                        }
+                        else {
+                            higherCorner.Set(cellLimits.GetMin().GetX(), cellLimits.GetMin().GetY());
+                            lowerCorner.Set(otherCellLimits.GetMax().GetX(), otherCellLimits.GetMin().GetY());
+                        }
+
+                        LOG << "Compare corners [" << higherCorner << "], [" << lowerCorner << "] = "
+                            << (higherCorner - lowerCorner).SquareLength() << "\n";
+                        if ((higherCorner - lowerCorner).SquareLength() < ROBOT_CLEARANCE) {
+                            LOG << "Great! That's the same shit!\n";
+                            edge.setEnd(otherEdge.getEnd());
+                            edge.getCell().finish(otherEdge.getCell().getEnd());
+                        }
+                    }
+                }
+
+                if (edge.getEnd() == ReebEdge::NO_NODE) {
+                    auto newNode = graph.addNode();
+                    edge.setEnd(newNode);
+
+                    Real x = 0;
+                    auto y = limits.GetMin().GetY();
+                    if (fabs(limits.GetMin().GetX()) < fabs(limits.GetMax().GetX()))
+                        x = limits.GetMin().GetX() + ROBOT_CLEARANCE_RADIUS;
+                    else
+                        x = limits.GetMax().GetX() - ROBOT_CLEARANCE_RADIUS;
+
+                    addNewCell(CVector2(x, y), newNode);
                 }
             }
             else if (cell.isReverseConvex()) {
+                LOG << "End cell with ReverseConvex CP!\n";
                 CVector2 beginningLeft(limits.GetMax().GetX() - ROBOT_CLEARANCE_RADIUS, limits.GetMin().GetY());
                 CVector2 beginningRight(limits.GetMin().GetX() + ROBOT_CLEARANCE_RADIUS, limits.GetMin().GetY());
+
+                auto newNode = graph.addNode();
+                edge.setEnd(newNode);
                 addNewCell(beginningLeft, newNode);
                 addNewCell(beginningRight, newNode);
             }
         }
     }
+}
 
-    LOG << "GRAPH: " << graph << endl;
+bool TaskManager::isXBoundaryOverlapping(const CRange<CVector2>& lowerCell, const CRange<CVector2>& upperCell) const {
+    return upperCell.GetMax().GetX() > lowerCell.GetMax().GetX() &&
+           upperCell.GetMin().GetX() < lowerCell.GetMax().GetX();
 }
 
 TaskManager::HandlersList::const_iterator TaskManager::getClosestHandler(const HandlersList& handlers, const Task&
@@ -178,7 +242,7 @@ void TaskManager::initialize() {
     if (graph.getCellsSize() != 0)
         THROW_ARGOSEXCEPTION("During initialization none cell should be available!");
 
-    auto unassignedHandlers = getIdleHandlers();
+    auto unassignedHandlers = getIdleWaitingHandlers();
     CVector2 start = limits.GetMax();
     Real minX = limits.GetMin().GetX();
 
@@ -188,7 +252,7 @@ void TaskManager::initialize() {
         Task::Behavior::Sweep, Task::Status::MoveToBegin
     };
     while (unassignedHandlers.size() > 0) {
-        task.begin.SetX( task.begin.GetX() - ROBOT_CLEARANCE );
+        task.begin.SetX( task.begin.GetX() - ROBOT_CLEARANCE);
         if (task.begin.GetX() < minX) {
             task.begin.SetX(start.GetX());
             task.begin.SetY( task.begin.GetY() - ROBOT_CLEARANCE );
@@ -200,7 +264,7 @@ void TaskManager::initialize() {
         unassignedHandlers.erase(handler);
     }
 
-    if (getIdleHandlers().size() > 0)
+    if (getIdleWaitingHandlers().size() > 0)
         THROW_ARGOSEXCEPTION("All robots should have assigned start point!");
 
     unsigned handlersAtStart = 0;
@@ -226,9 +290,6 @@ void TaskManager::updateMovingHandlers() {
         auto handlerTask = handler.get().getCurrentTask();
         if (handlerTask.behavior == Task::Behavior::Sweep)
             updateSweeperTask(handler);
-        else if (handlerTask.behavior == Task::Behavior::FollowLeftBoundary ||
-            handlerTask.behavior == Task::Behavior::FollowRightBoundary)
-            updateExplorerTask(handler);
     }
 }
 
@@ -258,28 +319,13 @@ void TaskManager::updateSweeperTask(TaskHandler& handler) {
     }
 }
 
-void TaskManager::updateExplorerTask(TaskHandler& handler) {
-    auto handlerTask = handler.getCurrentTask();
-    if (handlerTask.status == Task::Status::MoveToBegin)
-        setStatusIfNearGoal(handler, Task::Status::Proceed, handlerTask.begin);
-//        if (handlerTask.status == Task::Status::Proceed)
-//            setStatusIfNearGoal(handler.get(), Task::Status::Wait, handlerTask.end);
-}
-
-TaskManager::HandlersList TaskManager::getIdleHandlers() const {
+TaskManager::HandlersList TaskManager::getIdleWaitingHandlers() const {
     HandlersList unassignedHandlers;
     for(auto handler : handlers)
-        if (handler.get().getCurrentTask().behavior == Task::Behavior::Idle)
+        if (handler.get().getCurrentTask().behavior == Task::Behavior::Idle &&
+            handler.get().getCurrentTask().status == Task::Status::Wait)
             unassignedHandlers.emplace_back(handler);
     return unassignedHandlers;
-}
-
-void TaskManager::setStatusIfNearGoal(TaskHandler& handler, const Task::Status& status, const CVector2& goal) {
-    if (isNearGoal(handler, goal)) {
-        auto task = handler.getCurrentTask();
-        task.status = status;
-        handler.update(task);
-    }
 }
 
 bool TaskManager::isNearGoal(TaskHandler& handler, const CVector2& goal) const {

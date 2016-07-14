@@ -32,13 +32,16 @@ private:
     void finishWaitingTasks();
     void setStatusIfNearGoal(TaskHandler& handler, const Task::Status& status, const argos::CVector2& goal);
 
+    void updateCells();
     void updateMovingHandlers();
-    void updateExplorerTask(TaskHandler& handler);
     void updateSweeperTask(TaskHandler& handler);
 
     bool isNearGoal(TaskHandler& handler, const argos::CVector2& goal) const;
-    HandlersList getIdleHandlers() const;
+    HandlersList getIdleWaitingHandlers() const;
     HandlersList::const_iterator getClosestHandler(const HandlersList& handlers, const Task& task) const;
+
+    bool isXBoundaryOverlapping(const argos::CRange<argos::CVector2>& lowerCell,
+                                const argos::CRange<argos::CVector2>& upperCell) const;
 };
 
 

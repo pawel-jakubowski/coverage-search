@@ -8,7 +8,7 @@ class TaskCell {
 public:
     TaskCell(argos::CVector2 beginning);
     void update();
-    void finish(argos::CVector2 end, bool forwardConvexCP = true);
+    void finish(argos::CVector2 end);
     void addLeftExplorer(TaskHandler& e);
     void addRightExplorer(TaskHandler& e);
     bool isReady() const;
@@ -41,6 +41,10 @@ private:
     bool areExplorersReadyToProceed() const;
     void updateExplorers(Task::Status status);
     void updateExplorerStatus(Explorer index, Task::Status status);
+    void setRevertTaskForExplorers();
+    void setRevertTaskForExplorer(Explorer index);
+    void freeExplorers();
+    void freeExplorer(Explorer index);
 
     void updateCellLimits();
     void finishCell();

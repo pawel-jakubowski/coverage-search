@@ -58,6 +58,7 @@ protected:
     argos::CDegrees myPositionToPointAngle(const argos::CVector2& point) const;
     argos::CDegrees getAngleBetweenPoints(const argos::CVector2& a, const argos::CVector2& b) const;
     argos::CDegrees getOrientationOnXY() const;
+    argos::Real getObstacleDistanceFromFootbotProximityReading(argos::Real reading) const;
 };
 
 

@@ -14,7 +14,6 @@ private:
     std::vector<bool> obstacleHistogram;
     const argos::CRange<argos::Real> histogramThresholdHysteresis;
 
-    double getObstacleDistanceFromFootbotProximityReading(argos::Real reading) const;
     std::function<bool(const argos::CRadians&)> generateIsInBoundaryCheck(const argos::CRadians& lowerBoundary,
                                                                           const argos::CRadians& upperBoundary) const;
     void updateObstacleHistogram();

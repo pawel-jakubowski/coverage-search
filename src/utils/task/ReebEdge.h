@@ -5,6 +5,8 @@
 
 class ReebEdge {
 public:
+    static constexpr int NO_NODE = -1;
+
     ReebEdge(argos::CVector2 cellBeginning, int beginNode);
     int getEnd() const { return end; }
     void setEnd(int endNode) { end = endNode; }

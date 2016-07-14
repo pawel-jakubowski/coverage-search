@@ -23,6 +23,12 @@ if(NOT ARGOS_LOG)
     set(ARGOS_LOG "mbfo.log")
 endif()
 
+execute_process(
+        COMMAND python -c "import sys; sys.stdout.write(str(${ARGOS_AREA_HALF_SIDE_IN_M}-0.7))"
+        OUTPUT_VARIABLE ARGOS_TARGET_HALF_AREA_SIDE_BEGINNIG_IN_M)
+execute_process(
+        COMMAND python -c "import sys; sys.stdout.write(str(${ARGOS_AREA_HALF_SIDE_IN_M}-0.6))"
+        OUTPUT_VARIABLE ARGOS_TARGET_HALF_AREA_SIDE_IN_M)
 set(ARGOS_WALL_THICKNESS_IN_M 0.02)
 
 # Copy configuration files to output directory
