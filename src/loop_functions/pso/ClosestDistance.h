@@ -1,7 +1,6 @@
 #pragma once
 
 #include <argos3/core/simulator/loop_functions.h>
-#include <argos3/plugins/robots/e-puck/simulator/epuck_entity.h>
 #include <iostream>
 #include <mutex>
 

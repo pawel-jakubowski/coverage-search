@@ -22,7 +22,7 @@
                 <differential_steering implementation="default"/>
             </actuators>
             <sensors>
-                <proximity implementation="default" show_rays="true"/>
+                <footbot_proximity implementation="default" show_rays="true" />
                 <positioning implementation="default" pos_noise_range="-0.05:0.05"/>
                 <light implementation="default" noise_level="0.0"/>
                 <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
@@ -79,9 +79,9 @@
                       max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0"/>
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0"/>
             <entity quantity="@ARGOS_ROBOTS_NUMBER@" max_trials="100">
-                <e-puck id="fb" rab_range="0.2" rab_data_size="40">
-                    <controller config="pso_controller"/>
-                </e-puck>
+                <foot-bot id="fb" rab_range="0.2" rab_data_size="40">
+                    <controller config="pso_controller" />
+                </foot-bot>
             </entity>
         </distribute>
 
@@ -169,15 +169,15 @@
     <!-- * Visualization * -->
     <!-- ****************** -->
     <visualization>
-        <qt-opengl>
-            <camera>
-                <placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>
-                <placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>
-                <placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>
-                <placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>
-                <placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>
-            </camera>
-        </qt-opengl>
+        <!--<qt-opengl>-->
+            <!--<camera>-->
+                <!--<placement idx="0" position="0,0,@ARGOS_CAMERA_1@" look_at="0,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="1" position="0,0,5" look_at="0,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="2" position="-0.2,0,4" look_at="-0.2,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="3" position="0,0,20" look_at="0,0,0" lens_focal_length="50"/>-->
+                <!--<placement idx="4" position="0,0,100" look_at="0,0,0" lens_focal_length="50"/>-->
+            <!--</camera>-->
+        <!--</qt-opengl>-->
     </visualization>
 
 </argos-configuration>

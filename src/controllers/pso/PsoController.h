@@ -3,7 +3,7 @@
 #include <argos3/core/control_interface/ci_controller.h>
 #include <argos3/core/utility/math/vector2.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_proximity_sensor.h>
+#include <plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_light_sensor.h>
 
@@ -32,7 +32,7 @@ private:
     enum class TargetType { Unknown, Light, Robot };
 
     CCI_DifferentialSteeringActuator* wheelsEngine = nullptr;
-    CCI_ProximitySensor* proximitySensor = nullptr;
+    CCI_FootBotProximitySensor* proximitySensor = nullptr;
     CCI_PositioningSensor* positioningSensor = nullptr;
     CCI_LightSensor* lightSensor = nullptr;
     CCI_RangeAndBearingSensor* rabRx = nullptr;

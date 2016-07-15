@@ -11,7 +11,12 @@ using namespace argos;
 void ClosestDistance::Init(TConfigurationNode& t_tree) {
     parseLogConfig(t_tree);
     parseTargetConfig(t_tree);
-    targetsNumber = this->GetSpace().GetEntitiesByType("target").size();
+    try {
+        targetsNumber = this->GetSpace().GetEntitiesByType("target").size();
+    } catch(CARGoSException& e) {
+        LOGERR << e.what();
+        targetsNumber = 1;
+    }
     LOG << targetsNumber << " targets to found!" << endl;
 }
 

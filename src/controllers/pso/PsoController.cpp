@@ -26,7 +26,7 @@ PsoController::PsoController()
 
 void PsoController::Init(TConfigurationNode& configuration) {
     wheelsEngine = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
-    proximitySensor = GetSensor<CCI_ProximitySensor>("proximity");
+    proximitySensor = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     positioningSensor = GetSensor<CCI_PositioningSensor>("positioning");
     lightSensor = GetSensor<CCI_LightSensor>("light");
     rabRx = GetSensor<CCI_RangeAndBearingSensor>("range_and_bearing");
@@ -88,20 +88,10 @@ void PsoController::ControlStep() {
 }
 
 CVector2 PsoController::getWeightedProximityReading() {
-    const std::vector<Real>& proximityValues = proximitySensor->GetReadings();
-    std::vector<CRadians> proximityAngles(proximityValues.size(),
-            CRadians((ARGOS_PI / 8.0f) * 0.5f));
-    CRadians sensorSpacing = CRadians::TWO_PI / proximityValues.size();
-    for (UInt32 i = 0; i < proximityAngles.size(); ++i) {
-        proximityAngles[i] += i * sensorSpacing;
-        proximityAngles[i].SignedNormalize();
-    }
-
+    auto& proximityValues = proximitySensor->GetReadings();
     CVector2 accumulator;
-    for (size_t i = 0; i < proximityValues.size(); ++i) {
-        accumulator += CVector2(proximityValues[i], proximityAngles[i]);
-    }
-
+    for (auto& v : proximityValues)
+        accumulator += CVector2(v.Value, v.Angle);
     accumulator /= proximityValues.size();
     return accumulator;
 }
