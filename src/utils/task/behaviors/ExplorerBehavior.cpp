@@ -29,14 +29,15 @@ void ExplorerBehavior::turnOnLeds() {
 
 CVector2 ExplorerBehavior::proceed() {
     auto fellowAngle = getFellowAngle();
-    LOG << "Fellow angle: " << fellowAngle << endl;
+//    LOG << "Fellow angle: " << fellowAngle << endl;
     auto rotationAngle = getRotationAngle();
     return move(rotationAngle);
 }
 
 bool ExplorerBehavior::isCriticalPoint() const {
-    LOG << "Convex CP: " << boolalpha << isConvexCP() << ", "
-        << "Concave CP: " << boolalpha << isConcaveCP() << endl;
+//    LOG << "Convex CP: " << boolalpha << isConvexCP() << " ("
+//        << boolalpha << isForwardConvexCP() << "), "
+//        << "Concave CP: " << boolalpha << isConcaveCP() << endl;
     return isConvexCP() || isConcaveCP();
 }
 
@@ -48,19 +49,19 @@ bool ExplorerBehavior::isConvexCP() const {
     return false;
 }
 
-bool ExplorerBehavior::isForwardConvexCP() const {
-    auto angles = getFellowAngles();
-    CDegrees maxAngleDiff(0);
-    if (angles.size() > 0)
-        for (auto& a : angles)
-            for (auto& o : angles)
-                if (a > o) {
-                    auto angleDiff = (a - o).UnsignedNormalize();
-                    if (angleDiff > maxAngleDiff)
-                        maxAngleDiff = angleDiff;
-                }
-    return maxAngleDiff >= CDegrees(180);
-}
+//bool ExplorerBehavior::isForwardConvexCP() const {
+//    auto angles = getFellowAngles();
+//    CDegrees maxAngleDiff(0);
+//    if (angles.size() > 0)
+//        for (auto& a : angles)
+//            for (auto& o : angles)
+//                if (a > o) {
+//                    auto angleDiff = (a - o).UnsignedNormalize();
+//                    if (angleDiff > maxAngleDiff)
+//                        maxAngleDiff = angleDiff;
+//                }
+//    return maxAngleDiff >= CDegrees(180);
+//}
 
 bool ExplorerBehavior::isConcaveCP() const {
     return !isConvexCP() &&

@@ -8,7 +8,7 @@ CellularDrawer::CellularDrawer()
 {}
 
 void CellularDrawer::DrawInWorld() {
-    drawCoverageGrid();
+//    drawCoverageGrid();
     drawTaskCells();
 }
 

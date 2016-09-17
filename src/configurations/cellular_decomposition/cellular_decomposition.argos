@@ -5,7 +5,7 @@
     <!-- * General configuration * -->
     <!-- ************************* -->
     <framework>
-        <system threads="0" />
+        <system threads="4" />
         <experiment length="@ARGOS_EXPERIMENT_LENGTH@"
                     ticks_per_second="@ARGOS_TICKS_PER_SEC@"
                     @ARGOS_RANDOM_SEED@ />
@@ -99,7 +99,7 @@
         <!-- ********** -->
         <distribute>
             <position method="uniform"
-                min="-@ARGOS_AREA_HALF_SIDE_IN_M@, -@ARGOS_AREA_HALF_SIDE_IN_M@, 0"
+                min="-@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_ROBOTS_HALF_AREA_SIDE_BEGINNIG_IN_M@, 0"
                 max="@ARGOS_AREA_HALF_SIDE_IN_M@, @ARGOS_AREA_HALF_SIDE_IN_M@, 0" />
             <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
             <entity quantity="@ARGOS_ROBOTS_NUMBER@" max_trials="100">
@@ -158,8 +158,8 @@
 
         <distribute>
             <position method="uniform"
-            min="-@ARGOS_TARGET_HALF_AREA_SIDE_BEGINNIG_IN_M@, -@ARGOS_TARGET_HALF_AREA_SIDE_IN_M@, 0"
-            max="@ARGOS_TARGET_HALF_AREA_SIDE_IN_M@, @ARGOS_TARGET_HALF_AREA_SIDE_IN_M@, 0" />
+            min="-@ARGOS_TARGET_HALF_AREA_SIDE_IN_M@, -@ARGOS_TARGET_HALF_AREA_SIDE_IN_M@, 0"
+            max="@ARGOS_TARGET_HALF_AREA_SIDE_IN_M@, @ARGOS_TARGET_HALF_AREA_SIDE_BEGINNIG_IN_M@, 0" />
                 <orientation method="gaussian" mean="0,0,0" std_dev="360,0,0" />
                 <entity quantity="@ARGOS_TARGETS_NUMBER@" max_trials="100" >
                     <target id="t" rab_range="0.25" rab_data_size="40">

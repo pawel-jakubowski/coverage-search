@@ -9,14 +9,14 @@ class TaskManager {
 public:
     TaskManager() = default;
     void init(argos::CRange<argos::CVector2> limits);
-    void registerHandler(TaskHandler& handler);
-    void unregisterHandler(TaskHandler& handler);
+    void registerHandler(TaskHandler* handler);
+    void unregisterHandler(TaskHandler* handler);
     void assignTasks();
 
     const auto getCells() const { return graph.getCells(); }
 private:
-    using HandlersVector = std::vector<std::reference_wrapper<TaskHandler>>;
-    using HandlersList = std::list<std::reference_wrapper<TaskHandler>>;
+    using HandlersVector = std::vector<TaskHandler*>;
+    using HandlersList = std::list<TaskHandler*>;
 
     HandlersVector handlers;
     ReebGraph graph;
@@ -30,7 +30,6 @@ private:
     void addNewCell(argos::CVector2 beginning, int startNode);
 
     void finishWaitingTasks();
-    void setStatusIfNearGoal(TaskHandler& handler, const Task::Status& status, const argos::CVector2& goal);
 
     void updateCells();
     void updateMovingHandlers();
@@ -42,6 +41,8 @@ private:
 
     bool isXBoundaryOverlapping(const argos::CRange<argos::CVector2>& lowerCell,
                                 const argos::CRange<argos::CVector2>& upperCell) const;
+
+    void addCellFromForwardConvexCP(const argos::CRange<argos::CVector2>& cellLimits, int endNode);
 };
 
 

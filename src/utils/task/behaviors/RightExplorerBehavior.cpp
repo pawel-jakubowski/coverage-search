@@ -28,6 +28,36 @@ CVector2 RightExplorerBehavior::prepare() {
     }
 }
 
+bool RightExplorerBehavior::isForwardConvexCP() const {
+    auto angles = getFellowAngles();
+    auto myAngle = getOrientationOnXY();
+    auto threshold = 0.1f;
+    for (auto& a : angles) {
+        auto realAngle = (myAngle + a).SignedNormalize();
+//        LOG << "Real fellow angle: " << myAngle.GetValue() << " + " << a.GetValue() << " = " << realAngle.GetValue() << "\n";
+        if (realAngle > CDegrees(90) || realAngle < CDegrees(-90)) {
+            const auto& readings = sensors.proximity.GetReadings();
+            array<Real, 2> proximityValues = {-1, -1};
+            auto unsignedAngle = a.UnsignedNormalize();
+            for (size_t i = 0; i < readings.size(); i++) {
+                if (i+1 < readings.size() &&
+                    unsignedAngle > ToDegrees(readings.at(i).Angle).UnsignedNormalize() &&
+                    unsignedAngle < ToDegrees(readings.at(i+1).Angle).UnsignedNormalize()) {
+                    proximityValues = {readings.at(i).Value, readings.at(i+1).Value};
+                }
+                else if (unsignedAngle > ToDegrees(readings.at(i).Angle).UnsignedNormalize() ||
+                         unsignedAngle < ToDegrees(readings.at(0).Angle).UnsignedNormalize()) {
+                    proximityValues = {readings.at(i).Value, readings.at(0).Value};
+                }
+            }
+            if (proximityValues.at(0) < 0 || proximityValues.at(1) < 0)
+                THROW_ARGOSEXCEPTION("Algorithm do not find proper range for " << unsignedAngle);
+            return ((proximityValues.at(0) + proximityValues.at(1)) / 2) > threshold;
+        }
+    }
+    return false;
+}
+
 bool RightExplorerBehavior::isReadyToProceed() const {
     if(!hitWall)
         return false;

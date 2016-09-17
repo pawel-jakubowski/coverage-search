@@ -53,8 +53,9 @@ void Cellular::Init(TConfigurationNode& configuration) {
     assert(cameraFront != nullptr);
     assert(cameraBack != nullptr);
 
-    LOG << "Register me : " << this << endl;
-    loopFnc.registerToTaskManager(*this);
+//    LOG << "Register me : " << this << endl;
+    taskManager = loopFnc.getManager();
+    taskManager->registerHandler(this);
 
     Sensors s = { *positioningSensor, *proximitySensor, {*cameraLeft, *cameraRight, *cameraFront, *cameraBack} };
     Actuators a = { *wheelsEngine, *leds };
@@ -68,12 +69,12 @@ void Cellular::Reset() {
 }
 
 void Cellular::Destroy() {
-    LOG << "Unregister me : " << this << endl;
-    loopFnc.unregisterFromTaskManager(*this);
+//    LOG << "Unregister me : " << this << endl;
+    taskManager->unregisterHandler(this);
 }
 
 void Cellular::update(Task newTask) {
-    LOG << "[update task]";
+//    LOG << "[update task]";
     if (currentTask.behavior != newTask.behavior)
         behavior = factory->create(newTask);
     TaskHandler::update(newTask);
@@ -93,12 +94,16 @@ bool Cellular::isForwardConvexCP() const {
     return criticalPointDetected && forwardConvexCPDetected;
 }
 
+bool Cellular::isConcaveCP() const {
+    return criticalPointDetected && concaveCPDetected;
+}
+
 bool Cellular::isReadyToProceed() const {
     return readyToProceed;
 }
 
 void Cellular::ControlStep() {
-    LOG << "[" << GetId() << "]: " << to_string(currentTask) << "\n";
+//    LOG << "[" << GetId() << "]: " << to_string(currentTask) << ", ";
     if (currentTask.status == Task::Status::Wait)
         behavior->stop();
     else {
@@ -109,9 +114,16 @@ void Cellular::ControlStep() {
 
     criticalPointDetected = behavior->isCriticalPoint();
     forwardConvexCPDetected = behavior->isForwardConvexCP();
+    concaveCPDetected = behavior->isConcaveCP();
     readyToProceed = behavior->isReadyToProceed();
 
-    LOG.Flush();
+//    LOG << " CP:["
+//        << boolalpha << criticalPointDetected << ", "
+//        << boolalpha << forwardConvexCPDetected << ", "
+//        << boolalpha << concaveCPDetected << "]\n";
+
+    detectTargets();
+//    LOG.Flush();
 }
 
 CVector2 Cellular::runBehavior() {
@@ -124,6 +136,19 @@ CVector2 Cellular::runBehavior() {
             return behavior->proceed();
     }
     return CVector2();
+}
+
+void Cellular::detectTargets() {
+    auto position = positioningSensor->GetReading().Position;
+    auto packets = rabRx->GetReadings();
+    for(auto& packet : packets) {
+        int id;
+        Real posX, posY, posZ;
+        packet.Data >> id >> posX >> posY >> posZ;
+        if (id == 0) continue; // Skip default message send by pso robots
+        CVector3 targetPosition(posX, posY, posZ);
+        loopFnc.addTargetPosition(id, targetPosition);
+    }
 }
 
 REGISTER_CONTROLLER(Cellular, "cellular_decomposition_controller")

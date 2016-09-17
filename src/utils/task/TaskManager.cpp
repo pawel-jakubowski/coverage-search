@@ -37,22 +37,12 @@ using namespace std;
 using namespace argos;
 
 
-//class DummyLog : public std::stringstream {
-//public:
-//    void Flush() {}
-//};
-//static DummyLog dummyLog;
-//#define LOG dummyLog
-
-
-
 static const Real FOOTBOT_BODY_RADIUS = 0.085036758f;
 static const Real ARENA_CLEARANCE = FOOTBOT_BODY_RADIUS + 0.05f;
 static const Real ROBOT_CLEARANCE_RADIUS = FOOTBOT_BODY_RADIUS + 0.06f;
 static const Real ROBOT_CLEARANCE = 2 * ROBOT_CLEARANCE_RADIUS;
 
 mutex handlerAccessMutex;
-mutex addNewCellMutex;
 
 void TaskManager::init(CRange<CVector2> limits) {
     this->limits = CRange<CVector2>(
@@ -68,27 +58,29 @@ void TaskManager::init(CRange<CVector2> limits) {
 
 void TaskManager::addNewCell(CVector2 beginning, int startNode)
 {
+    // Assert that ther is no futher cell
+    for (auto e : graph.getEdges()) {
+        if (e.getCell().getBeginning().GetY() < beginning.GetY()) {
+            LOGERR << "There is other cell ahead!\n";
+            return;
+        }
+    }
+
     auto cellId = graph.addEdge(beginning, startNode);
     auto explorersTasks = graph.getCell(cellId).getExplorersTasks();
     for (auto task : explorersTasks)
         availableTasks.push({task, cellId});
-    LOG << "Cell " << cellId << " added! (" << beginning << ")" << endl;
+//    LOG << "Cell " << cellId << " added! (" << beginning << ")" << endl;
 }
 
-void TaskManager::registerHandler(TaskHandler& handler) {
+void TaskManager::registerHandler(TaskHandler* handler) {
     lock_guard<mutex> guard(handlerAccessMutex);
-    handlers.push_back(ref(handler));
+    handlers.push_back(handler);
 }
 
-void TaskManager::unregisterHandler(TaskHandler& handler) {
+void TaskManager::unregisterHandler(TaskHandler* handler) {
     lock_guard<mutex> guard(handlerAccessMutex);
-    reference_wrapper<TaskHandler> ref(handler);
-    auto it = find_if(handlers.begin(), handlers.end(),
-                      [&handler](reference_wrapper<TaskHandler>& ref){ return &ref.get() == &handler; });
-    if (it != handlers.end())
-        handlers.erase(it);
-    else
-        LOGERR << "[WARNING] Handler do not exists! " << &handler << endl;
+    handlers.erase(remove(handlers.begin(), handlers.end(), handler));
 }
 
 void TaskManager::assignTasks() {
@@ -98,35 +90,36 @@ void TaskManager::assignTasks() {
     updateCells();
 
 //    finishWaitingTasks();
-    updateMovingHandlers();
+//    updateMovingHandlers();
     auto unassignedHandlers = getIdleWaitingHandlers();
 
-    LOG << "TaskManager: ["
-        << availableTasks.size() << " available tasks], ["
-        << handlers.size() << " handlers], ["
-        << unassignedHandlers.size() << " unassigned handlers]" << endl;
+//    LOG << "TaskManager: ["
+//        << availableTasks.size() << " available tasks], ["
+//        << handlers.size() << " handlers], ["
+//        << unassignedHandlers.size() << " unassigned handlers]" << endl;
 
     while(availableTasks.size() > 0 && unassignedHandlers.size() > 0) {
         auto& task = availableTasks.front().first;
         auto cellId = availableTasks.front().second;
 
         if (!graph.getCell(cellId).isFinished()) {
-            LOG << "Task " << to_string(task);
+//            LOG << "Task " << to_string(task);
             auto closestHandler = getClosestHandler(unassignedHandlers, task);
-            closestHandler->get().update(task);
-            unassignedHandlers.erase(closestHandler);
+            (*closestHandler)->update(task);
 
-            LOG << " assigned to cell " << cellId << endl;
-            if (closestHandler->get().getCurrentTask().behavior == Task::Behavior::FollowLeftBoundary)
-                graph.getCell(cellId).addLeftExplorer(*closestHandler);
-            else if (closestHandler->get().getCurrentTask().behavior == Task::Behavior::FollowRightBoundary)
-                graph.getCell(cellId).addRightExplorer(*closestHandler);
+//            LOG << " assigned to cell " << cellId << endl;
+            if ((*closestHandler)->getCurrentTask().behavior == Task::Behavior::FollowLeftBoundary)
+                graph.getCell(cellId).addLeftExplorer(**closestHandler);
+            else if ((*closestHandler)->getCurrentTask().behavior == Task::Behavior::FollowRightBoundary)
+                graph.getCell(cellId).addRightExplorer(**closestHandler);
+
+            unassignedHandlers.erase(closestHandler);
         }
 
         availableTasks.pop();
     }
 
-    LOG << "GRAPH: " << graph << endl;
+//    LOG << "GRAPH: " << graph << endl;
 }
 
 void TaskManager::updateCells() {
@@ -135,57 +128,60 @@ void TaskManager::updateCells() {
         if (!cell.isFinished())
             cell.update();
         else if (edge.getEnd() == -1) {
+//            LOG << "Finishing cell... ";
             auto& limits = cell.getLimits();
             if (cell.isForwardConvex()) {
-                LOG << "End cell with ForwardConvex CP!\n";
-
-                LOG << "Search for already finished edges!\n";
+//                LOG << "End cell with ForwardConvex CP!" << "Search for already finished edges!\n";
                 auto cellLimits = cell.getLimits();
                 for (auto& otherEdge : graph.getEdges()) {
                     if (&otherEdge == &edge) // Compare adresses to check if same edge
                         continue;
 
-                    LOG << "Cell " << (void*)(&otherEdge.getCell())
-                        << " [" << boolalpha << otherEdge.getCell().isFinished() << ", "
-                        << boolalpha << otherEdge.getCell().isForwardConvex() << "]\n";
+//                    LOG << "Cell " << (void*)(&otherEdge.getCell())
+//                        << " [" << boolalpha << otherEdge.getCell().isFinished() << ", "
+//                        << boolalpha << otherEdge.getCell().isForwardConvex() << "]\n";
 
                     auto otherCellLimits = otherEdge.getCell().getLimits();
 
-                    if (otherEdge.getCell().isFinished()) {
+                    if (otherEdge.getEnd() != ReebEdge::NO_NODE) {
                         if (otherEdge.getCell().isForwardConvex()) {
-                            LOG << "I found cell " << (void*)(&otherEdge.getCell()) << " which has reverse CP!\n";
-                            LOG << "Test limits: [" << cellLimits << "], [" << otherCellLimits << "]\n";
+//                            LOG << "I found cell " << (void*)(&otherEdge.getCell()) << " which has reverse CP!\n";
+//                            LOG << "Test limits: [" << cellLimits << "], [" << otherCellLimits << "]\n";
+
                             if (isXBoundaryOverlapping(cellLimits, otherCellLimits) ||
                                 isXBoundaryOverlapping(otherCellLimits, cellLimits)) {
-                                LOG << "Wow, it is overlapping with current cell! 0_o \n";
-                                auto yDist = otherEdge.getCell().getEnd().GetY() - otherEdge.getCell().getEnd().GetY();
-                                LOG << "Check yDist = " << yDist << "\n";
+//                                LOG << "Wow, it is overlapping with current cell! 0_o \n";
+                                auto yDist = cell.getEnd().GetY() - otherEdge.getCell().getEnd().GetY();
+//                                LOG << "Check yDist = "
+//                                    << cell.getEnd().GetY() << " - "
+//                                    << otherEdge.getCell().getEnd().GetY() << " = " << yDist << "\n";
                                 if (fabs(yDist) < ROBOT_CLEARANCE_RADIUS) {
-                                    LOG << "Great! That's the same shit!\n";
+//                                    LOG << "Great! That's the same shit!\n";
                                     edge.setEnd(otherEdge.getEnd());
                                     edge.getCell().finish(otherEdge.getCell().getEnd());
                                 }
                             }
-                        }
-                    }
-                    else {
-                        CVector2 higherCorner;
-                        CVector2 lowerCorner;
-                        if (otherCellLimits.GetMax().GetX() > cellLimits.GetMax().GetX()) {
-                            higherCorner.Set(otherCellLimits.GetMin().GetX(), otherCellLimits.GetMin().GetY());
-                            lowerCorner.Set(cellLimits.GetMax().GetX(), cellLimits.GetMin().GetY());
-                        }
-                        else {
-                            higherCorner.Set(cellLimits.GetMin().GetX(), cellLimits.GetMin().GetY());
-                            lowerCorner.Set(otherCellLimits.GetMax().GetX(), otherCellLimits.GetMin().GetY());
-                        }
+                            else {
+                                CVector2 higherCorner;
+                                CVector2 lowerCorner;
+                                if (otherCellLimits.GetMax().GetX() > cellLimits.GetMax().GetX()) {
+                                    higherCorner.Set(otherCellLimits.GetMin().GetX(), otherCellLimits.GetMin().GetY());
+                                    lowerCorner.Set(cellLimits.GetMax().GetX(), cellLimits.GetMin().GetY());
+                                }
+                                else {
+                                    higherCorner.Set(cellLimits.GetMin().GetX(), cellLimits.GetMin().GetY());
+                                    lowerCorner.Set(otherCellLimits.GetMax().GetX(), otherCellLimits.GetMin().GetY());
+                                }
 
-                        LOG << "Compare corners [" << higherCorner << "], [" << lowerCorner << "] = "
-                            << (higherCorner - lowerCorner).SquareLength() << "\n";
-                        if ((higherCorner - lowerCorner).SquareLength() < ROBOT_CLEARANCE) {
-                            LOG << "Great! That's the same shit!\n";
-                            edge.setEnd(otherEdge.getEnd());
-                            edge.getCell().finish(otherEdge.getCell().getEnd());
+                                auto cornersDiff = higherCorner - lowerCorner;
+//                                LOG << "Compare corners [" << higherCorner << "], [" << lowerCorner << "] = "
+//                                << "[" << cornersDiff.GetX() << ", " << cornersDiff.GetY() << "]\n";
+                                if ((higherCorner - lowerCorner).SquareLength() < 0.1f) {
+//                                    LOG << "Great! That's the same shit!\n";
+                                    edge.setEnd(otherEdge.getEnd());
+                                    edge.getCell().finish(otherEdge.getCell().getEnd());
+                                }
+                            }
                         }
                     }
                 }
@@ -193,29 +189,38 @@ void TaskManager::updateCells() {
                 if (edge.getEnd() == ReebEdge::NO_NODE) {
                     auto newNode = graph.addNode();
                     edge.setEnd(newNode);
-
-                    Real x = 0;
-                    auto y = limits.GetMin().GetY();
-                    if (fabs(limits.GetMin().GetX()) < fabs(limits.GetMax().GetX()))
-                        x = limits.GetMin().GetX() + ROBOT_CLEARANCE_RADIUS;
-                    else
-                        x = limits.GetMax().GetX() - ROBOT_CLEARANCE_RADIUS;
-
-                    addNewCell(CVector2(x, y), newNode);
+                    addCellFromForwardConvexCP(limits, newNode);
                 }
             }
             else if (cell.isReverseConvex()) {
-                LOG << "End cell with ReverseConvex CP!\n";
-                CVector2 beginningLeft(limits.GetMax().GetX() - ROBOT_CLEARANCE_RADIUS, limits.GetMin().GetY());
-                CVector2 beginningRight(limits.GetMin().GetX() + ROBOT_CLEARANCE_RADIUS, limits.GetMin().GetY());
+//                LOG << "End cell with ReverseConvex CP!\n";
+                Real yOffset = 0.02f;
+                CVector2 beginningLeft(limits.GetMax().GetX() - ROBOT_CLEARANCE_RADIUS, limits.GetMin().GetY() - yOffset);
+                CVector2 beginningRight(limits.GetMin().GetX() + ROBOT_CLEARANCE_RADIUS, limits.GetMin().GetY() - yOffset);
 
                 auto newNode = graph.addNode();
                 edge.setEnd(newNode);
                 addNewCell(beginningLeft, newNode);
                 addNewCell(beginningRight, newNode);
             }
+            else if (cell.isConcave()) {
+//                LOG << "End cell with Concave CP!\n";
+                auto newNode = graph.addNode();
+                edge.setEnd(newNode);
+            }
         }
     }
+}
+
+void TaskManager::addCellFromForwardConvexCP(const CRange<CVector2>& cellLimits, int endNode) {
+    Real x = 0;
+    auto y = cellLimits.GetMin().GetY() - ROBOT_CLEARANCE_RADIUS;
+    if (fabs(cellLimits.GetMin().GetX()) < fabs(cellLimits.GetMax().GetX()))
+        x = cellLimits.GetMin().GetX();
+    else
+        x = cellLimits.GetMax().GetX();
+
+    addNewCell(CVector2(x, y), endNode);
 }
 
 bool TaskManager::isXBoundaryOverlapping(const CRange<CVector2>& lowerCell, const CRange<CVector2>& upperCell) const {
@@ -227,9 +232,9 @@ TaskManager::HandlersList::const_iterator TaskManager::getClosestHandler(const H
 task)
 const {
     auto closestHandler = handlers.begin();
-    auto closestHandlerDistance = (closestHandler->get().getPosition() - task.begin).SquareLength();
+    auto closestHandlerDistance = ((*closestHandler)->getPosition() - task.begin).SquareLength();
     for(auto handlerIt = handlers.begin(); handlerIt != handlers.end(); handlerIt++) {
-        auto distance = (handlerIt->get().getPosition() - task.begin).SquareLength();
+        auto distance = ((*handlerIt)->getPosition() - task.begin).SquareLength();
         if (distance < closestHandlerDistance) {
             closestHandler = handlerIt;
             closestHandlerDistance = distance;
@@ -241,55 +246,22 @@ const {
 void TaskManager::initialize() {
     if (graph.getCellsSize() != 0)
         THROW_ARGOSEXCEPTION("During initialization none cell should be available!");
-
-    auto unassignedHandlers = getIdleWaitingHandlers();
-    CVector2 start = limits.GetMax();
-    Real minX = limits.GetMin().GetX();
-
-    LOG << "Initialize TaskManager: [start " << start << "]";
-    Task task = {
-        CVector2(start.GetX() + ROBOT_CLEARANCE, start.GetY()), start,
-        Task::Behavior::Sweep, Task::Status::MoveToBegin
-    };
-    while (unassignedHandlers.size() > 0) {
-        task.begin.SetX( task.begin.GetX() - ROBOT_CLEARANCE);
-        if (task.begin.GetX() < minX) {
-            task.begin.SetX(start.GetX());
-            task.begin.SetY( task.begin.GetY() - ROBOT_CLEARANCE );
-            initialLineWidth += ROBOT_CLEARANCE;
-        }
-        LOG << ", [assign " << to_string(task) << "]";
-        auto handler = getClosestHandler(unassignedHandlers, task);
-        handler->get().update(task);
-        unassignedHandlers.erase(handler);
+    for (auto h : handlers) {
+        auto offset = (limits.GetMax().GetY() - h->getPosition().GetY());
+        if (offset > initialLineWidth)
+            initialLineWidth = offset;
     }
 
-    if (getIdleWaitingHandlers().size() > 0)
-        THROW_ARGOSEXCEPTION("All robots should have assigned start point!");
-
-    unsigned handlersAtStart = 0;
-    for (auto handler : handlers)
-        if (isNearGoal(handler.get(), handler.get().getCurrentTask().begin)) {
-            auto handlerTask = handler.get().getCurrentTask();
-            handlerTask.status = Task::Status::Wait;
-            handler.get().update(handlerTask);
-            handlersAtStart++;
-        }
-    LOG << ", [" << handlersAtStart << " handlers initizalized]" << endl;
-
-    if (handlers.size() == handlersAtStart) {
-        finishWaitingTasks();
-        auto newNode = graph.addNode();
-        addNewCell(CVector2(0, limits.GetMax().GetY() - initialLineWidth - ROBOT_CLEARANCE), newNode);
-        ready = true;
-    }
+    auto newNode = graph.addNode();
+    addNewCell(CVector2(0, limits.GetMax().GetY() - initialLineWidth - ROBOT_CLEARANCE), newNode);
+    ready = true;
 }
 
 void TaskManager::updateMovingHandlers() {
     for (auto handler : handlers) {
-        auto handlerTask = handler.get().getCurrentTask();
+        auto handlerTask = handler->getCurrentTask();
         if (handlerTask.behavior == Task::Behavior::Sweep)
-            updateSweeperTask(handler);
+            updateSweeperTask(*handler);
     }
 }
 
@@ -322,8 +294,8 @@ void TaskManager::updateSweeperTask(TaskHandler& handler) {
 TaskManager::HandlersList TaskManager::getIdleWaitingHandlers() const {
     HandlersList unassignedHandlers;
     for(auto handler : handlers)
-        if (handler.get().getCurrentTask().behavior == Task::Behavior::Idle &&
-            handler.get().getCurrentTask().status == Task::Status::Wait)
+        if (handler->getCurrentTask().behavior == Task::Behavior::Idle &&
+            handler->getCurrentTask().status == Task::Status::Wait)
             unassignedHandlers.emplace_back(handler);
     return unassignedHandlers;
 }
@@ -336,8 +308,8 @@ bool TaskManager::isNearGoal(TaskHandler& handler, const CVector2& goal) const {
 void TaskManager::finishWaitingTasks() {
     Task idleTask = {CVector2(), CVector2(), Task::Behavior::Idle, Task::Status::Wait};
     for(auto handler : handlers) {
-        auto handlerTask = handler.get().getCurrentTask();
+        auto handlerTask = handler->getCurrentTask();
         if (handlerTask.status == Task::Status::Wait)
-            handler.get().update(idleTask);
+            handler->update(idleTask);
     }
 }

@@ -17,26 +17,27 @@ TaskCell::TaskCell(argos::CVector2 beginning)
     , end(beginning)
     , limits(beginning, end)
     , explorers{nullptr, nullptr}
+    , explorersDistanceThreshold(0.15)
 {}
 
 list<Task> TaskCell::getExplorersTasks() const {
     CVector2 left(beginning.GetX() + ROBOT_CLEARANCE_RADIUS, beginning.GetY());
     CVector2 right(beginning.GetX() - ROBOT_CLEARANCE_RADIUS, beginning.GetY());
     return {
-        {right, right, Task::Behavior::FollowRightBoundary,  Task::Status::MoveToBegin},
-        {left, left, Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin}
+        {left, left, Task::Behavior::FollowLeftBoundary,  Task::Status::MoveToBegin},
+        {right, right, Task::Behavior::FollowRightBoundary,  Task::Status::MoveToBegin}
     };
 }
 
 void TaskCell::update() {
     if (finished) {
-        LOG << (void*)(this) << " Cell is finished!" << endl;
+//        LOG << (void*)(this) << " Cell is finished!" << endl;
         freeExplorers();
         return;
     }
 
     if (!isReady()) {
-        LOG << (void*)(this) << " Cell is not ready!" << endl;
+//        LOG << (void*)(this) << " Cell is not ready!" << endl;
         return;
     }
 
@@ -52,7 +53,9 @@ void TaskCell::freeExplorer(Explorer index) {
     if (explorers.at(index) == nullptr)
         return;
 
-    if (!forwardConvexCP || isExplorerNearBeginning(index)){
+    CVector2 reversePoint(explorers.at(index)->getPosition().GetX(),
+                          explorers.at(index)->getCurrentTask().begin.GetY());
+    if (!forwardConvexCP || isNear(*explorers.at(index), reversePoint)) {
         explorers.at(index)->update(Task());
         explorers.at(index) = nullptr;
     }
@@ -80,18 +83,18 @@ bool TaskCell::areExplorersReadyToProceed() const {
 }
 
 void TaskCell::finishCell() {
-    LOG << "Explorer report CP!" << endl;
+//    LOG << "Explorer report CP!" << endl;
     auto explorersDistance = (explorers.at(Left)->getPosition() - explorers.at(Right)->getPosition()).SquareLength();
     auto explorersDistanceOnY = explorers.at(Left)->getPosition().GetY() - explorers.at(Right)->getPosition().GetY();
-    auto explorersDistanceThreshold = 0.15;
-    LOG << "Explorers dist: " << explorersDistance << ", "
-        << "Explorers dist on Y: " << explorersDistanceOnY << ", "
-        << "Explorers forward cp: [" << boolalpha << explorers.at(Left)->isForwardConvexCP() << ", "
-        << explorers.at(Right)->isForwardConvexCP() << "]\n";
+//    LOG << "Explorers dist: " << explorersDistance << ", "
+//        << "Explorers dist on Y: " << explorersDistanceOnY << ", "
+//        << "Explorers forward cp: [" << boolalpha << explorers.at(Left)->isForwardConvexCP() << ", "
+//        << explorers.at(Right)->isForwardConvexCP() << "]\n";
     forwardConvexCP = explorers.at(Left)->isForwardConvexCP() ||
         explorers.at(Right)->isForwardConvexCP() ||
         fabs(explorersDistanceOnY) > explorersDistanceThreshold;
     reverseConvexCP = !forwardConvexCP && explorersDistance >= ROBOT_CLEARANCE;
+    concaveCP = explorers.at(Left)->isConcaveCP() || explorers.at(Right)->isConcaveCP();
     finished = true;
 }
 
@@ -104,7 +107,7 @@ void TaskCell::setRevertTaskForExplorer(Explorer index) {
     Task revertTask = explorers.at(index)->getCurrentTask();
     revertTask.status = Task::Status::MoveToBegin;
     revertTask.begin = explorers.at(index)->getPosition();
-    auto newY = end.GetY() + ROBOT_CLEARANCE_RADIUS;
+    auto newY = end.GetY() + ROBOT_CLEARANCE;
     if (newY > limits.GetMax().GetY())
         newY = limits.GetMax().GetY();
     revertTask.begin.SetY(newY);
@@ -151,18 +154,18 @@ bool TaskCell::isExplorerNearBeginning(Explorer index) const {
 }
 
 void TaskCell::addLeftExplorer(TaskHandler& e) {
-    LOG << (void*)(this) << " add left explorer!\n";
-    if (explorers.at(Left) != nullptr)
-        THROW_ARGOSEXCEPTION("Left explorer is already assigned!");
+//    LOG << (void*)(this) << " add left explorer!\n";
+//    if (explorers.at(Left) != nullptr)
+//        THROW_ARGOSEXCEPTION("Left explorer is already assigned!");
     if (e.getCurrentTask().behavior != Task::Behavior::FollowLeftBoundary)
         THROW_ARGOSEXCEPTION("Left explorer do not have FLEFT task!");
     explorers[Explorer::Left] = &e;
 }
 
 void TaskCell::addRightExplorer(TaskHandler& e) {
-    LOG << (void*)(this) << " add right explorer!\n";
-    if (explorers.at(Right) != nullptr)
-        THROW_ARGOSEXCEPTION("Right explorer is already assigned!");
+//    LOG << (void*)(this) << " add right explorer!\n";
+//    if (explorers.at(Right) != nullptr)
+//        THROW_ARGOSEXCEPTION("Right explorer is already assigned!");
     if (e.getCurrentTask().behavior != Task::Behavior::FollowRightBoundary)
         THROW_ARGOSEXCEPTION("Right explorer do not have FRIGHT task!");
     explorers[Explorer::Right] = &e;
@@ -184,13 +187,17 @@ bool TaskCell::isForwardConvex() const {
     return forwardConvexCP;
 }
 
+bool TaskCell::isConcave() const {
+    return concaveCP;
+}
+
 bool TaskCell::isNear(TaskHandler& handler, const CVector2& point) const {
     Real minDistance = 0.001f;
     return (handler.getPosition() - point).SquareLength() < minDistance;
 }
 
 void TaskCell::moveExplorersToBeginning() {
-    LOG << "Move explorers to begin!";
+//    LOG << "Move explorers to begin!";
     updateExplorers(Task::Status::MoveToBegin);
     Explorer index = Left;
     if (isExplorerNearBeginning(static_cast<Explorer>(index)))
@@ -198,26 +205,33 @@ void TaskCell::moveExplorersToBeginning() {
     index = Right;
     if (isExplorerNearBeginning(static_cast<Explorer>(index)))
         updateExplorerStatus(static_cast<Explorer>(index), Task::Status::Wait);
-    LOG << endl;
+//    LOG << endl;
 }
 
 void TaskCell::prepareExplorers() {
-    LOG << "Prepare explorers!";
+//    LOG << "Prepare explorers!";
     updateExplorers(Task::Status::Prepare);
     updateCellLimits();
     started = true;
-    LOG << endl;
+//    LOG << endl;
 }
 
 void TaskCell::proceedExplorers() {
-    LOG << "Proceed explorers!";
+//    LOG << "Proceed explorers!";
     updateExplorers(Task::Status::Proceed);
 
+    auto explorersDistanceOnY = explorers.at(Left)->getPosition().GetY() - explorers.at(Right)->getPosition().GetY();
+
+//    LOG << (void*)(this) << ": "
+//        << "L[" << explorers.at(Left)->isCriticalPoint() << ", " << explorers.at(Left)->isForwardConvexCP() << "], "
+//        << "R[" << explorers.at(Right)->isCriticalPoint() << ", " << explorers.at(Right)->isForwardConvexCP() << "], "
+//        << explorersDistanceOnY << "\n";
     if (!prepared)
         prepared = true;
     else if (
-            explorers.at(Left)->isForwardConvexCP() || explorers.at(Right)->isForwardConvexCP() ||
-            (explorers.at(Left)->isCriticalPoint() && explorers.at(Right)->isCriticalPoint())
+            (explorers.at(Left)->isForwardConvexCP() || explorers.at(Right)->isForwardConvexCP()) ||
+            (explorers.at(Left)->isCriticalPoint() && explorers.at(Right)->isCriticalPoint()) ||
+            (fabs(explorersDistanceOnY) > explorersDistanceThreshold)
         ) {
         updateExplorers(Task::Status::Wait);
         finishCell();
@@ -236,5 +250,5 @@ void TaskCell::proceedExplorers() {
         updateExplorerStatus(Right, Task::Status::Wait);
 
     updateCellLimits();
-    LOG << endl;
+//    LOG << endl;
 }

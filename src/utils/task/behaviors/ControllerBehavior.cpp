@@ -22,9 +22,8 @@ static const Real ANGLE_EPSILON = .1;
 
 ControllerBehavior::ControllerBehavior(Sensors s, Actuators a)
     : sensors(s)
-    , actuators(a) {
-    actuators.leds.Reset();
-}
+    , actuators(a)
+{}
 
 CVector2 ControllerBehavior::moveToBegin(const CVector2& beginning) {
     auto rotationAngle = myPositionToPointAngle(beginning);

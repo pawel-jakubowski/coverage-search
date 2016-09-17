@@ -20,11 +20,14 @@ if(NOT ARGOS_CAMERA_1)
     math(EXPR ARGOS_CAMERA_1 ${ARGOS_AREA_SIDE_IN_M}*2)
 endif()
 if(NOT ARGOS_LOG)
-    set(ARGOS_LOG "mbfo.log")
+    set(ARGOS_LOG "cellular.log")
 endif()
 
 execute_process(
-        COMMAND python -c "import sys; sys.stdout.write(str(${ARGOS_AREA_HALF_SIDE_IN_M}-0.7))"
+        COMMAND python -c "import sys; sys.stdout.write(str(${ARGOS_AREA_HALF_SIDE_IN_M}-0.4))"
+        OUTPUT_VARIABLE ARGOS_ROBOTS_HALF_AREA_SIDE_BEGINNIG_IN_M)
+execute_process(
+        COMMAND python -c "import sys; sys.stdout.write(str(${ARGOS_AREA_HALF_SIDE_IN_M}-0.8))"
         OUTPUT_VARIABLE ARGOS_TARGET_HALF_AREA_SIDE_BEGINNIG_IN_M)
 execute_process(
         COMMAND python -c "import sys; sys.stdout.write(str(${ARGOS_AREA_HALF_SIDE_IN_M}-0.6))"

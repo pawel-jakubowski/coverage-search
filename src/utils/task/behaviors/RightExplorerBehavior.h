@@ -8,6 +8,7 @@ class RightExplorerBehavior : public ExplorerBehavior {
 public:
     RightExplorerBehavior(Sensors s, Actuators a);
     argos::CVector2 prepare() override;
+    bool isForwardConvexCP() const override;
     bool isReadyToProceed() const override;
 
 protected:

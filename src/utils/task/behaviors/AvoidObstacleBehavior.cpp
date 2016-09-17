@@ -14,11 +14,11 @@ AvoidObstacleBehavior::AvoidObstacleBehavior(Sensors s, Actuators a)
     : ControllerBehavior(s, a)
     , histogramAlpha(5)
     , obstacleHistogram(static_cast<size_t>(CDegrees(360)/histogramAlpha), false)
-    , histogramThresholdHysteresis(0.1f, 0.2f)
+    , histogramThresholdHysteresis(0.12f, 0.2f)
 {}
 
 CVector2 AvoidObstacleBehavior::proceed() {
-    LOG << "Avoid obstacle!" << endl;
+//    LOG << "Avoid obstacle!" << endl;
     CDegrees closestFree(180);
     for (size_t i = 0; i < obstacleHistogram.size(); i++) {
         if (!obstacleHistogram.at(i)) {
@@ -27,7 +27,7 @@ CVector2 AvoidObstacleBehavior::proceed() {
                 closestFree = angleDiff;
         }
     }
-    LOG << "Free angle " << closestFree << endl;
+//    LOG << "Free angle " << closestFree << endl;
     return move(closestFree);
 }
 
@@ -40,10 +40,10 @@ bool AvoidObstacleBehavior::isRoadClear(CVector2 desiredVelocity) {
     bool isObstacleAtDesiredAngle = false;
     CDegrees velocityAngle = ToDegrees(desiredVelocity.Angle()).UnsignedNormalize();
 
-    LOG << "[";
-    for (auto isObstacle : obstacleHistogram)
-        LOG << (isObstacle ? "|" : ".");
-    LOG << "] desired = " << velocityAngle << "\n";
+//    LOG << "[";
+//    for (auto isObstacle : obstacleHistogram)
+//        LOG << (isObstacle ? "|" : ".");
+//    LOG << "] desired = " << velocityAngle << "\n";
 
 
     if (velocityAngle.GetValue() == 0)
@@ -70,7 +70,7 @@ void AvoidObstacleBehavior::updateObstacleHistogram() {
         if (isinf(distance))
             continue;
 
-        LOG << distance << ", ";
+//        LOG << distance << ", ";
 
         const auto clearance = 0.01f;
         auto enlargementAngle = ASin((BODY_RADIUS + clearance) / distance);
@@ -84,7 +84,7 @@ void AvoidObstacleBehavior::updateObstacleHistogram() {
                 magnitudeHistogramVariables.at(i).push_back(r.Value * r.Value);
         }
     }
-    LOG << "\n";
+//    LOG << "\n";
 
     vector<Real> magnitudeHistogram(magnitudeHistogramVariables.size());
     for (size_t i = 0; i < magnitudeHistogramVariables.size(); i++) {
@@ -92,9 +92,9 @@ void AvoidObstacleBehavior::updateObstacleHistogram() {
         auto maxEl = max_element(l.begin(), l.end());
         if (maxEl != l.end())
             magnitudeHistogram.at(i) = *maxEl;
-        LOG << magnitudeHistogram.at(i) << ", ";
+//        LOG << magnitudeHistogram.at(i) << ", ";
     }
-    LOG << "\n";
+//    LOG << "\n";
 
     fill(obstacleHistogram.begin(), obstacleHistogram.end(), false);
     for (size_t i = 0; i < obstacleHistogram.size(); i++) {

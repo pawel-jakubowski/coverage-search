@@ -33,6 +33,7 @@ public:
     virtual CVector2 getPosition() const override;
     virtual bool isCriticalPoint() const override;
     virtual bool isForwardConvexCP() const override;
+    virtual bool isConcaveCP() const override;
     virtual bool isReadyToProceed() const override;
 
 private:
@@ -47,6 +48,7 @@ private:
     CCI_ColoredBlobPerspectiveCameraSensor* cameraFront = nullptr;
     CCI_ColoredBlobPerspectiveCameraSensor* cameraBack = nullptr;
 
+    std::shared_ptr<TaskManager> taskManager;
     CellularDecomposition& loopFnc;
     std::unique_ptr<BehaviorFactory> factory;
     std::shared_ptr<ControllerBehavior> behavior;
@@ -54,10 +56,12 @@ private:
 
     bool criticalPointDetected = false;
     bool forwardConvexCPDetected = false;
+    bool concaveCPDetected = false;
     bool readyToProceed = false;
 
     void logCurrentTask() const;
     CVector2 runBehavior();
+    void detectTargets();
 };
 
 }

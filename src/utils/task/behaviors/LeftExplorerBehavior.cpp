@@ -20,14 +20,50 @@ CVector2 LeftExplorerBehavior::prepare() {
 
     if (controlAngle.GetAbsoluteValue() > angleEpsilon) {
         rotateForAnAngle(controlAngle);
-        LOG << "FLEFT rotate\n";
+//        LOG << "FLEFT rotate\n";
         return getDefaultVelocity().Rotate(ToRadians(controlAngle));
     }
     else if (!hitWall) {
         hitWall = getAccumulatedVector(getFrontProximityReadings(), frontThreshold).SquareLength() > 0;
-        LOG << "FLEFT move\n";
+//        LOG << "FLEFT move\n";
         return move(CDegrees(0));
     }
+}
+
+bool LeftExplorerBehavior::isForwardConvexCP() const {
+    auto angles = getFellowAngles();
+    auto myAngle = getOrientationOnXY();
+    auto threshold = 0.1f;
+    for (auto& a : angles) {
+        auto realAngle = (myAngle + a).SignedNormalize();
+//        LOG << "Real fellow angle: " << myAngle.GetValue() << " + " << a.GetValue() << " = " << realAngle.GetValue() << "\n";
+        if (realAngle < CDegrees(90) && realAngle > CDegrees(-90)) {
+            const auto& readings = sensors.proximity.GetReadings();
+            array<Real, 2> proximityValues = {-1, -1};
+            auto unsignedAngle = a.UnsignedNormalize();
+            for (size_t i = 0; i < readings.size(); i++) {
+                if (i+1 < readings.size())
+                    if (unsignedAngle > ToDegrees(readings.at(i).Angle).UnsignedNormalize() &&
+                        unsignedAngle < ToDegrees(readings.at(i+1).Angle).UnsignedNormalize()) {
+//                        LOG << "Range(" << ToDegrees(readings.at(i).Angle).GetValue() << ", "
+//                            << ToDegrees(readings.at(i+1).Angle).GetValue() << "), ";
+                        proximityValues = {readings.at(i).Value, readings.at(i+1).Value};
+                    }
+                else if (unsignedAngle > ToDegrees(readings.at(i).Angle).UnsignedNormalize() ||
+                         unsignedAngle < ToDegrees(readings.at(0).Angle).UnsignedNormalize()) {
+//                        LOG << "Range(" << ToDegrees(readings.at(i).Angle).GetValue() << ", "
+//                            << ToDegrees(readings.at(0).Angle).GetValue() << "), ";
+                    proximityValues = {readings.at(i).Value, readings.at(0).Value};
+                }
+            }
+            if (proximityValues.at(0) < 0 || proximityValues.at(1) < 0)
+                THROW_ARGOSEXCEPTION("Algorithm do not find proper range for " << unsignedAngle);
+//            LOG << "(" << proximityValues.at(0) << " + " << proximityValues.at(1) << ") / 2 = "
+//                << ((proximityValues.at(0) + proximityValues.at(1)) / 2) << "\n";
+            return ((proximityValues.at(0) + proximityValues.at(1)) / 2) > threshold;
+        }
+    }
+    return false;
 }
 
 bool LeftExplorerBehavior::isReadyToProceed() const {

@@ -15,6 +15,7 @@ public:
     bool isFinished() const;
     bool isForwardConvex() const;
     bool isReverseConvex() const;
+    bool isConcave() const;
 
     std::list<Task> getExplorersTasks() const;
     const argos::CVector2& getBeginning() const { return beginning; }
@@ -34,6 +35,9 @@ private:
     bool finished = false;
     bool forwardConvexCP = false;
     bool reverseConvexCP = false;
+    bool concaveCP = false;
+
+    argos::Real explorersDistanceThreshold;
 
     bool isNear(TaskHandler& handler, const argos::CVector2& point) const;
     bool isExplorerNearBeginning(Explorer index) const;

@@ -64,13 +64,20 @@
         <!-- ************* -->
         <!-- * Obstacles * -->
         <!-- ************* -->
-        <distribute>
-            <position method="uniform" min="-2,-2,0" max="2,2,0" />
-            <orientation method="constant" values="0,0,0" />
-            <entity quantity="10" max_trials="100">
-                <cylinder id="c" height="0.25" radius="0.1" movable="false" />
-            </entity>
-        </distribute>
+        <!--<distribute>-->
+            <!--<position method="uniform" min="-2,-2,0" max="2,2,0" />-->
+            <!--<orientation method="constant" values="0,0,0" />-->
+            <!--<entity quantity="10" max_trials="100">-->
+                <!--<cylinder id="c" height="0.25" radius="0.1" movable="false" />-->
+            <!--</entity>-->
+        <!--</distribute>-->
+
+        <light id="light"
+            position="0,0,0.5"
+            orientation="0,0,0"
+            color="yellow"
+            intensity="0.5"
+            medium="leds"/>
 
     </arena>
 
@@ -84,7 +91,9 @@
     <!-- ********* -->
     <!-- * Media * -->
     <!-- ********* -->
-    <media />
+    <media>
+        <led id="leds"/>
+    </media>
 
     <!-- ****************** -->
     <!-- * Visualization * -->

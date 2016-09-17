@@ -20,6 +20,7 @@ public:
     virtual argos::CVector2 getPosition() const = 0;
     virtual bool isCriticalPoint() const = 0;
     virtual bool isForwardConvexCP() const = 0;
+    virtual bool isConcaveCP() const = 0;
     virtual bool isReadyToProceed() const = 0;
 
 protected:
